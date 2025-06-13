@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals with Muted Teal Accent) -->
+    <!-- Application Structure Plan: A tabbed single-page application with sections for Overview, Science, an interactive Ingredient Explorer, Formulation Strategies, and Marketing Insights. This non-linear structure allows users (formulators, marketers) to quickly access the most relevant information for their role. The core is the interactive explorer, which facilitates direct comparison of ingredients, a key task for R&D, moving beyond the static tables of the source report. -->
+    <!-- Visualization & Content Choices: Report Info: Comparing candidate ingredients. -> Goal: Compare/Select. -> Viz Method: Interactive cards + dynamic Chart.js radar chart. -> Interaction: User selects ingredients via checkboxes, chart updates instantly to show comparative strengths (Gelling Power, Natural Origin, etc.). -> Justification: The radar chart provides an immediate, multi-dimensional comparison that is far more intuitive and efficient for decision-making than reading through tables. Diagrams explaining the roll-up mechanism are built with HTML/CSS for full control and to avoid external assets. Formulation concepts are presented in clickable cards for a clean, organized view. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <title>인터랙티브 롤업 클렌징 기술 보고서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        html { scroll-behavior: smooth; }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .nav-link:not(.active) { border-bottom-color: transparent; }
+        .card-checkbox:checked + label { border-color: #2563eb; background-color: #eff6ff; }
+        .tab-button.active { background-color: #2563eb; color: white; }
+    </style>
+</head>
+<body class="bg-stone-50 text-gray-800">
+
+    <div class="container mx-auto px-4">
+        <header class="sticky top-0 bg-stone-50/80 backdrop-blur-lg z-50 py-4 border-b border-stone-200">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold text-blue-800">롤업 클렌징 기술 인사이트</h1>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#overview" class="nav-link text-gray-600 hover:text-blue-600 border-b-2 pb-1">개요</a>
+                    <a href="#science" class="nav-link text-gray-600 hover:text-blue-600 border-b-2 pb-1">과학적 원리</a>
+                    <a href="#explorer" class="nav-link text-gray-600 hover:text-blue-600 border-b-2 pb-1">핵심 성분 탐색</a>
+                    <a href="#formulation" class="nav-link text-gray-600 hover:text-blue-600 border-b-2 pb-1">제형 전략</a>
+                    <a href="#marketing" class="nav-link text-gray-600 hover:text-blue-600 border-b-2 pb-1">마케팅 인사이트</a>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            <section id="overview" class="py-16 md:py-24 text-center">
+                 <p class="text-base md:text-lg text-blue-700 font-semibold mb-2">차세대 클렌징의 혁신</p>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">롤업(Roll-Up) 클렌징: 노폐물을 말아올려 제거하다</h2>
+                <p class="max-w-3xl mx-auto text-gray-600 mb-12">
+                    단순히 녹여내는 유화 방식(Emulsification)을 넘어, 피부 위 지질 노폐물을 효과적으로 응집시켜 '말아 올리는' 롤업(Roll-up) 기술을 소개합니다. 일본의 오일 응고제 기술에서 영감을 받은 이 혁신적인 접근법은 피부 자극은 줄이면서 세정력은 높여, 소비자에게 전에 없던 만족스러운 클렌징 경험과 가시적인 효과를 제공합니다.
+                </p>
+                <div class="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto">
+                    <div class="flex-1 p-6 bg-white rounded-xl shadow-lg border border-stone-200">
+                        <h3 class="font-bold text-xl mb-4">기존 유화 방식</h3>
+                        <div class="w-full h-40 bg-stone-100 rounded-lg flex justify-center items-center p-4 relative">
+                            <div class="w-16 h-16 bg-orange-400 rounded-full absolute top-4 animate-pulse" title="오염물"></div>
+                            <div class="text-sm text-gray-500 self-end">피부 표면</div>
+                            <div class="absolute top-1/2 flex gap-1">
+                                <div class="w-3 h-3 bg-orange-300 rounded-full animate-ping"></div>
+                                <div class="w-3 h-3 bg-orange-300 rounded-full animate-ping delay-100"></div>
+                                <div class="w-3 h-3 bg-orange-300 rounded-full animate-ping delay-200"></div>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600">계면활성제가 오염물을 미세 입자로 분해하여 물에 씻어냅니다. 때로 피부에 자극을 줄 수 있습니다.</p>
+                    </div>
+                    <div class="flex-1 p-6 bg-white rounded-xl shadow-lg border-2 border-blue-500">
+                        <h3 class="font-bold text-xl mb-4 text-blue-700">혁신적 롤업 방식</h3>
+                        <div class="w-full h-40 bg-stone-100 rounded-lg flex justify-center items-center p-4 relative">
+                            <div class="w-16 h-16 bg-blue-500 rounded-full absolute top-4" title="응집된 오염물"></div>
+                             <div class="absolute top-12 left-1/2 -translate-x-1/2 transform-gpu transition-transform duration-500 hover:rotate-12 hover:scale-110" title="오염물이 말려 올라가는 모습">
+                                <div class="w-16 h-8 bg-blue-500 rounded-t-full"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 self-end">피부 표면</div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600">특정 성분이 오염물을 하나의 덩어리로 응집시켜 피부에서 부드럽게 들어올려 제거합니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="science" class="py-16 md:py-24 bg-white rounded-2xl shadow-inner-lg">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">롤업의 과학: 어떻게 가능한가?</h2>
+                    <p class="max-w-2xl mx-auto text-gray-600">롤업 현상은 계면 장력의 정교한 조절과 성분의 흡착 특성에 기반합니다. 오염물을 분해하는 대신, 피부와 오염물 사이의 부착력을 약화시켜 분리하는 것이 핵심입니다.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <div class="text-3xl mb-3">🔬</div>
+                        <h3 class="font-bold text-lg mb-2">계면 장력(IFT) 조절</h3>
+                        <p class="text-sm text-gray-600">클렌저가 오일/물, 오일/피부, 물/피부 사이의 계면 장력을 최적으로 조절하여, 오염물이 피부에서 쉽게 떨어져 나갈 수 있는 환경을 만듭니다.</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <div class="text-3xl mb-3">🧩</div>
+                        <h3 class="font-bold text-lg mb-2">쐐기 효과(Wedge Effect)</h3>
+                        <p class="text-sm text-gray-600">계면활성제나 고분자가 오염물보다 피부 표면에 우선적으로 흡착하여, 마치 쐐기처럼 오염물을 밀어내고 들어올리는 현상을 촉진합니다.</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <div class="text-3xl mb-3">✨</div>
+                        <h3 class="font-bold text-lg mb-2">오염물 구조화</h3>
+                        <p class="text-sm text-gray-600">일본 기름 응고제 원리처럼, 특정 성분이 액상 지질 오염물의 점도를 높이고 응집력을 강화하여, 분산되기보다 하나의 덩어리로 뭉쳐 롤업되기 쉽게 만듭니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="explorer" class="py-16 md:py-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">핵심 성분 탐색기</h2>
+                    <p class="max-w-2xl mx-auto text-gray-600">롤업 효과를 구현하는 핵심 성분들을 탐색하고 비교해보세요. 양친매성 고분자와 천연 오일 겔화제 두 가지 카테고리에서 원하는 성분을 선택하여 특성을 비교 분석할 수 있습니다.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="p-6 bg-white rounded-xl shadow-lg">
+                        <div class="mb-4">
+                            <div class="flex border-b">
+                                <button id="poly-tab" class="tab-button flex-1 py-2 px-4 text-sm font-medium text-center text-gray-500 rounded-t-lg">양친매성 고분자</button>
+                                <button id="natural-tab" class="tab-button flex-1 py-2 px-4 text-sm font-medium text-center text-gray-500 rounded-t-lg">천연 오일 겔화제</button>
+                            </div>
+                        </div>
+                        <div id="ingredient-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
+                        </div>
+                    </div>
+                    <div class="p-6 bg-white rounded-xl shadow-lg flex flex-col items-center justify-center">
+                        <h3 class="font-bold text-lg mb-4">성분 특성 비교 (Radar Chart)</h3>
+                        <p class="text-sm text-gray-500 mb-4 text-center">카테고리 탭을 선택하고, 좌측 카드에서 2개 이상의 성분을 선택하여 특성을 비교해보세요.</p>
+                        <div class="chart-container">
+                            <canvas id="ingredientChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="formulation" class="py-16 md:py-24 bg-white rounded-2xl shadow-inner-lg">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">롤업 클렌저 제형 전략</h2>
+                    <p class="max-w-2xl mx-auto text-gray-600">롤업 기술은 다양한 제형으로 구현될 수 있습니다. 각 제형은 독특한 질감 변화와 사용감을 제공하여 소비자에게 새로운 경험을 선사합니다.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div class="group p-6 border border-stone-200 rounded-lg hover:shadow-xl hover:border-blue-500 transition-all">
+                        <div class="text-3xl mb-3">🍯</div>
+                        <h3 class="font-bold text-lg mb-2">클렌징 밤 / 고형 오일</h3>
+                        <p class="text-sm text-gray-600">상온에서는 고체, 피부에 닿으면 부드럽게 녹아 오염물과 섞이며 응집력을 높여 롤업을 유도합니다.</p>
+                        <p class="mt-4 text-xs text-blue-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">추천 성분: 수소첨가피마자유, 덱스트린팔미테이트</p>
+                    </div>
+                    <div class="group p-6 border border-stone-200 rounded-lg hover:shadow-xl hover:border-blue-500 transition-all">
+                        <div class="text-3xl mb-3">💧</div>
+                        <h3 class="font-bold text-lg mb-2">겔-투-오일 클렌저</h3>
+                        <p class="text-sm text-gray-600">산뜻한 겔이 마사지하면 오일로 변하며, 고분자 네트워크가 지질 오염물을 포획하여 롤업을 돕습니다.</p>
+                         <p class="mt-4 text-xs text-blue-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">추천 성분: Acrylates/C10-30 Alkyl Acrylate Crosspolymer</p>
+                    </div>
+                    <div class="group p-6 border border-stone-200 rounded-lg hover:shadow-xl hover:border-blue-500 transition-all">
+                        <div class="text-3xl mb-3">🌿</div>
+                        <h3 class="font-bold text-lg mb-2">구조화된 클렌징 오일</h3>
+                        <p class="text-sm text-gray-600">일반 오일에 오일 겔화제를 소량 첨가하여 점성과 응집력을 부여, 오염물을 감싸 안아 롤업 능력을 향상시킵니다.</p>
+                         <p class="mt-4 text-xs text-blue-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">추천 성분: 덱스트린팔미테이트(저농도), Cera Bellina</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="marketing" class="py-16 md:py-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">마케팅 & 커뮤니케이션</h2>
+                    <p class="max-w-2xl mx-auto text-gray-600">롤업 기술의 독창성은 강력한 마케팅 소구점을 제공합니다. 기술의 특징을 효과적으로 전달하여 소비자의 마음을 사로잡으세요.</p>
+                </div>
+                 <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md flex items-start gap-4">
+                        <div class="text-2xl pt-1">📢</div>
+                        <div>
+                            <h3 class="font-bold text-lg">직관적인 USP (독창적 판매 제안)</h3>
+                            <p class="text-sm text-gray-600">"노폐물을 자석처럼 끌어당겨 롤링 제거", "피부 위에서 텍스처가 변하며 노폐물을 눈으로 확인" 등 생생하고 직관적인 표현으로 효과를 전달합니다.</p>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-md flex items-start gap-4">
+                        <div class="text-2xl pt-1">🎥</div>
+                        <div>
+                            <h3 class="font-bold text-lg">시각적 효과 강조</h3>
+                            <p class="text-sm text-gray-600">광고나 상세 페이지에서 메이크업이 실제로 덩어리져 '굴러다니는' 모습을 시각적으로 보여주어 기술의 독창성을 증명합니다.</p>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-md flex items-start gap-4">
+                        <div class="text-2xl pt-1">🌱</div>
+                        <div>
+                            <h3 class="font-bold text-lg">천연 & 과학의 결합</h3>
+                            <p class="text-sm text-gray-600">"식물 유래 겔화제의 힘", "자연의 지혜와 첨단 고분자 과학의 만남" 등 천연 성분과 기술력을 동시에 강조하여 신뢰도를 높입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center py-8 border-t border-stone-200 text-sm text-gray-500">
+            <p>&copy; 2025 Interactive Cosmetic Science Report. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ingredientData = {
+                polymers: [
+                    { id: 'poly1', name: 'Acrylates/C10-30 Alkyl Acrylate Crosspolymer', desc: '소수성 회합을 통해 오일과 상호작용하여 점증 및 롤업을 촉진합니다.', ratings: [3, 4, 1, 4, 3] },
+                    { id: 'poly2', name: 'Acrylates/Beheneth-25 Methacrylate Copolymer', desc: 'HASE 고분자로, 계면활성제 시스템에서 효율적인 증점 및 오일 포획 능력을 보입니다.', ratings: [4, 4, 1, 5, 2] },
+                    { id: 'poly3', name: 'Polyethylene Oxide (고분자량)', desc: '계면활성제 응집체 크기를 증가시켜 피부 침투를 줄이고 롤업을 유도할 수 있습니다.', ratings: [2, 2, 1, 3, 5] },
+                ],
+                naturals: [
+                    { id: 'nat1', name: 'Hydrogenated Castor Oil', desc: '피마자유 유래 왁스. 강력한 오일 네트워크를 형성하여 오염물 응집력을 극대화합니다.', ratings: [5, 5, 5, 2, 2] },
+                    { id: 'nat2', name: 'Polyglyceryl-3 Beeswax (Cera Bellina)', desc: '비즈왁스 유도체. 부드러운 오일 겔을 형성하여 매끄러운 롤업 사용감을 제공합니다.', ratings: [4, 5, 4, 3, 4] },
+                    { id: 'nat3', name: 'Saccharum Officinarum Cera (Sugarcane Wax)', desc: '사탕수수 유래 왁스. 단단한 구조를 형성하여 제형에 안정성을 부여합니다.', ratings: [4, 4, 5, 2, 3] },
+                    { id: 'nat4', name: 'Dextrin Palmitate', desc: '강력한 오일 겔화제. 독특한 요변성(Thixotropy)으로 질감 변화를 주도합니다.', ratings: [5, 5, 5, 4, 4] },
+                    { id: 'nat5', name: 'Stearoyl Inulin', desc: '이눌린 유래 다당류. 오일 증점 및 겔화에 기여하며 부드러운 사용감을 줍니다.', ratings: [3, 4, 5, 3, 3] },
+                ]
+            };
+
+            const ingredientCardsContainer = document.getElementById('ingredient-cards');
+            const polyTab = document.getElementById('poly-tab');
+            const naturalTab = document.getElementById('natural-tab');
+            
+            let currentCategory = 'polymers';
+            let selectedIngredients = [];
+
+            function renderCards(category) {
+                ingredientCardsContainer.innerHTML = '';
+                ingredientData[category].forEach(ing => {
+                    const isChecked = selectedIngredients.find(s => s.id === ing.id);
+                    const cardHTML = `
+                        <div class="relative">
+                            <input type="checkbox" id="${ing.id}" data-category="${category}" class="card-checkbox absolute opacity-0 w-full h-full cursor-pointer" ${isChecked ? 'checked' : ''}>
+                            <label for="${ing.id}" class="block p-4 border-2 border-stone-200 rounded-lg cursor-pointer transition-all h-full">
+                                <h4 class="font-bold text-sm">${ing.name}</h4>
+                                <p class="text-xs text-gray-500 mt-1">${ing.desc}</p>
+                            </label>
+                        </div>
+                    `;
+                    ingredientCardsContainer.innerHTML += cardHTML;
+                });
+            }
+
+            const ctx = document.getElementById('ingredientChart').getContext('2d');
+            const chartLabels = ['오일 겔화력', '질감 부여력', '천연 유래 지수', '계면활성제 시너지', '마일드함'];
+            const chart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: chartLabels,
+                    datasets: []
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            pointLabels: { font: { size: 10 } },
+                            ticks: {
+                                stepSize: 1,
+                                backdropColor: 'rgba(255, 255, 255, 0)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            function updateChart() {
+                chart.data.datasets = selectedIngredients.map((ing, index) => {
+                    const colors = [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(249, 115, 22, 0.7)',
+                    ];
+                    const borderColors = [
+                        'rgb(59, 130, 246)',
+                        'rgb(239, 68, 68)',
+                        'rgb(16, 185, 129)',
+                        'rgb(249, 115, 22)',
+                    ];
+                    return {
+                        label: ing.name.split(' (')[0],
+                        data: ing.ratings,
+                        backgroundColor: colors[index % colors.length].replace('0.7', '0.2'),
+                        borderColor: borderColors[index % borderColors.length],
+                        borderWidth: 2,
+                        pointBackgroundColor: borderColors[index % borderColors.length],
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: borderColors[index % borderColors.length]
+                    }
+                });
+                chart.update();
+            }
+
+            ingredientCardsContainer.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    const ingId = e.target.id;
+                    const category = e.target.dataset.category;
+                    const ingredient = ingredientData[category].find(i => i.id === ingId);
+                    
+                    if (e.target.checked) {
+                        if (selectedIngredients.length < 4) {
+                            selectedIngredients.push(ingredient);
+                        } else {
+                            e.target.checked = false;
+                            alert('최대 4개의 성분까지 비교할 수 있습니다.');
+                        }
+                    } else {
+                        selectedIngredients = selectedIngredients.filter(s => s.id !== ingId);
+                    }
+                    updateChart();
+                }
+            });
+
+            function switchTab(category) {
+                currentCategory = category;
+                selectedIngredients = [];
+                if (category === 'polymers') {
+                    polyTab.classList.add('active');
+                    naturalTab.classList.remove('active');
+                } else {
+                    naturalTab.classList.add('active');
+                    polyTab.classList.remove('active');
+                }
+                renderCards(currentCategory);
+                updateChart();
+            }
+
+            polyTab.addEventListener('click', () => switchTab('polymers'));
+            naturalTab.addEventListener('click', () => switchTab('naturals'));
+            
+            switchTab('polymers');
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+        });
+    </script>
+
+</body>
+</html>
