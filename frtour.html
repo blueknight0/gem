@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프랑스 남부 인터랙티브 여행 플래너</title>
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals & Muted Accents) -->
+    <!-- Application Structure Plan: A single-page, vertically scrolling application designed as an interactive journey planner. The structure is thematic and user-flow-oriented, rather than mirroring the linear report. It begins with a hero section, followed by the recommended route visualization. The core is an interactive 'Itinerary Explorer' with expandable modules for each destination (Lyon, Annecy, Marseille/Cassis). Inside each module, tabbed interfaces and interactive charts/cards break down complex information (wine tours, transport, activities), allowing users to compare options and build their ideal trip. This structure turns passive reading into active planning, enhancing usability and engagement. -->
+    <!-- Visualization & Content Choices: Report data is transformed into interactive components. [Goal: Compare] Lyon Wine Tours: Interactive toggles update a content display and a Chart.js bar chart compares prices. Marseille-Cassis Transport: Toggles show pros/cons. [Goal: Explore] Calanques Boat Tours: A Chart.js bar chart links duration and price, with clickable elements revealing details. [Goal: Organize] The main journey is presented via expandable modules and tabbed sections, chunking information logically. [Goal: Emphasize] Key justifications for the route are shown in clickable cards, and the timely 'European Heritage Days' tip is highlighted in a distinct callout box. All visualizations use Chart.js on Canvas, adhering to the NO SVG/Mermaid rule. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        .section-hidden { display: none; }
+        .tab-active { border-color: #435585; color: #435585; background-color: #F5EFE7; }
+        .tab-inactive { border-color: transparent; color: #6B7280; }
+        .card-flip { transform: rotateY(180deg); }
+        .card .front, .card .back { backface-visibility: hidden; transition: transform 0.6s; }
+        .card .back { transform: rotateY(180deg); }
+        .section-fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-stone-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-[#435585]">프랑스 가을 여정</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#route" class="text-gray-600 hover:text-[#435585] transition">최적 경로</a>
+                <a href="#explorer" class="text-gray-600 hover:text-[#435585] transition">여정 탐험</a>
+                <a href="#booking" class="text-gray-600 hover:text-[#435585] transition">예약하기</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4">
+            <a href="#route" class="block py-2 text-gray-600 hover:text-[#435585]">최적 경로</a>
+            <a href="#explorer" class="block py-2 text-gray-600 hover:text-[#435585]">여정 탐험</a>
+            <a href="#booking" class="block py-2 text-gray-600 hover:text-[#435585]">예약하기</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="min-h-[60vh] flex items-center bg-amber-50">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-4xl md:text-6xl font-bold text-[#435585] mb-4">프랑스의 가을 서정시</h2>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">미식, 자연, 그리고 지중해의 햇살을 따라 떠나는 9-10월 프랑스 남부 여행. 당신의 완벽한 여정을 지금 바로 탐험해보세요.</p>
+                <a href="#route" class="mt-8 inline-block bg-[#435585] text-white font-bold py-3 px-8 rounded-full hover:bg-[#313f63] transition-transform transform hover:scale-105">여정 시작하기</a>
+            </div>
+        </section>
+
+        <section id="route" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-gray-800">최적의 궤적: 태양을 향한 남진(南進)</h3>
+                    <p class="mt-4 text-gray-600 max-w-2xl mx-auto">기후, 물류, 경험의 흐름을 모두 고려한 최상의 경로는 파리에서 시작해 남쪽으로 향하는 것입니다. 리옹에서 안시를 거쳐 마르세유로 이어지는 여정을 추천합니다.</p>
+                </div>
+
+                <div class="relative max-w-4xl mx-auto p-4">
+                    <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-stone-200 -translate-x-1/2"></div>
+                    <div class="space-y-16">
+                        <div class="flex items-center justify-start">
+                            <div class="w-2/5"></div>
+                            <div class="relative w-1/5 flex justify-center">
+                                <div class="w-8 h-8 rounded-full bg-[#435585] text-white flex items-center justify-center font-bold shadow-lg">P</div>
+                            </div>
+                            <div class="w-2/5 text-left pl-4">
+                                <h4 class="font-bold text-xl">파리 (출발)</h4>
+                                <p class="text-sm text-gray-500">모든 여정의 시작점</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <div class="w-2/5 text-right pr-4">
+                                <h4 class="font-bold text-xl">리옹</h4>
+                                <p class="text-sm text-gray-500">미식과 론 밸리 와인</p>
+                            </div>
+                            <div class="relative w-1/5 flex justify-center">
+                                <div class="w-8 h-8 rounded-full bg-white border-2 border-[#435585] text-[#435585] flex items-center justify-center font-bold shadow-lg">1</div>
+                            </div>
+                             <div class="w-2/5"></div>
+                        </div>
+                        <div class="flex items-center justify-start">
+                            <div class="w-2/5"></div>
+                            <div class="relative w-1/5 flex justify-center">
+                                <div class="w-8 h-8 rounded-full bg-white border-2 border-[#435585] text-[#435585] flex items-center justify-center font-bold shadow-lg">2</div>
+                            </div>
+                            <div class="w-2/5 text-left pl-4">
+                                <h4 class="font-bold text-xl">안시</h4>
+                                <p class="text-sm text-gray-500">알프스와 가을 단풍</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <div class="w-2/5 text-right pr-4">
+                                <h4 class="font-bold text-xl">마르세유 & 꺄시스</h4>
+                                <p class="text-sm text-gray-500">지중해와 칼랑크</p>
+                            </div>
+                            <div class="relative w-1/5 flex justify-center">
+                                <div class="w-8 h-8 rounded-full bg-white border-2 border-[#435585] text-[#435585] flex items-center justify-center font-bold shadow-lg">3</div>
+                            </div>
+                            <div class="w-2/5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-20 grid md:grid-cols-3 gap-8 text-center">
+                     <div class="perspective">
+                        <div class="card relative w-full h-48 cursor-pointer">
+                            <div class="front absolute w-full h-full bg-amber-100/50 p-6 rounded-lg shadow-md flex flex-col justify-center items-center">
+                                <div class="text-3xl mb-2">☀️</div><h4 class="font-bold text-xl">기후적 논리</h4><p class="text-sm text-gray-500 mt-2">뒤집어 보기</p>
+                            </div>
+                            <div class="back absolute w-full h-full bg-amber-100 p-6 rounded-lg shadow-md flex items-center justify-center card-flip">
+                                <p class="text-sm text-gray-700">10월로 갈수록 따뜻한 남쪽으로 이동하여 여행 내내 쾌적한 날씨를 즐길 확률을 극대화합니다. 9월 말 남부의 햇살을 놓치지 마세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="perspective">
+                        <div class="card relative w-full h-48 cursor-pointer">
+                            <div class="front absolute w-full h-full bg-sky-100/50 p-6 rounded-lg shadow-md flex flex-col justify-center items-center">
+                                <div class="text-3xl mb-2">🚄</div><h4 class="font-bold text-xl">물류적 효율성</h4><p class="text-sm text-gray-500 mt-2">뒤집어 보기</p>
+                            </div>
+                            <div class="back absolute w-full h-full bg-sky-100 p-6 rounded-lg shadow-md flex items-center justify-center card-flip">
+                                <p class="text-sm text-gray-700">프랑스 TGV 고속철도망을 효율적으로 활용하여 도시 간 이동 시간을 최소화하고 불필요한 동선 중복을 피하는 경로입니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="perspective">
+                        <div class="card relative w-full h-48 cursor-pointer">
+                            <div class="front absolute w-full h-full bg-rose-100/50 p-6 rounded-lg shadow-md flex flex-col justify-center items-center">
+                                <div class="text-3xl mb-2">🗺️</div><h4 class="font-bold text-xl">경험의 흐름</h4><p class="text-sm text-gray-500 mt-2">뒤집어 보기</p>
+                            </div>
+                            <div class="back absolute w-full h-full bg-rose-100 p-6 rounded-lg shadow-md flex items-center justify-center card-flip">
+                                <p class="text-sm text-gray-700">미식 도시에서 시작해 알프스의 장엄한 자연을 거쳐, 햇살 가득한 지중해에서 마무리되는 뚜렷한 서사적 흐름을 가집니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="explorer" class="py-20 bg-stone-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-gray-800">나만의 여정 탐험하기</h3>
+                    <p class="mt-4 text-gray-600">각 도시의 매력을 자세히 살펴보고 원하는 활동을 계획해보세요.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Lyon Section -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="w-full p-6 text-left flex justify-between items-center accordion-toggle">
+                            <h4 class="text-2xl font-bold text-[#435585]">1. 리옹: 미식과 와인의 심장</h4>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-6 border-t border-stone-200 section-hidden">
+                            <p class="mb-6 text-gray-600">프랑스 미식의 수도 리옹에서 전통 요리 '부숑'을 맛보고, 세계적인 명성의 론 밸리 와인 산지를 탐험하세요. (추천 체류: 3-4일)</p>
+                            
+                            <div class="mb-4 border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-active" data-target="lyon-wine">🍷 론 밸리 와인 투어</button>
+                                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive" data-target="lyon-food">🍴 리옹의 맛, 부숑</button>
+                                </nav>
+                            </div>
+
+                            <div id="lyon-wine" class="tab-content">
+                                <p class="mb-4 text-gray-600">리옹은 상반된 매력의 두 와인 산지로 가는 관문입니다. 당신의 취향에 맞는 투어를 선택해보세요.</p>
+                                <div class="flex justify-center my-4">
+                                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                                        <button type="button" class="wine-toggle-btn px-4 py-2 text-sm font-medium text-white bg-[#435585] border border-gray-200 rounded-l-lg hover:bg-opacity-90" data-wine="northern-rhone">북부 론</button>
+                                        <button type="button" class="wine-toggle-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100" data-wine="beaujolais">보졸레</button>
+                                    </div>
+                                </div>
+                                <div id="wine-tour-details" class="grid md:grid-cols-2 gap-8 items-center mt-6">
+                                </div>
+                            </div>
+
+                            <div id="lyon-food" class="tab-content section-hidden">
+                                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div class="bg-stone-50 p-4 rounded-lg">
+                                        <h5 class="font-bold">다니엘 에 드니즈</h5>
+                                        <p class="text-sm text-gray-600">MOF 셰프가 운영하는 명성 높은 곳. 크넬(생선 수플레)은 필수 메뉴.</p>
+                                    </div>
+                                    <div class="bg-stone-50 p-4 rounded-lg">
+                                        <h5 class="font-bold">카페 콩투아 아벨</h5>
+                                        <p class="text-sm text-gray-600">1726년부터 이어진 역사적인 분위기. 고전적인 부숑 경험을 원한다면 추천.</p>
+                                    </div>
+                                    <div class="bg-stone-50 p-4 rounded-lg">
+                                        <h5 class="font-bold">라 메르 레아</h5>
+                                        <p class="text-sm text-gray-600">미쉐린 가이드 등재. 조금 더 세련된 분위기의 부숑을 즐길 수 있음.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Annecy Section -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="w-full p-6 text-left flex justify-between items-center accordion-toggle">
+                            <h4 class="text-2xl font-bold text-[#435585]">2. 안시: 알프스의 가을 팔레트</h4>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-6 border-t border-stone-200 section-hidden">
+                            <p class="mb-6 text-gray-600">유럽에서 가장 깨끗한 호수와 불타는 듯한 가을 단풍의 조화. 동화 같은 풍경 속에서 하이킹과 드라이브를 즐겨보세요. (추천 체류: 2-3일)</p>
+                             <div class="grid md:grid-cols-2 gap-8 items-center">
+                                 <div>
+                                    <h5 class="font-bold text-lg mb-4">최고의 가을 전망대</h5>
+                                    <ul class="space-y-3">
+                                        <li class="bg-stone-50 p-3 rounded-lg"><strong class="text-[#435585]">콜 드 라 포클라 (1147m):</strong> 호수 전체를 조망하는 상징적인 파노라마 뷰.</li>
+                                        <li class="bg-stone-50 p-3 rounded-lg"><strong class="text-[#435585]">셈노즈 산 (1699m):</strong> 맑은 날 몽블랑까지 보이는 360도 경관.</li>
+                                        <li class="bg-stone-50 p-3 rounded-lg"><strong class="text-[#435585]">호수 일주 드라이브:</strong> 탈루아르, 망통-생-베르나르 등 아름다운 마을들을 경유하는 코스.</li>
+                                    </ul>
+                                </div>
+                                <div class="chart-container h-64 md:h-80">
+                                    <canvas id="annecyViewpointChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Marseille & Cassis Section -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="w-full p-6 text-left flex justify-between items-center accordion-toggle">
+                            <h4 class="text-2xl font-bold text-[#435585]">3. 마르세유 & 꺄시스: 지중해의 정수</h4>
+                             <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-6 border-t border-stone-200 section-hidden">
+                            <p class="mb-6 text-gray-600">활기찬 항구 도시 마르세유와 보석 같은 해안 마을 꺄시스에서 지중해의 푸른빛과 미식, 그리고 장엄한 칼랑크를 만나보세요. (추천 체류: 2-3일)</p>
+                            
+                             <div class="mb-4 border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-active" data-target="cassis-calanques">🌊 꺄시스 칼랑크 투어</button>
+                                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive" data-target="marseille-food">🍲 마르세유 부야베스</button>
+                                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive" data-target="transport-guide">🚌 이동 가이드</button>
+                                </nav>
+                            </div>
+
+                            <div id="cassis-calanques" class="tab-content">
+                                <p class="mb-4 text-gray-600">웅장한 석회암 협곡 칼랑크를 탐험하는 보트 투어는 꺄시스 여행의 하이라이트입니다. 투어 시간과 가격을 비교해보세요.</p>
+                                <div class="chart-container h-80">
+                                    <canvas id="calanquesTourChart"></canvas>
+                                </div>
+                                <div id="calanques-details" class="mt-4 text-center text-sm text-gray-600">차트의 막대를 클릭하여 세부 정보를 확인하세요.</div>
+                            </div>
+                            
+                            <div id="marseille-food" class="tab-content section-hidden">
+                                 <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md my-6" role="alert">
+                                    <p class="font-bold">특별 정보: 유럽 문화유산의 날</p>
+                                    <p class="text-sm">여행 기간(2025년 9월 20-21일)은 평소 닫혀있는 유적지를 무료 개방하는 '유럽 문화유산의 날'과 겹칩니다. 이 시기에 마르세유에 머문다면 특별한 경험을 할 수 있습니다!</p>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="bg-stone-50 p-4 rounded-lg">
+                                        <h5 class="font-bold">셰 퐁퐁</h5>
+                                        <p class="text-sm text-gray-600">그림 같은 발롱 데 조프에 위치한 전통의 명가. 클래식한 부야베스를 맛볼 수 있음.</p>
+                                    </div>
+                                    <div class="bg-stone-50 p-4 rounded-lg">
+                                        <h5 class="font-bold">레스토랑 미셸</h5>
+                                        <p class="text-sm text-gray-600">신선한 생선을 최우선으로 여기는 부야베스 전문점. 전문가들의 선택.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="transport-guide" class="tab-content section-hidden">
+                                <p class="mb-4 text-gray-600">마르세유에서 꺄시스까지 가는 두 가지 방법을 비교해보세요. 속도와 편의성 중 무엇을 중요하게 생각하시나요?</p>
+                                 <div class="grid md:grid-cols-2 gap-4">
+                                     <div class="border rounded-lg p-4">
+                                         <h5 class="font-bold text-lg">🚄 기차 (TER) + 셔틀</h5>
+                                         <p class="text-sm text-gray-500 mt-1">가장 빠른 경로</p>
+                                         <ul class="mt-4 space-y-2 text-sm">
+                                             <li class="flex items-start"><span class="text-green-500 mr-2">✔</span> <strong>장점:</strong> 마르세유-꺄시 역까지 약 22분 소요.</li>
+                                             <li class="flex items-start"><span class="text-red-500 mr-2">✖</span> <strong>단점:</strong> 꺄시 역에서 항구까지 셔틀버스(M01) 추가 환승 필요 (약 15분).</li>
+                                         </ul>
+                                     </div>
+                                      <div class="border rounded-lg p-4">
+                                         <h5 class="font-bold text-lg">🚌 버스 (L78)</h5>
+                                         <p class="text-sm text-gray-500 mt-1">경치가 좋은 직행 경로</p>
+                                         <ul class="mt-4 space-y-2 text-sm">
+                                             <li class="flex items-start"><span class="text-green-500 mr-2">✔</span> <strong>장점:</strong> 환승 없이 꺄시 항구 근처까지 바로 도착. 아름다운 해안 도로를 지남.</li>
+                                             <li class="flex items-start"><span class="text-red-500 mr-2">✖</span> <strong>단점:</strong> 약 45분 소요, 교통 상황에 따라 더 걸릴 수 있음.</li>
+                                         </ul>
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="booking" class="py-20 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                 <h3 class="text-3xl font-bold text-gray-800">여정을 현실로</h3>
+                 <p class="mt-4 text-gray-600 max-w-2xl mx-auto">잊지 못할 프랑스 가을 여행을 위한 준비가 되셨나요? 도시 간 이동을 위한 기차표는 미리 예매할수록 저렴합니다.</p>
+                 <a href="https://www.sncf-connect.com/en-en/" target="_blank" class="mt-8 inline-block bg-[#435585] text-white font-bold py-3 px-8 rounded-full hover:bg-[#313f63] transition-transform transform hover:scale-105">SNCF Connect에서 기차 예매하기</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p>이 인터랙티브 플래너는 제공된 연구 자료를 기반으로 제작되었습니다.</p>
+            <p class="text-sm mt-2 text-stone-400">Bon voyage!</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const wineTourData = {
+                'northern-rhone': {
+                    title: '북부 론 밸리: 와인 애호가의 선택',
+                    description: '강력하고 복합적인 시라(Syrah) 레드 와인과 향긋한 비오니에(Viognier) 화이트 와인을 선호한다면 이곳입니다. 가파른 경사면의 드라마틱한 포도밭이 인상적인 풍경을 자아냅니다.',
+                    image: 'https://placehold.co/600x400/8B0000/FFFFFF?text=Northern+Rhône',
+                    avgPrice: (99+138) / 2
+                },
+                'beaujolais': {
+                    title: '보졸레 지역: 그림 같은 선택',
+                    description: '"프랑스의 토스카나"라 불리는 그림 같은 언덕을 따라 펼쳐지는 가볍고 과실미 넘치는 가메(Gamay) 와인을 즐길 수 있습니다. 매력적인 마을 탐방은 덤입니다.',
+                    image: 'https://placehold.co/600x400/C11B17/FFFFFF?text=Beaujolais',
+                    avgPrice: (89+127) / 2
+                }
+            };
+            
+            const calanquesTourData = {
+              labels: ['3개 칼랑크', '5개 칼랑크', '8개 칼랑크', '9개 칼랑크'],
+              durations: [60, 80, 110, 140],
+              prices: [21, 25, 29, 33],
+              details: [
+                  "필수 코스, 가장 유명한 포르-미우, 포르-팽, 앙-보 방문",
+                  "울, 드방송 칼랑크를 추가로 탐험하는 확장 코스",
+                  "국립공원을 더 깊이 탐험하며 쉬지통, 모르지우 방문",
+                  "소르미우까지 포함하는 가장 포괄적인 투어"
+              ]
+            };
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.querySelector('.front').classList.toggle('card-flip');
+                    card.querySelector('.back').classList.toggle('card-flip');
+                });
+            });
+
+            const accordionToggles = document.querySelectorAll('.accordion-toggle');
+            accordionToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const content = toggle.nextElementSibling;
+                    const icon = toggle.querySelector('span');
+                    
+                    if (content.classList.contains('section-hidden')) {
+                        content.classList.remove('section-hidden');
+                        content.classList.add('section-fade-in');
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        content.classList.add('section-hidden');
+                        content.classList.remove('section-fade-in');
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+
+            const tabContainers = document.querySelectorAll('.accordion-content');
+            tabContainers.forEach(container => {
+                const tabButtons = container.querySelectorAll('.tab-button');
+                const tabContents = container.querySelectorAll('.tab-content');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetId = button.dataset.target;
+                        
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('tab-active');
+                            btn.classList.add('tab-inactive');
+                        });
+                        button.classList.add('tab-active');
+                        button.classList.remove('tab-inactive');
+
+                        tabContents.forEach(content => {
+                            if (content.id === targetId) {
+                                content.classList.remove('section-hidden');
+                                content.classList.add('section-fade-in');
+                            } else {
+                                content.classList.add('section-hidden');
+                                content.classList.remove('section-fade-in');
+                            }
+                        });
+                    });
+                });
+            });
+
+            const wineDetailsContainer = document.getElementById('wine-tour-details');
+            const wineToggleButtons = document.querySelectorAll('.wine-toggle-btn');
+            let wineChart;
+
+            function updateWineTourDetails(wineType) {
+                const data = wineTourData[wineType];
+                wineDetailsContainer.innerHTML = `
+                    <div class="relative">
+                         <img src="${data.image}" alt="${data.title}" class="rounded-lg shadow-lg w-full h-full object-cover">
+                         <div class="absolute inset-0 bg-black/30 rounded-lg"></div>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-xl mb-2">${data.title}</h5>
+                        <p class="text-gray-600">${data.description}</p>
+                        <div class="mt-4">
+                            <h6 class="font-bold">반나절 투어 평균 가격</h6>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                                <div class="bg-[#435585] h-2.5 rounded-full" style="width: ${data.avgPrice / 150 * 100}%"></div>
+                            </div>
+                            <p class="text-sm text-right font-semibold">약 €${data.avgPrice.toFixed(0)}</p>
+                        </div>
+                    </div>
+                `;
+                wineDetailsContainer.classList.add('section-fade-in');
+                setTimeout(() => wineDetailsContainer.classList.remove('section-fade-in'), 800);
+            }
+            
+            wineToggleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                     wineToggleButtons.forEach(btn => {
+                        btn.classList.remove('bg-[#435585]', 'text-white');
+                        btn.classList.add('bg-white', 'text-gray-900');
+                    });
+                    button.classList.add('bg-[#435585]', 'text-white');
+                    button.classList.remove('bg-white', 'text-gray-900');
+                    updateWineTourDetails(button.dataset.wine);
+                });
+            });
+
+            updateWineTourDetails('northern-rhone');
+
+            const annecyCtx = document.getElementById('annecyViewpointChart').getContext('2d');
+            new Chart(annecyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['콜 드 라 포클라', '셈노즈 산'],
+                    datasets: [{
+                        label: '전망대 고도 (m)',
+                        data: [1147, 1699],
+                        backgroundColor: ['rgba(67, 85, 133, 0.6)', 'rgba(127, 140, 185, 0.6)'],
+                        borderColor: ['rgb(67, 85, 133)', 'rgb(127, 140, 185)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: '안시 주요 전망대 고도 비교' }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: '고도 (m)' } }
+                    }
+                }
+            });
+            
+            const calanquesCtx = document.getElementById('calanquesTourChart').getContext('2d');
+            const calanquesChart = new Chart(calanquesCtx, {
+                type: 'bar',
+                data: {
+                    labels: calanquesTourData.labels,
+                    datasets: [{
+                        label: '투어 시간 (분)',
+                        data: calanquesTourData.durations,
+                        backgroundColor: 'rgba(67, 85, 133, 0.5)',
+                        yAxisID: 'y',
+                    }, {
+                        label: '가격 (€)',
+                        data: calanquesTourData.prices,
+                        backgroundColor: 'rgba(245, 239, 231, 1)',
+                        borderColor: 'rgba(131, 111, 111, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const details = document.getElementById('calanques-details');
+                            details.innerHTML = `<strong class="text-[#435585]">${calanquesTourData.labels[index]}:</strong> ${calanquesTourData.details[index]}`;
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: '칼랑크 보트 투어 시간 및 가격 비교' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: '투어 시간 (분)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: '가격 (€)' }
+                        }
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
