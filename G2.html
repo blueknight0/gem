@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대화형 '롤업' 클렌저 기술 보고서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: A single-page, top-down narrative structure is chosen over a direct report mirror to guide the user on a journey of discovery. It starts with the core 'what' (the roll-up effect), moves to the 'how' (the inspiration and ingredients), and finishes with the 'so what' (formulation and marketing). This thematic flow enhances understanding and engagement for a non-expert audience. Key interactions include animated diagrams to explain processes, a clickable mind-map for exploring ingredients, and a dynamic chart for formulation, making complex data accessible. -->
+    <!-- Visualization & Content Choices:
+    - Report Info: Emulsification vs. Roll-up mechanism -> Goal: Compare processes -> Viz: Side-by-side Canvas animations -> Interaction: Passive viewing -> Justification: More intuitive than static text/table for dynamic concepts -> Library/Method: JS Canvas.
+    - Report Info: Key Ingredient Categories (12-HSA, waxes, esters, etc.) -> Goal: Organize & detail ingredients -> Viz: Interactive HTML/CSS bubble diagram -> Interaction: Click to reveal details in a modal/card -> Justification: Breaks down complex info into digestible, user-driven chunks -> Library/Method: HTML/CSS/JS.
+    - Report Info: Formulation balancing act -> Goal: Show relationships & customization -> Viz: Bar Chart -> Interaction: Buttons to switch between formulation presets (e.g., 'Oily Skin', 'Dry Skin') -> Justification: Makes the abstract concept of formulation tangible and interactive -> Library/Method: Chart.js.
+    - Report Info: 12-HSA Gelling Mechanism -> Goal: Explain a key scientific principle -> Viz: Simple Canvas animation of fiber network forming -> Interaction: Passive viewing -> Justification: Visually decodes the "magic" behind the core ingredient -> Library/Method: JS Canvas.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 50vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 60vh;
+            }
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item.active {
+            color: #C5A08C;
+            transform: scale(1.1);
+        }
+        .ingredient-bubble {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .ingredient-bubble:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .detail-card {
+            transition: all 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .detail-card.show {
+            max-height: 1000px;
+        }
+        .sticky-nav {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav id="navbar" class="sticky-nav bg-white/80 backdrop-blur-md shadow-sm hidden md:block">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-center h-16 space-x-8">
+                <a href="#section-intro" class="nav-item text-gray-600 hover:text-[#C5A08C] font-medium">소개</a>
+                <a href="#section-mechanism" class="nav-item text-gray-600 hover:text-[#C5A08C] font-medium">핵심 원리</a>
+                <a href="#section-inspiration" class="nav-item text-gray-600 hover:text-[#C5A08C] font-medium">영감</a>
+                <a href="#section-ingredients" class="nav-item text-gray-600 hover:text-[#C5A08C] font-medium">핵심 성분</a>
+                <a href="#section-formulation" class="nav-item text-gray-600 hover:text-[#C5A08C] font-medium">제형 설계</a>
+                <a href="#section-marketing" class="nav-item text-gray-600 hover:text-[#C5A08C] font-mendium">마케팅</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4 md:p-8">
+
+        <!-- Section 1: Introduction -->
+        <section id="section-intro" class="text-center min-h-[80vh] flex flex-col justify-center items-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-[#6D5D53] leading-tight">보이는 세정의 과학, <br class="md:hidden"><span class="text-[#C5A08C]">롤업 클렌저</span></h1>
+            <p class="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-gray-600">
+                일본의 기름 응고제 기술에서 영감을 얻어, 피부 위 노폐물이 눈에 보이는 덩어리로 뭉쳐 제거되는 혁신적인 클렌징 기술을 탐구합니다. 이 보고서는 단순한 세정을 넘어, 사용자에게 즉각적인 만족감과 신뢰를 주는 '롤업(Roll-up)' 현상의 원리, 핵심 성분, 그리고 제품화 전략을 심층적으로 분석합니다.
+            </p>
+            <div class="mt-12">
+                <a href="#section-mechanism" class="px-8 py-3 bg-[#6D5D53] text-white font-bold rounded-full hover:bg-[#C5A08C] transition-colors">
+                    탐구 시작하기 &darr;
+                </a>
+            </div>
+        </section>
+
+        <!-- Section 2: Mechanism -->
+        <section id="section-mechanism" class="py-20">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#6D5D53]">핵심 원리: 유화 vs. 롤업</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-gray-600">
+                    일반적인 클렌저는 노폐물을 보이지 않게 녹여내는 '유화' 방식을 사용합니다. 하지만 '롤업' 기술은 노폐물을 물리적으로 응집시켜 눈으로 직접 제거를 확인하게 하는 새로운 차원의 세정 메커니즘입니다.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="border rounded-xl p-6 shadow-lg bg-white">
+                    <h3 class="text-2xl font-semibold text-center text-[#6D5D53]">유화 작용 (Emulsification)</h3>
+                    <canvas id="emulsificationCanvas" class="w-full h-64 mt-4 rounded-lg"></canvas>
+                    <p class="mt-4 text-center text-gray-600">노폐물(주황색)이 계면활성제에 의해 미세하게 분산되어 물에 녹아 보이지 않게 됩니다.</p>
+                </div>
+                <div class="border rounded-xl p-6 shadow-lg bg-white">
+                    <h3 class="text-2xl font-semibold text-center text-[#C5A08C]">롤업 현상 (Roll-up)</h3>
+                    <canvas id="rollupCanvas" class="w-full h-64 mt-4 rounded-lg"></canvas>
+                    <p class="mt-4 text-center text-gray-600">노폐물이 특정 성분에 의해 서로 뭉쳐져(롤업) 눈에 보이는 덩어리를 형성합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Inspiration -->
+        <section id="section-inspiration" class="py-20 bg-amber-50 rounded-2xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#6D5D53]">기술의 영감: 일본의 기름 응고제</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-gray-600">
+                    폐식용유를 단단하게 굳혀 쉽게 버리도록 돕는 일본의 주방용품. 그 핵심은 피마자유에서 유래한 성분이 기름 분자들을 섬유 네트워크로 엮어 겔화시키는 원리입니다. 우리는 이 '지질 경화' 메커니즘을 화장품에 접목했습니다.
+                </p>
+            </div>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 px-4">
+                <div class="text-center flex-1">
+                    <div class="bg-white rounded-full w-40 h-40 mx-auto flex items-center justify-center shadow-md">
+                        <span class="text-4xl">💧</span>
+                    </div>
+                    <p class="mt-4 font-semibold text-lg text-gray-700">피마자유</p>
+                </div>
+                <div class="text-3xl text-[#C5A08C] font-bold">&rarr;</div>
+                <div class="text-center flex-1">
+                     <div class="bg-white rounded-lg p-4 w-48 h-40 mx-auto flex items-center justify-center shadow-md">
+                        <canvas id="hsaCanvas" class="w-full h-full"></canvas>
+                    </div>
+                    <p class="mt-4 font-semibold text-lg text-gray-700">12-하이드록시<br>스테아르산 (12-HSA)</p>
+                </div>
+                <div class="text-3xl text-[#C5A08C] font-bold">&rarr;</div>
+                <div class="text-center flex-1">
+                    <div class="bg-white rounded-lg p-4 w-48 h-40 mx-auto flex items-center justify-center shadow-md">
+                       <div class="w-24 h-24 bg-amber-200 rounded-md shadow-inner"></div>
+                    </div>
+                    <p class="mt-4 font-semibold text-lg text-gray-700">지질 응고 (겔화)</p>
+                </div>
+            </div>
+             <p class="mt-12 text-center max-w-2xl mx-auto text-gray-600">
+                12-HSA는 오일 속에 미세한 섬유 네트워크를 형성하여 액체 상태의 기름을 포획하고 반고체 상태로 만듭니다. 이 원리를 통해 클렌저가 피부의 피지, 메이크업 잔여물과 만나면 이들을 효과적으로 응집시켜 '롤업' 현상을 구현합니다.
+            </p>
+        </section>
+
+        <!-- Section 4: Ingredients -->
+        <section id="section-ingredients" class="py-20">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#6D5D53]">롤업 클렌저의 핵심 성분 탐구</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-gray-600">
+                    '롤업' 효과는 하나의 성분이 아닌, 각기 다른 역할을 하는 성분들의 정교한 조합으로 완성됩니다. 각 성분 그룹을 클릭하여 자세한 역할을 확인해보세요.
+                </p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- 1. Gelling Agents -->
+                <div class="ingredient-bubble bg-white rounded-xl shadow-lg p-6" data-target="detail-1">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-[#6D5D53]">지질 응집 및 겔화제</h3>
+                        <span class="text-2xl text-[#C5A08C] transform transition-transform duration-300">&oplus;</span>
+                    </div>
+                    <div id="detail-1" class="detail-card">
+                        <div class="pt-4 mt-4 border-t border-gray-200">
+                            <p class="text-gray-600 mb-4">피부 위 노폐물을 물리적으로 응집시켜 가시적인 롤업 효과를 만드는 주역들입니다.</p>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong class="text-gray-700">12-하이드록시스테아르산 (12-HSA):</strong> 피마자유 유래 성분. 지질과 만나 섬유 네트워크를 형성하며 겔화시켜 롤업 현상의 핵심 역할을 수행합니다.</li>
+                                <li><strong class="text-gray-700">천연 왁스 (칸데릴라, 카나우바 등):</strong> 응집된 덩어리에 구조적인 안정감과 부피감을 더해 쉽게 부서지지 않게 돕습니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Emulsifiers -->
+                 <div class="ingredient-bubble bg-white rounded-xl shadow-lg p-6" data-target="detail-2">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-[#6D5D53]">헹굼 및 질감 변환제</h3>
+                        <span class="text-2xl text-[#C5A08C] transform transition-transform duration-300">&oplus;</span>
+                    </div>
+                    <div id="detail-2" class="detail-card">
+                        <div class="pt-4 mt-4 border-t border-gray-200">
+                             <p class="text-gray-600 mb-4">응집된 노폐물이 피부에 남지 않고 물에 깨끗하게 씻겨나가도록 돕습니다. 오일에서 밀크로 변하는 마법 같은 질감 변화를 담당합니다.</p>
+                             <ul class="list-disc list-inside space-y-2">
+                                <li><strong class="text-gray-700">식물 유래 에스터 (수크로스, 폴리글리세릴):</strong> 순한 비이온성 유화제. 오일 베이스 제형이 물과 만나면 부드러운 유액(밀크) 형태로 변하게 하여 헹굼성을 높입니다.</li>
+                                <li><strong class="text-gray-700">호호바 에스터:</strong> 피부 피지와 유사한 구조로, 세정 후 피부 장벽을 보호하고 촉촉함을 남겨줍니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Physical Aggregators -->
+                 <div class="ingredient-bubble bg-white rounded-xl shadow-lg p-6" data-target="detail-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-[#6D5D53]">물리적 응집 보조제</h3>
+                        <span class="text-2xl text-[#C5A08C] transform transition-transform duration-300">&oplus;</span>
+                    </div>
+                    <div id="detail-3" class="detail-card">
+                        <div class="pt-4 mt-4 border-t border-gray-200">
+                            <p class="text-gray-600 mb-4">지질 외에 묵은 각질 등 미세 노폐물까지 함께 뭉치게 하여 더욱 만족스러운 롤업 효과를 제공합니다.</p>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong class="text-gray-700">셀룰로오스:</strong> 천연 고분자. 곤약 필링젤처럼 묵은 각질과 노폐물을 흡착하여 물리적으로 뭉쳐지게 만들어 '때'처럼 보이는 롤업 효과를 강화합니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Formulation -->
+        <section id="section-formulation" class="py-20">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#6D5D53]">롤업 클렌저 제형 설계</h2>
+                 <p class="mt-4 max-w-2xl mx-auto text-gray-600">
+                    효과적인 롤업 클렌저는 세정력, 응집력, 헹굼성, 그리고 피부 안전성 간의 정교한 균형을 요구합니다. 피부 타입에 따라 어떻게 제형이 조절될 수 있는지 확인해보세요.
+                </p>
+            </div>
+            <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
+                <div class="chart-container mx-auto">
+                    <canvas id="formulationChart"></canvas>
+                </div>
+                <div class="mt-8 flex justify-center items-center gap-4 flex-wrap">
+                    <button class="formulation-btn px-6 py-2 rounded-full font-semibold bg-[#C5A08C] text-white" data-type="balanced">밸런스 타입</button>
+                    <button class="formulation-btn px-6 py-2 rounded-full font-semibold bg-gray-200 text-gray-700" data-type="oily">지성 피부용</button>
+                    <button class="formulation-btn px-6 py-2 rounded-full font-semibold bg-gray-200 text-gray-700" data-type="dry">건성 피부용</button>
+                </div>
+                 <p id="formulation-desc" class="mt-6 text-center text-gray-600 max-w-2xl mx-auto"></p>
+            </div>
+        </section>
+
+        <!-- Section 6: Marketing -->
+        <section id="section-marketing" class="py-20">
+             <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#6D5D53]">마케팅 전략: 어떻게 어필할 것인가?</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-gray-600">
+                    혁신적인 기술을 소비자에게 효과적으로 전달하기 위한 핵심 마케팅 포인트를 제안합니다.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-amber-50 rounded-xl p-6 text-center hover:shadow-xl hover:-translate-y-2 transition-all">
+                    <div class="text-4xl mb-4">👀</div>
+                    <h3 class="text-xl font-bold text-[#6D5D53]">가시적인 세정 효과</h3>
+                    <p class="mt-2 text-gray-600">"노폐물이 눈으로 확인되니 더 깨끗하고 상쾌해요!" 즉각적인 시각적 피드백으로 효능을 증명합니다.</p>
+                </div>
+                 <div class="bg-amber-50 rounded-xl p-6 text-center hover:shadow-xl hover:-translate-y-2 transition-all">
+                    <div class="text-4xl mb-4">🇯🇵</div>
+                    <h3 class="text-xl font-bold text-[#6D5D53]">일본 기술력 스토리</h3>
+                    <p class="mt-2 text-gray-600">"일본의 독자적인 기술에서 찾은 해답." 기술의 기원을 통해 제품의 신뢰도와 호기심을 자극합니다.</p>
+                </div>
+                 <div class="bg-amber-50 rounded-xl p-6 text-center hover:shadow-xl hover:-translate-y-2 transition-all">
+                    <div class="text-4xl mb-4">🌿</div>
+                    <h3 class="text-xl font-bold text-[#6D5D53]">클린 & 천연 성분</h3>
+                    <p class="mt-2 text-gray-600">"피마자유, 천연 왁스로 순하고 안전하게." 클린 뷰티 트렌드에 부합하는 식물 유래 성분을 강조합니다.</p>
+                </div>
+                 <div class="bg-amber-50 rounded-xl p-6 text-center hover:shadow-xl hover:-translate-y-2 transition-all">
+                    <div class="text-4xl mb-4">✨</div>
+                    <h3 class="text-xl font-bold text-[#6D5D53]">딥 클렌징 & 젠틀 케어</h3>
+                    <p class="mt-2 text-gray-600">"강력하게 지우지만 피부 장벽은 지켜줘요." 효과와 순함을 동시에 만족시키는 이점을 소구합니다.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-[#6D5D53] text-white text-center p-6">
+        <p>&copy; 2025 Interactive Technology Report. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Canvas Animations ---
+            const setupCanvasAnimation = (canvasId, drawFunction) => {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let particles = [];
+                let frame;
+
+                function resizeCanvas() {
+                    const parent = canvas.parentElement;
+                    canvas.width = parent.clientWidth;
+                    canvas.height = parent.clientHeight;
+                }
+
+                function init() {
+                    resizeCanvas();
+                    particles = [];
+                    for (let i = 0; i < 30; i++) {
+                        particles.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            vx: (Math.random() - 0.5) * 0.5,
+                            vy: (Math.random() - 0.5) * 0.5,
+                            radius: Math.random() * 3 + 2,
+                            color: '#F59E0B'
+                        });
+                    }
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawFunction(ctx, particles, canvas);
+                    frame = requestAnimationFrame(animate);
+                }
+
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        if (!frame) {
+                           init();
+                           animate();
+                        }
+                    } else {
+                        if (frame) {
+                            cancelAnimationFrame(frame);
+                            frame = null;
+                        }
+                    }
+                }, { threshold: 0.1 });
+
+                observer.observe(canvas);
+                window.addEventListener('resize', () => {
+                   if (frame) {
+                       cancelAnimationFrame(frame);
+                       frame = null;
+                   }
+                   observer.unobserve(canvas);
+                   observer.observe(canvas);
+                });
+            };
+            
+            // Emulsification: particles spread out
+            setupCanvasAnimation('emulsificationCanvas', (ctx, particles, canvas) => {
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius + 3, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(197, 160, 140, 0.5)';
+                    ctx.stroke();
+                });
+            });
+
+            // Rollup: particles clump together
+            setupCanvasAnimation('rollupCanvas', (ctx, particles, canvas) => {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                particles.forEach(p => {
+                    p.vx += (centerX - p.x) * 0.0005;
+                    p.vy += (centerY - p.y) * 0.0005;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                });
+            });
+            
+            // 12-HSA Fiber Network Animation
+            setupCanvasAnimation('hsaCanvas', (ctx, particles, canvas) => {
+                 particles.forEach((p, i) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.7)';
+                    ctx.fill();
+
+                    if (i > 0) {
+                        const prev = particles[i-1];
+                        const dist = Math.hypot(p.x - prev.x, p.y - prev.y);
+                        if (dist < 50) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(prev.x, prev.y);
+                            ctx.strokeStyle = 'rgba(109, 93, 83, 0.3)';
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                });
+            });
+
+            // --- Ingredient Accordion ---
+            const bubbles = document.querySelectorAll('.ingredient-bubble');
+            bubbles.forEach(bubble => {
+                bubble.addEventListener('click', () => {
+                    const targetId = bubble.dataset.target;
+                    const detailCard = document.getElementById(targetId);
+                    const icon = bubble.querySelector('span');
+
+                    // Close other open bubbles
+                    bubbles.forEach(otherBubble => {
+                        if (otherBubble !== bubble) {
+                            const otherDetail = document.getElementById(otherBubble.dataset.target);
+                            otherDetail.classList.remove('show');
+                            otherBubble.querySelector('span').textContent = '⊕';
+                            otherBubble.querySelector('span').classList.remove('rotate-45');
+                        }
+                    });
+                    
+                    detailCard.classList.toggle('show');
+                    if(detailCard.classList.contains('show')){
+                        icon.textContent = '⊖';
+                        icon.classList.add('rotate-45');
+                    } else {
+                        icon.textContent = '⊕';
+                        icon.classList.remove('rotate-45');
+                    }
+                });
+            });
+
+            // --- Formulation Chart ---
+            const formulationData = {
+                balanced: {
+                    labels: ['세정 오일', '지질 응집제 (12-HSA)', '유화제 (에스터)', '물리적 응집제 (셀룰로오스)', '보습/컨디셔닝'],
+                    values: [50, 15, 15, 5, 15],
+                    description: "모든 피부 타입에 적합한 표준 제형입니다. 세정, 롤업, 헹굼성, 피부 보호 기능이 균형을 이룹니다."
+                },
+                oily: {
+                    labels: ['세정 오일', '지질 응집제 (12-HSA)', '유화제 (에스터)', '물리적 응집제 (셀룰로오스)', '보습/컨디셔닝'],
+                    values: [45, 20, 15, 10, 10],
+                     description: "피지 분비가 많은 지성 피부를 위해 지질 응집제와 물리적 응집제의 함량을 높여 더욱 강력한 롤업 효과와 피지 제거 능력을 제공합니다."
+                },
+                dry: {
+                    labels: ['세정 오일', '지질 응집제 (12-HSA)', '유화제 (에스터)', '물리적 응집제 (셀룰로오스)', '보습/컨디셔닝'],
+                    values: [55, 10, 15, 0, 20],
+                    description: "건성 피부를 위해 각질을 물리적으로 제거하는 성분은 제외하고, 세정 후에도 피부가 당기지 않도록 보습 및 컨디셔닝 성분 함량을 높였습니다."
+                }
+            };
+            
+            const ctxChart = document.getElementById('formulationChart').getContext('2d');
+            const formulationChart = new Chart(ctxChart, {
+                type: 'bar',
+                data: {
+                    labels: formulationData.balanced.labels,
+                    datasets: [{
+                        label: '성분 비율 (%)',
+                        data: formulationData.balanced.values,
+                        backgroundColor: [
+                            'rgba(245, 208, 172, 0.7)',
+                            'rgba(197, 160, 140, 0.7)',
+                            'rgba(109, 93, 83, 0.7)',
+                            'rgba(163, 163, 163, 0.7)',
+                            'rgba(147, 197, 253, 0.7)'
+                        ],
+                        borderColor: [
+                            '#F5D0AC',
+                            '#C5A08C',
+                            '#6D5D53',
+                            '#A3A3A3',
+                            '#93C5FD'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 60,
+                            title: { display: true, text: '비율 (%)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const formulationBtns = document.querySelectorAll('.formulation-btn');
+            const formulationDesc = document.getElementById('formulation-desc');
+            
+            const updateChart = (type) => {
+                const data = formulationData[type];
+                formulationChart.data.datasets[0].data = data.values;
+                formulationChart.update();
+                formulationDesc.textContent = data.description;
+
+                formulationBtns.forEach(btn => {
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('bg-[#C5A08C]', 'text-white');
+                        btn.classList.remove('bg-gray-200', 'text-gray-700');
+                    } else {
+                        btn.classList.remove('bg-[#C5A08C]', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    }
+                });
+            };
+            
+            formulationBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateChart(btn.dataset.type);
+                });
+            });
+            
+            // Initial chart setup
+            updateChart('balanced');
+            
+            // --- Navbar scroll tracking ---
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-item');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+
+            const sectionObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const targetId = entry.target.id;
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href') === `#${targetId}`);
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                sectionObserver.observe(section);
+            });
+        });
+
+    </script>
+</body>
+</html>
