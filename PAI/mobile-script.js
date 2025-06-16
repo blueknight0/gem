@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const winnerAnnouncer = document.getElementById('winner-announcer');
     const resetButton = document.getElementById('reset-button');
     const rankingList = document.getElementById('ranking-list');
+    const liveRanking = document.getElementById('live-ranking');
+    const toggleRankingButton = document.getElementById('toggle-ranking');
     const podiumStands = {
         1: document.querySelector('.podium-stand.first'),
         2: document.querySelector('.podium-stand.second'),
@@ -23,13 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const distanceRemaining = document.getElementById('distance-remaining');
 
     let participants = [];
-    let racersData = []; // 경주마 데이터 모델
+    let racersData = [];
     let winners = [];
     let raceInterval;
     let totalDistance = 2000;
     let pixelsPerMeter = 0;
     let racePixelDistance = 0;
-    let raceFinished = false; // 경기 종료 상태 추가
+    let raceFinished = false;
+    let isRankingVisible = false;
 
     // 부스터 텍스트 배열
     const boostTexts = [
@@ -47,6 +50,29 @@ document.addEventListener('DOMContentLoaded', () => {
         "가속!"
     ];
 
+    // 모바일 터치 이벤트 처리
+    function addTouchSupport() {
+        // 터치 이벤트를 클릭 이벤트로 변환
+        document.addEventListener('touchstart', function(e) {
+            // 기본 터치 동작 방지 (더블 탭 줌 등)
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+    }
+
+    // 순위 토글 기능
+    toggleRankingButton.addEventListener('click', () => {
+        isRankingVisible = !isRankingVisible;
+        if (isRankingVisible) {
+            liveRanking.classList.remove('ranking-hidden');
+            toggleRankingButton.textContent = '순위 숨기기';
+        } else {
+            liveRanking.classList.add('ranking-hidden');
+            toggleRankingButton.textContent = '순위 보기';
+        }
+    });
+
     prepareButton.addEventListener('click', () => {
         const names = participantsInput.value.split('\n').filter(name => name.trim() !== '');
         if (names.length < 1) {
@@ -58,12 +84,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setupScreen.style.display = 'none';
         raceScreen.style.display = 'flex';
         startButton.classList.remove('hidden');
+        
+        // 모바일에서는 기본적으로 순위를 숨김
+        liveRanking.classList.add('ranking-hidden');
+        isRankingVisible = false;
+        toggleRankingButton.textContent = '순위 보기';
     });
 
     function setupRacersAndRanking() {
         racetrack.innerHTML = '<div class="finish-line"></div>';
         rankingList.innerHTML = '';
-        const trackHeight = Math.max(400, participants.length * 40 + 20);
+        
+        // 모바일에서는 고정 높이 사용
+        const trackHeight = Math.max(300, Math.min(participants.length * 30 + 20, 400));
         racetrack.style.height = `${trackHeight}px`;
 
         const finishLine = racetrack.querySelector('.finish-line');
@@ -74,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const racerElement = document.createElement('div');
             racerElement.className = 'racer';
             racerElement.textContent = name;
-            racerElement.style.top = `${index * 40 + 10}px`;
+            racerElement.style.top = `${index * 30 + 10}px`;
             racetrack.appendChild(racerElement);
 
             racersData.push({
@@ -87,9 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rankItem = document.createElement('li');
             rankItem.className = 'rank-item';
             rankItem.dataset.name = name;
-            rankItem.style.top = `${index * 40}px`;
             rankItem.innerHTML = `<span class="rank-num">${index + 1}</span> ${name}`;
-            if(index >= 5) rankItem.classList.add('rank-hidden');
             rankingList.appendChild(rankItem);
         });
     }
@@ -97,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startButton.addEventListener('click', () => {
         startButton.disabled = true;
         winners = [];
-        raceFinished = false; // 경기 상태 초기화
+        raceFinished = false;
         
         // 기존 부스터 텍스트들 모두 제거
         const existingBoostTexts = racetrack.querySelectorAll('.boost-text');
@@ -107,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             racer.position = 0;
             racer.finished = false;
             racer.element.style.transform = `translateX(0px)`;
-            racer.element.className = 'racer'; // 모든 클래스 초기화
+            racer.element.className = 'racer';
         });
 
         commentaryText.textContent = "출발! 2000m 대장정이 시작됩니다!";
@@ -115,8 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             const racetrackRect = racetrack.getBoundingClientRect();
-            // 결승선까지의 정확한 거리 계산: 트랙 전체 너비에서 시작점(150px)과 결승선 위치(30px)를 뺀 값
-            racePixelDistance = racetrackRect.width - 150 - 30;
+            // 모바일에 맞게 조정된 거리 계산
+            racePixelDistance = racetrackRect.width - 80 - 15; // 시작점 80px, 결승선 15px
             pixelsPerMeter = racePixelDistance / totalDistance;
 
             raceInterval = setInterval(updateRaceState, 100);
@@ -127,42 +158,39 @@ document.addEventListener('DOMContentLoaded', () => {
         racersData.forEach(racer => {
             if (racer.finished) return;
 
-            let move = Math.random() * 5;
+            // 모바일에서는 약간 더 빠른 속도
+            let move = Math.random() * 6;
             if (Math.random() < 0.015 && !racer.element.classList.contains('boost')) {
                 racer.element.classList.add('boost');
                 move *= 3;
                 
-                // 랜덤 부스터 텍스트 표시 - 완전히 독립적인 오버레이
+                // 랜덤 부스터 텍스트 표시
                 const randomText = boostTexts[Math.floor(Math.random() * boostTexts.length)];
                 const boostTextElement = document.createElement('div');
                 boostTextElement.className = 'boost-text';
                 boostTextElement.textContent = randomText;
                 
-                // 말의 실제 위치를 직접 계산하여 텍스트 위치 설정
+                // 말의 실제 위치 계산
                 const racerRect = racer.element.getBoundingClientRect();
                 const racetrackRect = racetrack.getBoundingClientRect();
                 
-                // 말의 중앙 위치 계산 (racetrack 기준)
                 const racerCenterX = racerRect.left - racetrackRect.left + racerRect.width / 2;
                 const racerTopY = racerRect.top - racetrackRect.top;
                 
-                // 첫 번째 선수(가장 위)인지 확인하여 텍스트 위치 결정
+                // 모바일에서는 더 보수적으로 텍스트 위치 설정
                 const racerIndex = racersData.findIndex(r => r.name === racer.name);
-                const isTopRacer = racerIndex <= 2; // 상위 3명은 아래쪽에 표시 (더 안전하게)
+                const isTopRacer = racerIndex <= 1; // 상위 2명은 아래쪽에 표시
                 
-                // 텍스트 위치 직접 설정 (상위 3명은 아래쪽에, 나머지는 위쪽에)
                 boostTextElement.style.position = 'absolute';
                 boostTextElement.style.left = `${racerCenterX}px`;
-                boostTextElement.style.top = `${racerTopY + (isTopRacer ? 40 : -30)}px`; // 더 안전한 여백으로 조정
-                boostTextElement.style.transform = 'translateX(-50%)'; // 중앙 정렬
+                boostTextElement.style.top = `${racerTopY + (isTopRacer ? 35 : -25)}px`;
+                boostTextElement.style.transform = 'translateX(-50%)';
                 boostTextElement.style.zIndex = '1000';
                 
-                // 레이스 트랙에 직접 추가
                 racetrack.appendChild(boostTextElement);
                 
                 setTimeout(() => {
                     racer.element.classList.remove('boost');
-                    // 부스터 텍스트 제거
                     if (boostTextElement && boostTextElement.parentNode) {
                         boostTextElement.parentNode.removeChild(boostTextElement);
                     }
@@ -172,14 +200,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             racer.element.style.transform = `translateX(${racer.position}px)`;
 
-            // 오른쪽 기준 정렬에서 결승선 통과 판정 - 말의 오른쪽 끝이 결승선에 닿으면 통과
-            // translateX가 양수로 증가하면 말이 오른쪽으로 이동함
             if (racer.position >= racePixelDistance) {
                 racer.finished = true;
                 winners.push(racer.name);
                 racer.element.classList.add(`finished-${winners.length}`);
                 if (winners.length >= 3 || winners.length === participants.length) {
-                    raceFinished = true; // 경기 종료 상태 설정
+                    raceFinished = true;
                     endRace(winners);
                 }
             }
@@ -187,15 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         racersData.sort((a, b) => b.position - a.position);
 
-        // 경기가 끝나지 않았을 때만 실시간 순위 업데이트
+        // 순위 업데이트
         if (!raceFinished) {
             racersData.forEach((racer, index) => {
                 const rankItem = rankingList.querySelector(`li[data-name="${racer.name}"]`);
                 if (rankItem) {
-                    rankItem.style.top = `${index * 40}px`;
                     rankItem.innerHTML = `<span class="rank-num">${index + 1}</span> ${racer.name}`;
-                    if (index < 5) rankItem.classList.remove('rank-hidden');
-                    else rankItem.classList.add('rank-hidden');
                 }
 
                 racer.element.classList.remove('rank-1', 'rank-2', 'rank-3');
@@ -206,29 +229,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } else {
-            // 경기 종료 후 최종 순위 고정 (완주 순서대로)
+            // 경기 종료 후 최종 순위 표시
             const finalRanking = [];
-            // 1-3등: 완주한 선수들을 완주 순서대로
             winners.forEach((name, index) => {
                 const racer = racersData.find(r => r.name === name);
                 if (racer) finalRanking.push({ ...racer, finalRank: index + 1 });
             });
-            // 나머지: 완주하지 못한 선수들을 현재 위치 순서대로
             const unfinishedRacers = racersData.filter(r => !r.finished)
                 .sort((a, b) => b.position - a.position);
             unfinishedRacers.forEach((racer, index) => {
                 finalRanking.push({ ...racer, finalRank: winners.length + index + 1 });
             });
             
-            // 최종 순위 표시
-            finalRanking.forEach((racer, index) => {
+            finalRanking.forEach((racer) => {
                 const rankItem = rankingList.querySelector(`li[data-name="${racer.name}"]`);
                 if (rankItem) {
-                    rankItem.style.top = `${index * 40}px`;
                     const rankText = racer.finished ? `${racer.finalRank}등 (완주)` : `${racer.finalRank}등`;
                     rankItem.innerHTML = `<span class="rank-num">${racer.finalRank}</span> ${racer.name}`;
-                    if (index < 5) rankItem.classList.remove('rank-hidden');
-                    else rankItem.classList.add('rank-hidden');
                 }
             });
         }
@@ -240,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
             distanceRemaining.textContent = `남은 거리: ${Math.round(remainingDistance)}m`;
             updateCommentary(remainingDistance, leadRacer.name);
         } else if (leadRacer && leadRacer.finished) {
-            // 우승자가 나온 경우 거리 표시 업데이트
             distanceRemaining.textContent = "경주 완료!";
         }
     }
@@ -248,24 +264,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCommentary(remainingDistance, leaderName) {
         let commentary = "";
         
-        if (remainingDistance > 1800) commentary = "출발선을 통과했습니다! 모든 선수들이 힘차게 달리기 시작합니다!";
+        if (remainingDistance > 1800) commentary = "출발! 모든 선수들이 힘차게 달리기 시작합니다!";
         else if (remainingDistance > 1500) commentary = `초반 선두는 ${leaderName}! 아직 갈 길이 멉니다!`;
-        else if (remainingDistance > 1200) commentary = `500m 지점 통과! ${leaderName}이(가) 앞서나가고 있습니다!`;
-        else if (remainingDistance > 1000) commentary = `800m 지점! 이제 본격적인 레이스가 시작됩니다!`;
-        else if (remainingDistance > 800) commentary = `반환점 통과! ${leaderName}이(가) 여전히 선두를 유지하고 있습니다!`;
-        else if (remainingDistance > 600) commentary = `1200m 지점! 후반부로 접어들었습니다! 순위 경쟁이 치열합니다!`;
-        else if (remainingDistance > 400) commentary = `1400m 통과! 이제 600m 남았습니다! ${leaderName}이(가) 선두!`;
-        else if (remainingDistance > 200) commentary = `직선 주로 진입! 마지막 스퍼트가 시작됩니다!`;
-        else if (remainingDistance > 100) commentary = `200m 남았습니다! 숨막히는 접전입니다!`;
+        else if (remainingDistance > 1200) commentary = `500m 지점! ${leaderName}이(가) 앞서나가고 있습니다!`;
+        else if (remainingDistance > 1000) commentary = `800m 지점! 본격적인 레이스가 시작됩니다!`;
+        else if (remainingDistance > 800) commentary = `반환점! ${leaderName}이(가) 선두를 유지합니다!`;
+        else if (remainingDistance > 600) commentary = `1200m 지점! 순위 경쟁이 치열합니다!`;
+        else if (remainingDistance > 400) commentary = `1400m 통과! ${leaderName}이(가) 선두!`;
+        else if (remainingDistance > 200) commentary = `직선 주로! 마지막 스퍼트!`;
+        else if (remainingDistance > 100) commentary = `200m 남았습니다! 숨막히는 접전!`;
         else if (remainingDistance > 50) commentary = `마지막 100m! 누가 우승할까요?!`;
-        else commentary = `결승선이 눈앞입니다! 최후의 승부!`;
+        else commentary = `결승선이 눈앞! 최후의 승부!`;
         
         if (racersData.length > 1) {
             const leadPosition = racersData[0].position;
             const secondPosition = racersData[1].position;
             const gapPixels = leadPosition - secondPosition;
-            if (gapPixels < 30 && remainingDistance < 1000) {
-                commentary += ` ${racersData[1].name}이(가) 맹추격 중입니다!`;
+            if (gapPixels < 25 && remainingDistance < 1000) {
+                commentary += ` ${racersData[1].name}이(가) 맹추격 중!`;
             }
         }
         
@@ -276,7 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(raceInterval);
         commentaryText.textContent = `경주 종료! ${finalWinners[0]}이(가) 우승했습니다! 🏆`;
         distanceRemaining.textContent = "경주 완료!";
-        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+        
+        // 모바일에서는 confetti 효과를 약간 줄임
+        confetti({ 
+            particleCount: 100, 
+            spread: 80, 
+            origin: { y: 0.6 },
+            colors: ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7']
+        });
+        
         Object.values(podiumStands).forEach(stand => stand.classList.add('hidden'));
         if (finalWinners[0]) {
             winnerNames[1].textContent = finalWinners[0];
@@ -310,11 +334,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         winners = [];
-        raceFinished = false; // 경기 상태 초기화
+        raceFinished = false;
         if (raceInterval) {
             clearInterval(raceInterval);
             raceInterval = null;
         }
+        
+        // 순위 표시 초기화
+        liveRanking.classList.add('ranking-hidden');
+        isRankingVisible = false;
+        toggleRankingButton.textContent = '순위 보기';
     }
+
     resetButton.addEventListener('click', resetGame);
-});
+
+    // 페이지 로드 시 터치 지원 초기화
+    addTouchSupport();
+
+    // 화면 크기 변경 시 대응
+    window.addEventListener('resize', () => {
+        if (raceInterval && racePixelDistance > 0) {
+            // 화면 크기가 변경되면 거리 재계산
+            setTimeout(() => {
+                const racetrackRect = racetrack.getBoundingClientRect();
+                racePixelDistance = racetrackRect.width - 80 - 15;
+                pixelsPerMeter = racePixelDistance / totalDistance;
+            }, 100);
+        }
+    });
+
+    // 모바일 환경 감지 및 안내
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // 모바일 환경에서 추가 최적화
+    if (isMobileDevice()) {
+        // 모바일에서 더 큰 터치 영역 제공
+        document.body.style.fontSize = '16px';
+        
+        // 스크롤 바운스 효과 방지
+        document.body.style.overscrollBehavior = 'none';
+        
+        // 선택 방지
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+    }
+}); 
