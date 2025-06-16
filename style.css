@@ -27,31 +27,34 @@ button:active { transform: scale(0.98); }
 #start-button:hover { background-color: #218838; }
 #start-button:disabled { background-color: #aaa; cursor: not-allowed; }
 
-/* --- 경주 화면 (수정됨) --- */
-#race-screen {
-    display: none; /* 기본적으로 숨김 처리 */
-    gap: 20px;
-}
+#race-screen { display: none; gap: 20px; }
 #racetrack {
     flex-grow: 1; position: relative; height: 500px; max-height: 70vh;
     overflow-y: auto; overflow-x: hidden; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
 }
-/* 이하 .finish-line, .racer, 추가 효과, 실시간 순위 창, 우승자 발표 화면 스타일은 이전과 모두 동일합니다. */
 .finish-line {
     position: absolute; right: 30px; top: 0; width: 5px; height: 100%;
     background-image: repeating-linear-gradient(white 0, white 10px, black 10px, black 20px);
     z-index: 2;
 }
 .racer {
-    position: absolute; left: 150px; height: 30px; background-color: #ff7043;
+    position: absolute; left: 150px; height: 30px;
+    /* --- 수정된 부분: 기본 배경색 변경 --- */
+    background-color: #81c784; /* 기본색: 엷은 녹색 */
     color: white; border-radius: 5px; padding: 0 15px; display: flex;
     align-items: center; font-size: 0.9em;
-    transition: transform 0.2s linear, box-shadow 0.3s;
+    transition: transform 0.2s linear, box-shadow 0.3s, background-color 0.3s;
     transform: translateX(-100%);
 }
 .racer::after {
     content: '🐎'; margin-left: 10px; font-size: 1.2em; white-space: nowrap;
 }
+
+/* --- 추가된 부분: 실시간 순위 색상 --- */
+.racer.rank-1 { background-color: #ffd700; color: #333; font-weight: bold; } /* 1위: 금색 */
+.racer.rank-2 { background-color: #c0c0c0; color: #333; font-weight: bold; } /* 2위: 은색 */
+.racer.rank-3 { background-color: #cd7f32; color: white; font-weight: bold; } /* 3위: 동색 */
+
 .racer.boost { box-shadow: 0 0 20px 5px #ffeb3b; z-index: 10; }
 .racer.finished-1 { box-shadow: 0 0 20px 5px #ffd700; }
 .racer.finished-2 { box-shadow: 0 0 20px 5px #c0c0c0; }
