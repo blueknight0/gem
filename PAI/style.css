@@ -201,9 +201,9 @@ button:active { transform: scale(0.98); }
 
 @keyframes boostColorChange {
     0%   { background-color: #81c784; }
-    25%  { background-color: #ffd700; }
-    50%  { background-color: #ffeb3b; }
-    75%  { background-color: #ffd700; }
+    25%  { background-color: #ff6b6b; }
+    50%  { background-color: #ff4757; }
+    75%  { background-color: #ff6b6b; }
     100% { background-color: #81c784; }
 }
 
