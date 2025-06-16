@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const commentaryText = document.getElementById('commentary-text');
     const distanceRemaining = document.getElementById('distance-remaining');
+    const boostOverlayLayer = document.getElementById('boost-overlay-layer');
 
     let participants = [];
     let winners = [];
@@ -99,21 +100,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 부스터 오버레이 텍스트 생성 함수
     function createBoostOverlay(racer) {
-        const overlay = document.createElement('div');
-        overlay.className = 'boost-overlay';
         const randomText = boostTexts[Math.floor(Math.random() * boostTexts.length)];
+        
+        // 오버레이 요소 생성
+        const overlay = document.createElement('div');
+        overlay.className = 'boost-text-overlay';
         overlay.textContent = randomText;
         
-        // racer 요소에 data 속성으로 텍스트 저장
-        racer.dataset.boostText = randomText;
-        racer.classList.add('showing-boost-text');
+        // racer의 위치 계산 (racetrack 기준)
+        const racerRect = racer.getBoundingClientRect();
+        const racetrackRect = racetrack.getBoundingClientRect();
+        
+        // 상대 위치 계산
+        const left = racerRect.left - racetrackRect.left + (racerRect.width / 2);
+        const top = racerRect.top - racetrackRect.top - 50;
+        
+        overlay.style.left = `${left}px`;
+        overlay.style.top = `${top}px`;
+        
+        // 별도 레이어에 추가 (racer와 완전 분리)
+        boostOverlayLayer.appendChild(overlay);
         
         console.log(`부스터 발동! ${racer.dataset.name}: ${randomText}`); // 디버깅용 로그
         
-        // 1초 후 텍스트 제거
+        // 1초 후 오버레이 제거
         setTimeout(() => {
-            racer.classList.remove('showing-boost-text');
-            delete racer.dataset.boostText;
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
         }, 1000);
     }
 
