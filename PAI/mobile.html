@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>2025 PAI Seminar - 럭키드로우 그랑프리 (모바일)</title>
+    <link rel="stylesheet" href="mobile-style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>2025 PAI Seminar<br>럭키드로우 그랑프리 🐎</h1>
+
+        <div id="setup-screen">
+            <h2>참가자 명단 입력</h2>
+            <p>참가자 이름을 한 줄에 한 명씩 입력해주세요.</p>
+            <textarea id="participants-input" rows="8" placeholder="김민준&#10;이서연&#10;박도윤&#10;최지우&#10;..."></textarea>
+            <button id="prepare-button">경주 준비</button>
+        </div>
+
+        <div id="race-screen">
+            <div id="race-commentary" class="commentary-box">
+                <p id="commentary-text">경주 준비 중...</p>
+                <p id="distance-remaining">남은 거리: 2000m</p>
+            </div>
+            
+            <div class="mobile-controls">
+                <button id="toggle-ranking" class="toggle-btn">순위 보기/숨기기</button>
+            </div>
+
+            <div class="race-content">
+                <div id="racetrack">
+                    <div class="finish-line"></div>
+                </div>
+                <div id="live-ranking" class="ranking-hidden">
+                    <h3>실시간 순위</h3>
+                    <ol id="ranking-list"></ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="start-button" class="hidden">경주 시작!</button>
+        </div>
+
+        <div id="winner-announcer" class="hidden">
+            <div class="winner-box">
+                <h2>🏆 최종 결과 🏆</h2>
+                <div class="podium">
+                    <div class="podium-stand second hidden">
+                        <div class="place">🥈 2nd</div>
+                        <div class="name" id="winner-2"></div>
+                    </div>
+                    <div class="podium-stand first hidden">
+                        <div class="place">🥇 1st</div>
+                        <div class="name" id="winner-1"></div>
+                    </div>
+                    <div class="podium-stand third hidden">
+                        <div class="place">🥉 3rd</div>
+                        <div class="name" id="winner-3"></div>
+                    </div>
+                </div>
+                <button id="reset-button">다시하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="mobile-script.js"></script>
+</body>
+</html> 
