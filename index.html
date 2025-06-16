@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 PAI Seminar - 럭키드로우 그랑프리</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>2025 PAI Seminar<br>럭키드로우 그랑프리 🐎</h1>
+
+        <div id="setup-screen">
+            <h2>참가자 명단 입력</h2>
+            <p>참가자 이름을 한 줄에 한 명씩 입력해주세요.</p>
+            <textarea id="participants-input" rows="10" placeholder="김민준&#10;이서연&#10;박도윤&#10;최지우&#10;..."></textarea>
+            <button id="prepare-button">경주 준비</button>
+        </div>
+
+        <div id="race-screen" class="hidden">
+            <div id="racetrack">
+                <div class="finish-line"></div>
+            </div>
+            <button id="start-button">경주 시작!</button>
+        </div>
+
+        <div id="winner-announcer" class="hidden">
+            <div class="winner-box">
+                <h2>🏆 최종 우승 🏆</h2>
+                <p id="winner-name"></p>
+                <button id="reset-button">다시하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
