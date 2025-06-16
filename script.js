@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let winners = [];
     let raceInterval;
 
-    // "경주 준비" 버튼 클릭 이벤트
+    // "경주 준비" 버튼 클릭 이벤트 (이전과 동일)
     prepareButton.addEventListener('click', () => {
         const names = participantsInput.value.split('\n').filter(name => name.trim() !== '');
         if (names.length < 1) {
@@ -34,13 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
         participants = names;
         setupRacersAndRanking();
 
-        // --- 수정된 부분 1 ---
-        // CSS를 직접 제어하여 화면을 표시합니다.
         setupScreen.style.display = 'none';
-        raceScreen.style.display = 'flex'; // flex로 설정하여 보이게 함
+        raceScreen.style.display = 'flex';
         startButton.classList.remove('hidden');
     });
 
+    // 경주마와 실시간 순위 창을 함께 설정 (이전과 동일)
     function setupRacersAndRanking() {
         racetrack.innerHTML = '<div class="finish-line"></div>';
         rankingList.innerHTML = '';
@@ -65,26 +64,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // "경주 시작!" 버튼 클릭 이벤트
+    // "경주 시작!" 버튼 클릭 이벤트 (이전과 동일)
     startButton.addEventListener('click', () => {
         startButton.disabled = true;
         winners = [];
-
-        // --- 수정된 부분 2 ---
-        // setTimeout으로 레이스 로직을 아주 잠깐 지연시켜 렌더링 문제를 해결합니다.
         setTimeout(() => {
             const racetrackRect = racetrack.getBoundingClientRect();
             const finishLineCoord = racetrackRect.right - 30;
-
             raceInterval = setInterval(() => {
                 updateRaceState(finishLineCoord);
             }, 100);
-        }, 10); // 0.01초의 찰나의 지연
+        }, 10);
     });
     
-    // (이하 updateRaceState, endRace 함수는 이전과 동일)
+    // --- updateRaceState 함수 수정됨 ---
     function updateRaceState(finishLineCoord) {
         const racers = Array.from(document.querySelectorAll('.racer'));
+
+        // 1. 말 이동 및 부스트 효과 적용 (이전과 동일)
         racers.forEach(racer => {
             if (racer.dataset.finished) return;
             let move = Math.random() * 10;
@@ -97,8 +94,21 @@ document.addEventListener('DOMContentLoaded', () => {
             racer.style.transform = `translateX(${currentTransform + move}px)`;
         });
 
+        // 2. 실시간 순위 계산
         racers.sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right);
 
+        // --- 추가된 부분: 실시간 순위 색상 적용 ---
+        // (1) 먼저 모든 말의 순위 클래스를 초기화
+        racers.forEach(racer => {
+            racer.classList.remove('rank-1', 'rank-2', 'rank-3');
+        });
+        // (2) 정렬된 순서에 따라 상위 3명에게만 새로운 순위 클래스 부여
+        if (racers[0] && !racers[0].dataset.finished) racers[0].classList.add('rank-1');
+        if (racers[1] && !racers[1].dataset.finished) racers[1].classList.add('rank-2');
+        if (racers[2] && !racers[2].dataset.finished) racers[2].classList.add('rank-3');
+        // --- 여기까지 추가 ---
+
+        // 3. 실시간 순위 창 UI 업데이트 (이전과 동일)
         racers.forEach((racer, index) => {
             const rankItem = rankingList.querySelector(`li[data-name="${racer.dataset.name}"]`);
             if (rankItem) {
@@ -109,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 4. 결승선 통과 체크 및 세리머니 (이전과 동일)
         racers.forEach(racer => {
             if (!racer.dataset.finished && racer.getBoundingClientRect().right >= finishLineCoord) {
                 racer.dataset.finished = 'true';
@@ -121,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // (이하 endRace, resetButton 함수는 이전과 동일)
     function endRace(finalWinners) {
         clearInterval(raceInterval);
         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
@@ -140,12 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
         winnerAnnouncer.classList.remove('hidden');
     }
 
-    // 다시하기 버튼 로직 수정
-    resetButton.addEventListener('click', () => {
+    function resetButton() {
         winnerAnnouncer.classList.add('hidden');
-        raceScreen.style.display = 'none'; // flex 대신 none으로 설정하여 숨김
+        raceScreen.style.display = 'none';
         startButton.classList.add('hidden');
         startButton.disabled = false;
-        setupScreen.style.display = 'block'; // none 대신 block으로 설정하여 보이게 함
-    });
+        setupScreen.style.display = 'block';
+    }
+    document.getElementById('reset-button').addEventListener('click', resetButton);
 });
