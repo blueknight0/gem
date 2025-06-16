@@ -97,8 +97,12 @@ button:active { transform: scale(0.98); }
     position: relative;
 }
 
-.boost-overlay {
+.racer.showing-boost-text::before {
+    content: attr(data-boost-text);
     position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(45deg, #ff6b35, #f7931e);
     color: white;
     padding: 8px 15px;
