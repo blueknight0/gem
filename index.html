@@ -21,8 +21,13 @@
             <div id="racetrack">
                 <div class="finish-line"></div>
             </div>
-            <button id="start-button">경주 시작!</button>
+            <div id="live-ranking">
+                <h3>실시간 순위</h3>
+                <ol id="ranking-list"></ol>
+            </div>
         </div>
+        <button id="start-button" class="hidden">경주 시작!</button>
+
 
         <div id="winner-announcer" class="hidden">
             <div class="winner-box">
@@ -46,6 +51,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
