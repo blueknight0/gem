@@ -99,9 +99,6 @@ button:active { transform: scale(0.98); }
 
 .boost-overlay {
     position: absolute;
-    top: -45px;
-    left: 50%;
-    transform: translateX(-50%);
     background: linear-gradient(45deg, #ff6b35, #f7931e);
     color: white;
     padding: 8px 15px;
