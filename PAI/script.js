@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingList.innerHTML = '';
         const trackHeight = participants.length * 40 + 20;
         racetrack.style.height = `${trackHeight}px`;
+        
+        // 결승선 높이를 트랙 높이에 맞게 설정
+        const finishLine = racetrack.querySelector('.finish-line');
+        finishLine.style.height = `${trackHeight}px`;
+        
         participants.forEach((name, index) => {
             const racer = document.createElement('div');
             racer.className = 'racer';
@@ -96,8 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function createBoostOverlay(racer) {
         const overlay = document.createElement('div');
         overlay.className = 'boost-overlay';
-        overlay.textContent = boostTexts[Math.floor(Math.random() * boostTexts.length)];
+        const randomText = boostTexts[Math.floor(Math.random() * boostTexts.length)];
+        overlay.textContent = randomText;
         racer.appendChild(overlay);
+        
+        console.log(`부스터 발동! ${racer.dataset.name}: ${randomText}`); // 디버깅용 로그
         
         // 1초 후 오버레이 제거
         setTimeout(() => {
@@ -113,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         racers.forEach(racer => {
             if (racer.dataset.finished) return;
             let move = Math.random() * 20; // 기본 이동 거리를 10에서 20으로 증가
-            if (Math.random() < 0.008 && !racer.classList.contains('boost')) { // 부스트 확률을 0.005에서 0.008로 증가
+            if (Math.random() < 0.02 && !racer.classList.contains('boost')) { // 부스트 확률을 테스트용으로 0.02로 증가
                 racer.classList.add('boost');
                 move *= 3; // 부스트 시 3배 속도
                 createBoostOverlay(racer); // 부스터 오버레이 텍스트 생성
