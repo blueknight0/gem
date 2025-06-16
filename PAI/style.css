@@ -58,10 +58,12 @@ button:active { transform: scale(0.98); }
     font-weight: bold;
 }
 
-#race-screen > div:not(.commentary-box) {
+.race-content {
     display: flex;
     gap: 20px;
+    align-items: flex-start;
 }
+
 #racetrack {
     flex-grow: 1; position: relative; height: 500px; max-height: 70vh;
     overflow-y: auto; overflow-x: hidden; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
@@ -96,8 +98,12 @@ button:active { transform: scale(0.98); }
 #live-ranking {
     width: 200px; flex-shrink: 0; background-color: #fafafa;
     border: 1px solid #ddd; border-radius: 10px; padding: 10px;
+    height: 500px; max-height: 70vh; overflow: hidden;
 }
-#ranking-list { list-style: none; padding: 0; margin: 0; position: relative; }
+#ranking-list { 
+    list-style: none; padding: 0; margin: 0; position: relative; 
+    height: calc(100% - 40px); /* h3 높이를 뺀 나머지 */
+}
 .rank-item {
     position: absolute; width: 100%; height: 38px; padding: 5px; background: white;
     border: 1px solid #eee; border-radius: 5px; box-sizing: border-box;
