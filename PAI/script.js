@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let raceInterval;
     let totalDistance = 2000; // 총 경주 거리 (미터)
     let pixelsPerMeter = 0; // 픽셀당 미터 (경주 시작 시 계산)
+    
+    // 부스터 효과 텍스트 배열
+    const boostTexts = [
+        "간닷!", "이럇!!", "영혼의질주!", "젖먹던힘까지!", "으랴랴랴랴",
+        "불타올라!", "질풍같이!", "번개처럼!", "폭풍질주!", "최고속도!",
+        "가즈아!", "돌진!", "전력질주!", "미친속도!", "초고속!"
+    ];
 
     // "경주 준비" 버튼 클릭 이벤트 (이전과 동일)
     prepareButton.addEventListener('click', () => {
@@ -85,6 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 10);
     });
     
+    // 부스터 오버레이 텍스트 생성 함수
+    function createBoostOverlay(racer) {
+        const overlay = document.createElement('div');
+        overlay.className = 'boost-overlay';
+        overlay.textContent = boostTexts[Math.floor(Math.random() * boostTexts.length)];
+        racer.appendChild(overlay);
+        
+        // 1초 후 오버레이 제거
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, 1000);
+    }
+
     // updateRaceState 함수 (이전과 동일)
     function updateRaceState(finishLineCoord) {
         const racers = Array.from(document.querySelectorAll('.racer'));
@@ -94,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Math.random() < 0.008 && !racer.classList.contains('boost')) { // 부스트 확률을 0.005에서 0.008로 증가
                 racer.classList.add('boost');
                 move *= 3; // 부스트 시 3배 속도
+                createBoostOverlay(racer); // 부스터 오버레이 텍스트 생성
                 setTimeout(() => racer.classList.remove('boost'), 1000);
             }
             const currentTransform = new DOMMatrix(getComputedStyle(racer).transform).m41;
