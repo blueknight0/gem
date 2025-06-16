@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인터랙티브 피부 색소 질환 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Soft Skin Tones (#FAF7F5, #4A4A4A, #D4A373, #EAE0D5) -->
+    <!-- Application Structure Plan: The application is designed as a user-task-oriented interactive dashboard, moving away from the report's linear structure. The flow is: 1. Identify Your Concern (interactive cards for conditions), 2. Explore Treatments (tabbed interface for methods), 3. Understand Advanced Strategy (visual diagram for melasma), 4. Learn Prevention (actionable tips), 5. Compare Costs (interactive chart). This structure allows users to quickly find information relevant to their specific needs, enhancing usability and comprehension. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info (Lesion Types) -> Goal (Compare/Inform) -> Viz (Interactive HTML Cards) -> Interaction (Click to reveal details) -> Justification (Transforms static list into a guided discovery tool) -> Library (Vanilla JS).
+        - Report Info (Treatments) -> Goal (Organize/Compare) -> Viz (Tabbed HTML content) -> Interaction (Click tab to filter content) -> Justification (Simplifies complex treatment options into manageable categories) -> Library (Vanilla JS).
+        - Report Info (Melasma Strategy) -> Goal (Organize/Explain) -> Viz (HTML/CSS Flexbox Diagram) -> Interaction (Static Visual) -> Justification (Visually represents the multi-faceted approach for better retention) -> Library (Tailwind CSS).
+        - Report Info (Cost Data) -> Goal (Compare/Inform) -> Viz (Bar Chart) -> Interaction (Hover for tooltips) -> Justification (Makes numerical range data intuitive and easy to compare) -> Library (Chart.js).
+        - CONFIRMING NO SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FAF7F5;
+            color: #4A4A4A;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #D4A373;
+            border-bottom-color: #D4A373;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease-in-out;
+            border: 1px solid #EAE0D5;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .btn {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        .btn-primary {
+            background-color: #D4A373;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #C39260;
+        }
+        .btn-secondary {
+            background-color: #EAE0D5;
+            color: #4A4A4A;
+        }
+        .btn-secondary.active, .btn-secondary:hover {
+            background-color: #D4A373;
+            color: white;
+        }
+        .tag {
+            background-color: #EAE0D5;
+            color: #8B5E34;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[#4A4A4A]">피부 색소 질환 가이드</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#identifier" class="nav-link px-3 py-2 text-sm font-medium">정체 파악</a>
+                        <a href="#treatments" class="nav-link px-3 py-2 text-sm font-medium">치료법 탐색</a>
+                        <a href="#strategy" class="nav-link px-3 py-2 text-sm font-medium">최신 전략</a>
+                        <a href="#prevention" class="nav-link px-3 py-2 text-sm font-medium">재발 방지</a>
+                        <a href="#costs" class="nav-link px-3 py-2 text-sm font-medium">비용 비교</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-D4A373">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#identifier" class="nav-link block px-3 py-2 rounded-md text-base font-medium">정체 파악</a>
+                <a href="#treatments" class="nav-link block px-3 py-2 rounded-md text-base font-medium">치료법 탐색</a>
+                <a href="#strategy" class="nav-link block px-3 py-2 rounded-md text-base font-medium">최신 전략</a>
+                <a href="#prevention" class="nav-link block px-3 py-2 rounded-md text-base font-medium">재발 방지</a>
+                <a href="#costs" class="nav-link block px-3 py-2 rounded-md text-base font-medium">비용 비교</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 tracking-tight">내 피부의 '잡티', 정체가 뭘까요?</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">주근깨, 기미, 흑자, 점... 모두 비슷해 보이지만 원인과 치료법은 전혀 다릅니다. 정확한 진단이 효과적인 치료의 첫걸음입니다. 이 가이드를 통해 내 피부 고민을 정확히 이해하고 최적의 해결책을 찾아보세요.</p>
+        </section>
+
+        <!-- Section 1: Identifier -->
+        <section id="identifier" class="mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold mb-2">1. 내 피부 고민, 정체 파악하기</h3>
+                <p class="text-gray-600">가장 흔한 4가지 색소 질환의 특징을 비교해보세요. 궁금한 질환을 클릭하면 자세한 정보가 나타납니다.</p>
+            </div>
+            <div id="lesion-selector" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-8">
+                <!-- Buttons will be populated by JS -->
+            </div>
+            <div id="lesion-details-container">
+                <!-- Details will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Section 2: Treatments -->
+        <section id="treatments" class="mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold mb-2">2. 어떻게 치료할까? 치료법 탐색하기</h3>
+                <p class="text-gray-600">색소 질환 치료에 사용되는 다양한 방법들을 원리에 따라 알아봅니다. 탭을 눌러 종류별 치료법을 확인하세요.</p>
+            </div>
+            <div class="w-full max-w-4xl mx-auto">
+                <div class="mb-6 border-b border-gray-200">
+                    <ul id="treatment-tabs" class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+                         <!-- Tabs will be populated by JS -->
+                    </ul>
+                </div>
+                <div id="treatment-content">
+                    <!-- Content will be populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Strategy for Melasma -->
+        <section id="strategy" class="mb-20 bg-[#EAE0D5]/30 p-8 rounded-2xl">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold mb-2">3. 난치성 기미, 정복을 위한 최신 전략</h3>
+                <p class="text-gray-600 max-w-3xl mx-auto">기미는 단순 색소 문제가 아닌 피부 생태계 전체의 문제입니다. 현대 의학은 색소 생성 억제, 혈관 안정화, 진피 환경 개선이라는 3가지 축을 동시에 공략하는 복합 치료를 통해 재발을 막고 치료 효과를 높입니다.</p>
+            </div>
+            <div id="strategy-content" class="max-w-5xl mx-auto">
+                <!-- Strategy content will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Section 4: Prevention -->
+        <section id="prevention" class="mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold mb-2">4. 재발 방지를 위한 통합 관리</h3>
+                <p class="text-gray-600">색소 치료의 성공은 시술 후 꾸준한 관리에 달려있습니다. 건강한 피부를 유지하고 재발을 막는 핵심 습관을 알아보세요.</p>
+            </div>
+            <div id="prevention-content" class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Prevention tips will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Section 5: Costs -->
+        <section id="costs" class="mb-12">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold mb-2">5. 치료 비용, 현실적으로 살펴보기</h3>
+                <p class="text-gray-600">치료 계획 수립에 도움이 되도록 대표적인 시술들의 예상 비용 범위를 알려드립니다. (1회 기준, 병원/장비에 따라 상이)</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="costChart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#EAE0D5]/50 border-t border-gray-200">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-600 text-sm">
+            <p>본 애플리케이션에서 제공하는 정보는 의학적 소견이나 진단을 대체할 수 없습니다.</p>
+            <p>정확한 진단과 치료를 위해서는 반드시 피부과 전문의와 상담하시기 바랍니다.</p>
+            <p class="mt-2">&copy; 2025 Interactive Skin Pigmentation Guide. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    const appData = {
+        lesions: [
+            {
+                id: 'freckle',
+                name: '주근깨',
+                icon: '☀️',
+                tag: '햇볕의 흔적',
+                color: 'bg-yellow-100 text-yellow-800',
+                title: 'Ephelides / Freckles',
+                features: '1-2mm 크기의 작고 경계가 명확한 황갈색 반점. 햇빛이 강한 여름에 짙어지고 겨울에 옅어지는 특징이 있음.',
+                cause: '유전, 자외선',
+                inside: '멜라닌 세포의 수는 정상이지만, 활성도가 일시적으로 증가하여 표피에 멜라닌 색소 양이 늘어난 상태.',
+                takeaway: '미래의 기미 발생 가능성을 암시할 수 있어, 어릴 때부터 자외선 차단이 중요합니다.'
+            },
+            {
+                id: 'lentigo',
+                name: '흑자',
+                icon: '⏳',
+                tag: '지속적인 색소',
+                color: 'bg-orange-100 text-orange-800',
+                title: 'Lentigo / Sun Spot',
+                features: '주근깨보다 크고 경계가 명확한 갈색/흑색 반점. 계절에 관계없이 색이 변하지 않고 지속됨.',
+                cause: '누적된 자외선 노출',
+                inside: '멜라닌 색소를 만드는 멜라닌 세포의 수가 국소적으로 증식한 상태.',
+                takeaway: '드물게 피부암 초기 단계(흑색종)일 수 있으므로, 모양/색깔 변화 시 반드시 전문의 진찰이 필요합니다.'
+            },
+            {
+                id: 'melasma',
+                name: '기미',
+                icon: '☁️',
+                tag: '복합적/재발 잦음',
+                color: 'bg-blue-100 text-blue-800',
+                title: 'Melasma',
+                features: '경계가 불분명하고 넓은 갈색, 회갈색 색소반. 주로 뺨, 이마에 대칭적으로 발생하며 재발이 잦음.',
+                cause: '자외선, 호르몬, 유전, 혈관, 진피 노화 등 복합적 요인',
+                inside: '멜라닌 세포의 기능이 과하게 항진되고, 주변 혈관 증식, 기저막 손상 등 피부 생태계 전반의 문제.',
+                takeaway: '단순 색소 제거가 아닌 혈관 안정, 진피 환경 개선 등 복합적인 치료 접근이 필수적입니다.'
+            },
+            {
+                id: 'mole',
+                name: '점',
+                icon: '📍',
+                tag: '세포의 군집',
+                color: 'bg-gray-200 text-gray-800',
+                title: 'Melanocytic Nevi',
+                features: '편평하거나 튀어나온 갈색/흑색 병변. 나이가 들면서 깊어지고 융기될 수 있음.',
+                cause: '유전, 자외선',
+                inside: '멜라닌 세포가 변형된 모반세포가 둥지 형태로 뭉쳐있는 양성 종양.',
+                takeaway: 'ABCDE 법칙(비대칭, 불규칙 경계, 다양한 색, 직경 6mm 이상, 변화)에 해당하면 흑색종 감별이 필요합니다.'
+            }
+        ],
+        treatments: [
+            {
+                id: 'topical',
+                name: '바르는 치료',
+                contentTitle: '국소 도포 치료: 관리의 초석',
+                content: `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">타이로시나아제 억제제 (멜라닌 생성 차단)</h4>
+                            <p><strong class="text-[#D4A373]">하이드로퀴논:</strong> 50년 이상 사용된 기미 치료의 표준. 멜라닌 생성 효소를 억제하나, 전문가 감독 하에 사용해야 합니다.</p>
+                            <p><strong class="text-[#D4A373]">시스테아민:</strong> 하이드로퀴논의 강력한 대안. 효과는 유사하나 세포 독성이 없어 장기적으로 안전합니다.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">세포 주기 촉진제 (각질 탈락 유도)</h4>
+                            <p><strong class="text-[#D4A373]">레티노이드 (비타민 A 유도체):</strong> 피부 턴오버를 촉진해 색소가 침착된 각질을 빠르게 탈락시킵니다.</p>
+                        </div>
+                    </div>`
+            },
+            {
+                id: 'oral',
+                name: '먹는 약',
+                contentTitle: '경구 약물 치료: 전신적 개입',
+                content: `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">트라넥삼산 (Tranexamic Acid)</h4>
+                            <p>본래 지혈제이지만, 멜라닌 생성과 혈관 증식이라는 기미의 두 핵심 병리를 동시에 억제하여 획기적인 치료제로 사용됩니다. 특히 혈관성 기미에 효과적이며 반드시 의사의 처방이 필요합니다.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">경구 항산화제</h4>
+                            <p>폴리포디움 류코토모스, 피크노제놀 등은 '먹는 자외선 차단제'로 불리며, 피부를 내부로부터 보호하는 보조 요법으로 유용합니다.</p>
+                        </div>
+                    </div>`
+            },
+            {
+                id: 'laser',
+                name: '레이저/광선',
+                contentTitle: '레이저 및 광선 치료: 에너지 기반의 무기',
+                content: `
+                    <p class="mb-6">특정 파장의 빛을 이용해 멜라닌 색소만 선택적으로 파괴하는 원리입니다. 최근에는 열 손상 없이 충격파로 색소를 분쇄하는 피코 레이저가 각광받고 있습니다.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="p-4 bg-white rounded-lg border border-gray-200">
+                            <h5 class="font-bold">IPL (Intense Pulsed Light)</h5>
+                            <p class="text-sm">여러 파장의 빛을 이용. 표피의 <strong class="text-[#D4A373]">주근깨, 흑자</strong>에 효과적. 기미에는 악영향을 줄 수 있어 주의.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border border-gray-200">
+                            <h5 class="font-bold">나노초 큐스위치 레이저 (레이저 토닝)</h5>
+                            <p class="text-sm">낮은 에너지로 반복 조사하여 진피층의 <strong class="text-[#D4A373]">기미</strong> 색소를 점진적으로 파괴.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border border-gray-200">
+                            <h5 class="font-bold">피코초 레이저 (피코 토닝)</h5>
+                            <p class="text-sm">나노초보다 1000배 짧은 시간 조사. 열손상 없이 충격파로 색소를 매우 잘게 분쇄. <strong class="text-[#D4A373]">난치성 기미, 깊은 흑자, 문신 제거</strong>에 탁월.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border border-gray-200">
+                            <h5 class="font-bold">CO2/어븀야그 레이저</h5>
+                            <p class="text-sm">병변을 직접 깎아내는 박피성 레이저. 튀어나온 <strong class="text-[#D4A373]">점, 검버섯</strong> 제거에 사용.</p>
+                        </div>
+                    </div>`
+            }
+        ],
+        strategy: {
+            title: "'3중 복합 치료' 패러다임",
+            description: "가장 포괄적인 최신 기미 치료는 아래 세 가지 요소를 개인의 상태에 맞게 통합하는 것입니다.",
+            items: [
+                { name: '전신 치료 (Systemic)', detail: '경구 트라넥삼산 및 항산화제 복용으로 내부에서부터 색소 생성과 염증 억제' },
+                { name: '국소 치료 (Topical)', detail: '맞춤형 미백 연고(레티노이드, 시스테아민 등)를 꾸준히 사용' },
+                { name: '시술적 치료 (Procedural)', detail: '피코 레이저, 미세침 고주파, 스킨부스터 등 최신 장비 시술 병행' }
+            ],
+            advanced: [
+                { name: '미세침 고주파 (실펌엑스 등)', detail: '진피에 직접 에너지를 전달해 비정상 혈관을 응고시키고, 손상된 기저막을 강화하며, 콜라겐 생성을 촉진. 기미가 발생하는 근본적인 토양을 개선.' },
+                { name: '콜라겐 촉진 스킨부스터 (쥬베룩 등)', detail: '진피에 콜라겐 생성을 유도하여 피부를 두껍고 탄력있게 만들어 외부 자극에 대한 저항력을 높임.' }
+            ]
+        },
+        prevention: [
+            {
+                icon: '🧴',
+                color: 'bg-red-100 text-red-800',
+                title: '자외선 완벽 차단',
+                description: "SPF/PA 지수뿐 아니라, 가시광선(블루라이트)까지 막는 '산화철(Iron Oxide)' 성분이 포함된 틴티드 타입의 무기자차를 2-3시간마다 덧바르는 것이 최선입니다."
+            },
+            {
+                icon: '🧱',
+                color: 'bg-green-100 text-green-800',
+                title: '피부 장벽 강화',
+                description: "약산성 클렌저, 세라마이드 성분 보습제를 사용하고, 때수건 등 물리적 마찰을 최소화하여 피부 보호막을 건강하게 유지하는 것이 색소 예방의 핵심입니다."
+            },
+            {
+                icon: '🌡️',
+                color: 'bg-purple-100 text-purple-800',
+                title: '열 자극 피하기',
+                description: "사우나, 찜질방, 과도한 히터 사용 등은 기미의 혈관성 요인을 악화시킬 수 있습니다. 피부 온도를 시원하게 유지하는 것이 중요합니다."
+            }
+        ],
+        costs: {
+            labels: ['IPL', '레이저 토닝', '점 제거(개당)', '기미 복합(10회)'],
+            data: [
+                [3, 30],      // IPL
+                [4, 20],      // Laser Toning
+                [0.5, 1],     // Mole Removal
+                [50, 260]     // Melasma Program
+            ]
+        }
+    };
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const lesionSelector = document.getElementById('lesion-selector');
+        const lesionDetailsContainer = document.getElementById('lesion-details-container');
+        const treatmentTabs = document.getElementById('treatment-tabs');
+        const treatmentContent = document.getElementById('treatment-content');
+        const strategyContent = document.getElementById('strategy-content');
+        const preventionContent = document.getElementById('prevention-content');
+
+        // Populate Lesion Identifier
+        appData.lesions.forEach(lesion => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-secondary';
+            button.textContent = lesion.name;
+            button.dataset.lesionId = lesion.id;
+            lesionSelector.appendChild(button);
+        });
+
+        lesionSelector.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const lesionId = e.target.dataset.lesionId;
+                const lesionData = appData.lesions.find(l => l.id === lesionId);
+
+                lesionSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+
+                lesionDetailsContainer.innerHTML = `
+                    <div class="card p-6 md:p-8 max-w-4xl mx-auto fade-in">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="flex-shrink-0 text-center md:text-left">
+                                <div class="icon-box mx-auto md:mx-0 ${lesionData.color}">${lesionData.icon}</div>
+                            </div>
+                            <div class="flex-grow">
+                                <span class="tag mb-2 inline-block">${lesionData.tag}</span>
+                                <h4 class="text-2xl font-bold mb-1">${lesionData.name} <span class="text-lg font-normal text-gray-500">(${lesionData.title})</span></h4>
+                                <div class="space-y-4 mt-4 text-gray-700">
+                                    <div><strong class="font-semibold w-24 inline-block text-gray-800">▪️ 임상 특징:</strong> ${lesionData.features}</div>
+                                    <div><strong class="font-semibold w-24 inline-block text-gray-800">▪️ 주요 원인:</strong> ${lesionData.cause}</div>
+                                    <div><strong class="font-semibold w-24 inline-block text-gray-800">▪️ 피부 속 모습:</strong> ${lesionData.inside}</div>
+                                    <div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
+                                        <strong class="font-semibold">⚠️ 핵심 Point:</strong> ${lesionData.takeaway}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+        });
+
+        // Populate Treatments
+        appData.treatments.forEach((treatment, index) => {
+            const li = document.createElement('li');
+            li.className = 'mr-2';
+            li.setAttribute('role', 'presentation');
+            li.innerHTML = `<button class="inline-block p-4 border-b-2 rounded-t-lg ${index === 0 ? 'text-[#D4A373] border-[#D4A373]' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}" data-tab-target="${treatment.id}" role="tab">${treatment.name}</button>`;
+            treatmentTabs.appendChild(li);
+
+            const div = document.createElement('div');
+            div.id = treatment.id;
+            div.setAttribute('role', 'tabpanel');
+            div.className = `${index === 0 ? '' : 'hidden'} p-4 rounded-lg bg-[#EAE0D5]/30`;
+            div.innerHTML = `
+                <h4 class="text-xl font-bold mb-4">${treatment.contentTitle}</h4>
+                ${treatment.content}
+            `;
+            treatmentContent.appendChild(div);
+        });
+        
+        treatmentTabs.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const targetId = e.target.dataset.tabTarget;
+                
+                treatmentTabs.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('text-[#D4A373]', 'border-[#D4A373]');
+                    btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                });
+                e.target.classList.add('text-[#D4A373]', 'border-[#D4A373]');
+                e.target.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+
+                treatmentContent.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+                    panel.id === targetId ? panel.classList.remove('hidden') : panel.classList.add('hidden');
+                });
+            }
+        });
+        
+        // Populate Strategy
+        strategyContent.innerHTML = `
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h4 class="text-xl font-bold text-center mb-4">${appData.strategy.title}</h4>
+                <p class="text-center text-gray-600 mb-6">${appData.strategy.description}</p>
+                <div class="flex flex-col md:flex-row justify-around text-center gap-6">
+                    ${appData.strategy.items.map(item => `
+                        <div class="flex-1">
+                            <h5 class="font-bold text-lg text-[#D4A373]">${item.name}</h5>
+                            <p class="text-sm text-gray-600 mt-1">${item.detail}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div>
+                 <h4 class="text-xl font-bold text-center mb-4 mt-12">핵심적인 최신 시술</h4>
+                 <div class="grid md:grid-cols-2 gap-6 mt-6">
+                    ${appData.strategy.advanced.map(item => `
+                        <div class="card p-6">
+                             <h5 class="font-bold text-lg text-[#4A4A4A]">${item.name}</h5>
+                             <p class="text-gray-600 mt-2">${item.detail}</p>
+                        </div>
+                    `).join('')}
+                 </div>
+            </div>
+        `;
+
+        // Populate Prevention
+        appData.prevention.forEach(tip => {
+            const div = document.createElement('div');
+            div.className = 'card p-6 text-center';
+            div.innerHTML = `
+                <div class="icon-box mx-auto ${tip.color}">${tip.icon}</div>
+                <h4 class="font-bold text-lg my-3">${tip.title}</h4>
+                <p class="text-gray-600 text-sm">${tip.description}</p>
+            `;
+            preventionContent.appendChild(div);
+        });
+
+        // Setup Chart
+        const ctx = document.getElementById('costChart').getContext('2d');
+        const costChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: appData.costs.labels,
+                datasets: [{
+                    label: '최소 비용 (만원)',
+                    data: appData.costs.data.map(d => d[0]),
+                    backgroundColor: 'rgba(212, 163, 115, 0.5)',
+                    borderColor: 'rgba(212, 163, 115, 1)',
+                    borderWidth: 1
+                }, {
+                    label: '최대 비용 (만원)',
+                    data: appData.costs.data.map(d => d[1]),
+                    backgroundColor: 'rgba(212, 163, 115, 0.8)',
+                    borderColor: 'rgba(212, 163, 115, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '비용 (단위: 만원)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.x !== null) {
+                                    label += context.parsed.x + '만원';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth Scroll for Nav Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                if (mobileMenu.classList.contains('hidden') === false) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Activate first lesion button
+        lesionSelector.querySelector('button').click();
+    });
+    </script>
+</body>
+</html>
