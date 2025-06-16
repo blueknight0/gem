@@ -2,26 +2,13 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: #f0f4f8;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 20px 0;
-    color: #333;
+    background-color: #f0f4f8; display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; margin: 0; padding: 20px 0; color: #333;
 }
-
 .container {
-    width: 90%;
-    max-width: 1000px; /* 너비 확장 */
-    background: white;
-    padding: 2em;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    text-align: center;
+    width: 90%; max-width: 1000px; background: white; padding: 2em; border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
 }
-
 h1, h2, h3 { color: #005a9c; }
 h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
@@ -30,34 +17,31 @@ h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 #setup-screen textarea {
     width: 95%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em; margin-bottom: 1em;
 }
-
 button {
     background-color: #007bff; color: white; border: none; padding: 12px 25px; font-size: 1.1em; font-weight: bold;
     border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.1s;
 }
 button:hover { background-color: #0056b3; }
 button:active { transform: scale(0.98); }
-
 #start-button { margin-top: 1em; background-color: #28a745; }
 #start-button:hover { background-color: #218838; }
 #start-button:disabled { background-color: #aaa; cursor: not-allowed; }
 
-/* --- 경주 화면 (레이아웃 수정) --- */
-#race-screen { display: flex; gap: 20px; }
-
-#racetrack {
-    flex-grow: 1; /* 남은 공간을 모두 차지 */
-    position: relative; height: 500px; max-height: 70vh;
-    overflow-y: auto; overflow-x: hidden;
-    background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
+/* --- 경주 화면 (수정됨) --- */
+#race-screen {
+    display: none; /* 기본적으로 숨김 처리 */
+    gap: 20px;
 }
-
+#racetrack {
+    flex-grow: 1; position: relative; height: 500px; max-height: 70vh;
+    overflow-y: auto; overflow-x: hidden; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
+}
+/* 이하 .finish-line, .racer, 추가 효과, 실시간 순위 창, 우승자 발표 화면 스타일은 이전과 모두 동일합니다. */
 .finish-line {
     position: absolute; right: 30px; top: 0; width: 5px; height: 100%;
     background-image: repeating-linear-gradient(white 0, white 10px, black 10px, black 20px);
     z-index: 2;
 }
-
 .racer {
     position: absolute; left: 150px; height: 30px; background-color: #ff7043;
     color: white; border-radius: 5px; padding: 0 15px; display: flex;
@@ -68,60 +52,27 @@ button:active { transform: scale(0.98); }
 .racer::after {
     content: '🐎'; margin-left: 10px; font-size: 1.2em; white-space: nowrap;
 }
-
-/* --- 추가 효과 스타일 --- */
-.racer.boost {
-    box-shadow: 0 0 20px 5px #ffeb3b; /* 노란색 부스트 효과 */
-    z-index: 10;
-}
-.racer.finished-1 { box-shadow: 0 0 20px 5px #ffd700; } /* 1등 금색 */
-.racer.finished-2 { box-shadow: 0 0 20px 5px #c0c0c0; } /* 2등 은색 */
-.racer.finished-3 { box-shadow: 0 0 20px 5px #cd7f32; } /* 3등 동색 */
-
-/* --- 실시간 순위 창 스타일 --- */
+.racer.boost { box-shadow: 0 0 20px 5px #ffeb3b; z-index: 10; }
+.racer.finished-1 { box-shadow: 0 0 20px 5px #ffd700; }
+.racer.finished-2 { box-shadow: 0 0 20px 5px #c0c0c0; }
+.racer.finished-3 { box-shadow: 0 0 20px 5px #cd7f32; }
 #live-ranking {
-    width: 200px; /* 고정 너비 */
-    flex-shrink: 0; /* 창 크기가 줄어도 너비 유지 */
-    background-color: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 10px;
+    width: 200px; flex-shrink: 0; background-color: #fafafa;
+    border: 1px solid #ddd; border-radius: 10px; padding: 10px;
 }
-#ranking-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: relative;
-}
+#ranking-list { list-style: none; padding: 0; margin: 0; position: relative; }
 .rank-item {
-    position: absolute;
-    width: 100%;
-    height: 38px;
-    padding: 5px;
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    transition: top 0.5s ease-in-out, opacity 0.5s;
-    opacity: 1;
-    overflow: hidden;
-    white-space: nowrap;
+    position: absolute; width: 100%; height: 38px; padding: 5px; background: white;
+    border: 1px solid #eee; border-radius: 5px; box-sizing: border-box;
+    display: flex; align-items: center; transition: top 0.5s ease-in-out, opacity 0.5s;
+    opacity: 1; overflow: hidden; white-space: nowrap;
 }
-.rank-item.rank-hidden {
-    opacity: 0;
-}
+.rank-item.rank-hidden { opacity: 0; }
 .rank-num {
-    font-weight: bold;
-    font-size: 1.1em;
-    width: 30px;
-    text-align: center;
-    color: #007bff;
+    font-weight: bold; font-size: 1.1em; width: 30px;
+    text-align: center; color: #007bff;
 }
-
-/* --- 우승자 발표 화면 (이전과 동일) --- */
-#winner-announcer, .winner-box, .podium, .podium-stand { /* 이전 CSS 코드와 동일 */
+#winner-announcer {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);
     display: flex; justify-content: center; align-items: center; z-index: 100;
 }
