@@ -246,8 +246,8 @@ button:active {
 /* 부스터 텍스트 - 모바일 최적화 */
 .boost-text {
     position: absolute !important;
-    background-color: rgba(255, 215, 0, 0.95);
-    color: #333;
+    background-color: rgba(255, 107, 107, 0.95);
+    color: white;
     padding: 3px 6px;
     border-radius: 8px;
     font-size: 0.65em;
@@ -257,7 +257,7 @@ button:active {
     animation: boostTextAnimation 1s ease-in-out;
     pointer-events: none;
     transform: translateX(-50%);
-    border: 1px solid #ff6b00;
+    border: 1px solid #ff4757;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
