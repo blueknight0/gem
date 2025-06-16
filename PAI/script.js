@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             raceInterval = setInterval(() => {
                 updateRaceState(finishLineCoord);
-            }, 200); // 100ms에서 200ms로 증가 (이동 주기 증가)
+            }, 400); // 100ms에서 400ms로 증가 (이동 주기 증가)
         }, 10);
     });
     
