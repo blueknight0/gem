@@ -77,13 +77,13 @@ button:active {
 }
 
 
-/* --- 경주 화면 (수정됨) --- */
+/* --- 경주 화면 --- */
 #racetrack {
     position: relative;
     width: 100%;
-    height: 400px; /* 기본 높이 */
-    max-height: 60vh; /* 화면 높이의 60%를 넘지 않도록 설정 */
-    overflow-y: auto; /* 내용이 많아지면 스크롤 생성 */
+    height: 400px;
+    max-height: 60vh;
+    overflow-y: auto;
     background: #e8f5e9;
     border: 2px solid #a5d6a7;
     border-radius: 10px;
@@ -106,7 +106,8 @@ button:active {
 /* --- 말 스타일 (수정됨) --- */
 .racer {
     position: absolute;
-    left: 10px;
+    /* left: 10px; -> left: 150px; 로 변경하여 출발선 위치를 오른쪽으로 이동 */
+    left: 150px; 
     height: 30px;
     background-color: #ff7043;
     color: white;
@@ -116,16 +117,19 @@ button:active {
     align-items: center;
     font-size: 0.9em;
     transition: transform 0.2s linear;
-    transform: translateX(0);
+    /* transform 속성을 추가하여 오른쪽 끝을 기준으로 정렬 */
+    transform: translateX(-100%); 
 }
 
-.racer::after { /* ::before 에서 ::after로 변경하여 말 아이콘을 오른쪽으로 이동 */
+.racer::after {
     content: '🐎';
-    margin-left: 10px; /* margin-right 에서 margin-left 로 변경 */
+    margin-left: 10px;
     font-size: 1.2em;
+    /* white-space: nowrap 추가로 너비 계산이 깨지지 않도록 함 */
+    white-space: nowrap; 
 }
 
-/* --- 우승자 발표 화면 (수정됨) --- */
+/* --- 우승자 발표 화면 (이전과 동일) --- */
 #winner-announcer {
     position: fixed;
     top: 0;
@@ -153,7 +157,6 @@ button:active {
     to { transform: scale(1); opacity: 1; }
 }
 
-/* --- 시상대(Podium) 스타일 (추가됨) --- */
 .podium {
     display: flex;
     align-items: flex-end;
@@ -179,7 +182,7 @@ button:active {
     font-size: 1.1em;
     font-weight: bold;
     margin-top: 10px;
-    word-break: keep-all; /* 이름이 잘리지 않도록 */
+    word-break: keep-all;
 }
 
 .podium-stand.first {
