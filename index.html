@@ -26,8 +26,21 @@
 
         <div id="winner-announcer" class="hidden">
             <div class="winner-box">
-                <h2>🏆 최종 우승 🏆</h2>
-                <p id="winner-name"></p>
+                <h2>🏆 최종 결과 🏆</h2>
+                <div class="podium">
+                    <div class="podium-stand second hidden">
+                        <div class="place">🥈 2nd</div>
+                        <div class="name" id="winner-2"></div>
+                    </div>
+                    <div class="podium-stand first hidden">
+                        <div class="place">🥇 1st</div>
+                        <div class="name" id="winner-1"></div>
+                    </div>
+                    <div class="podium-stand third hidden">
+                        <div class="place">🥉 3rd</div>
+                        <div class="name" id="winner-3"></div>
+                    </div>
+                </div>
                 <button id="reset-button">다시하기</button>
             </div>
         </div>
