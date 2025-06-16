@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             raceInterval = setInterval(() => {
                 updateRaceState(finishLineCoord);
-            }, 150); // 100ms에서 150ms로 증가 (이동 주기 증가)
+            }, 200); // 100ms에서 200ms로 증가 (이동 주기 증가)
         }, 10);
     });
     
@@ -213,6 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
         startButton.classList.add('hidden');
         startButton.disabled = false;
         setupScreen.style.display = 'block';
+        
+        // 중계 전광판 초기화
+        commentaryText.textContent = "경주 준비 중...";
+        distanceRemaining.textContent = "남은 거리: 2000m";
+        
+        // 경주 관련 변수들 초기화
+        winners = [];
+        if (raceInterval) {
+            clearInterval(raceInterval);
+            raceInterval = null;
+        }
     }
     // 'resetButton' 변수(버튼 요소)에 'resetGame' 함수를 클릭 이벤트로 연결
     resetButton.addEventListener('click', resetGame);
