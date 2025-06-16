@@ -27,7 +27,41 @@ button:active { transform: scale(0.98); }
 #start-button:hover { background-color: #218838; }
 #start-button:disabled { background-color: #aaa; cursor: not-allowed; }
 
-#race-screen { display: none; gap: 20px; }
+#race-screen { display: none; gap: 20px; flex-direction: column; }
+
+.commentary-box {
+    background: linear-gradient(135deg, #005a9c, #007bff);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 4px 20px rgba(0,123,255,0.4); }
+}
+
+#commentary-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    min-height: 1.5em;
+}
+
+#distance-remaining {
+    font-size: 1.1em;
+    margin: 0;
+    color: #ffeb3b;
+    font-weight: bold;
+}
+
+#race-screen > div:not(.commentary-box) {
+    display: flex;
+    gap: 20px;
+}
 #racetrack {
     flex-grow: 1; position: relative; height: 500px; max-height: 70vh;
     overflow-y: auto; overflow-x: hidden; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
