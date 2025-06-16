@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // HTML 요소 가져오기
+    // HTML 요소 가져오기 (이전과 동일)
     const setupScreen = document.getElementById('setup-screen');
     const raceScreen = document.getElementById('race-screen');
     const participantsInput = document.getElementById('participants-input');
@@ -23,10 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let winners = [];
     let raceInterval;
 
-    // "경주 준비" 버튼 클릭 이벤트
+    // "경주 준비" 버튼 클릭 이벤트 (이전과 동일)
     prepareButton.addEventListener('click', () => {
         const names = participantsInput.value.split('\n').filter(name => name.trim() !== '');
-        if (names.length < 1) { // 1명 이상이면 시작 가능하도록 변경
+        if (names.length < 1) {
             alert('최소 1명 이상의 참가자를 입력해주세요.');
             return;
         }
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         raceScreen.classList.remove('hidden');
     });
 
-    // 경주마(참가자)들을 트랙에 배치
+    // 경주마(참가자)들을 트랙에 배치 (이전과 동일)
     function setupRacers() {
         racetrack.innerHTML = '<div class="finish-line"></div>';
         const trackHeight = participants.length * 40 + 20;
@@ -52,31 +52,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // "경주 시작!" 버튼 클릭 이벤트
+    // "경주 시작!" 버튼 클릭 이벤트 (결승선 통과 로직 수정)
     startButton.addEventListener('click', () => {
         startButton.disabled = true;
-        winners = []; // 우승자 배열 초기화
+        winners = [];
+
+        // getBoundingClientRect는 스크롤 위치에 따라 값이 변하므로, 시작 전에 고정된 값을 계산
+        const racetrackRect = racetrack.getBoundingClientRect();
+        const finishLineCoord = racetrackRect.right - 30; // 결승선 x좌표 (여유 공간 30px)
 
         raceInterval = setInterval(() => {
             const racers = document.querySelectorAll('.racer');
-            const trackWidth = racetrack.clientWidth;
-            const finishLine = trackWidth - 30; // 결승선 위치 (말 아이콘 너비 고려)
 
             racers.forEach(racer => {
-                if (racer.dataset.finished) return; // 이미 들어온 말은 무시
+                if (racer.dataset.finished) return;
 
+                // getComputedStyle과 DOMMatrix를 사용하여 현재 transform 값을 정확히 읽어옴
                 const currentTransform = new DOMMatrix(getComputedStyle(racer).transform).m41;
                 const randomMove = Math.random() * 10;
-                const newPosition = currentTransform + randomMove;
+                // 기존 transform 값에 새로운 이동거리를 더함
+                const newTransform = currentTransform + randomMove;
                 
-                racer.style.transform = `translateX(${newPosition}px)`;
+                racer.style.transform = `translateX(${newTransform}px)`;
 
-                // 결승선 통과 체크 (오른쪽 끝 기준)
-                if (newPosition + racer.clientWidth >= finishLine) {
+                // 결승선 통과 체크 로직 수정: 실제 렌더링된 박스의 오른쪽 끝 위치로 판단
+                const racerRightEdge = racer.getBoundingClientRect().right;
+                if (racerRightEdge >= finishLineCoord) {
                     racer.dataset.finished = 'true';
                     winners.push(racer.dataset.name);
                     
-                    // 3등까지 들어오거나, 모든 참가자가 들어오면 경주 종료
                     if (winners.length >= 3 || winners.length === participants.length) {
                         endRace(winners);
                     }
@@ -85,14 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     });
 
-    // 경주 종료 및 시상대 표시 함수
+    // 경주 종료 및 시상대 표시 함수 (이전과 동일)
     function endRace(finalWinners) {
         clearInterval(raceInterval);
         
-        // 시상대 초기화
         Object.values(podiumStands).forEach(stand => stand.classList.add('hidden'));
 
-        // 1, 2, 3등 시상대 채우기
         if (finalWinners[0]) {
             winnerNames[1].textContent = finalWinners[0];
             podiumStands[1].classList.remove('hidden');
@@ -109,13 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
         winnerAnnouncer.classList.remove('hidden');
     }
 
-    // "다시하기" 버튼 클릭 이벤트
+    // "다시하기" 버튼 클릭 이벤트 (이전과 동일)
     resetButton.addEventListener('click', () => {
         winnerAnnouncer.classList.add('hidden');
         raceScreen.classList.add('hidden');
         setupScreen.classList.remove('hidden');
         startButton.disabled = false;
-        // 입력창을 비우지 않아 명단 수정 후 재시작 용이
-        // participantsInput.value = ''; 
     });
 });
