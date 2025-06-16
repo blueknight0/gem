@@ -2,14 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // HTML 요소 가져오기 (이전과 동일)
     const setupScreen = document.getElementById('setup-screen');
     const raceScreen = document.getElementById('race-screen');
-    const liveRanking = document.getElementById('live-ranking');
-    const rankingList = document.getElementById('ranking-list');
     const participantsInput = document.getElementById('participants-input');
     const prepareButton = document.getElementById('prepare-button');
     const racetrack = document.getElementById('racetrack');
     const startButton = document.getElementById('start-button');
     const winnerAnnouncer = document.getElementById('winner-announcer');
     const resetButton = document.getElementById('reset-button');
+    const rankingList = document.getElementById('ranking-list');
     const podiumStands = {
         1: document.querySelector('.podium-stand.first'),
         2: document.querySelector('.podium-stand.second'),
@@ -36,15 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setupRacersAndRanking();
 
         // --- 수정된 부분 1 ---
-        // 화면 표시 방식을 classList.remove로 변경하여 !important 문제를 해결합니다.
-        setupScreen.classList.add('hidden');
-        raceScreen.classList.remove('hidden'); // raceScreen.style.display = 'flex' 대신 사용
-        // liveRanking과 startButton을 제어하는 코드는 raceScreen 내부에 있으므로 이제 불필요
-        // liveRanking.classList.remove('hidden'); -> 삭제
+        // CSS를 직접 제어하여 화면을 표시합니다.
+        setupScreen.style.display = 'none';
+        raceScreen.style.display = 'flex'; // flex로 설정하여 보이게 함
         startButton.classList.remove('hidden');
     });
 
-    // 경주마와 실시간 순위 창을 함께 설정
     function setupRacersAndRanking() {
         racetrack.innerHTML = '<div class="finish-line"></div>';
         rankingList.innerHTML = '';
@@ -75,30 +71,28 @@ document.addEventListener('DOMContentLoaded', () => {
         winners = [];
 
         // --- 수정된 부분 2 ---
-        // getBoundingClientRect()를 setInterval 바깥으로 이동하여
-        // 레이스가 시작된 후, 화면이 보이는 상태에서 단 한 번만 계산합니다.
-        const racetrackRect = racetrack.getBoundingClientRect();
-        const finishLineCoord = racetrackRect.right - 30;
+        // setTimeout으로 레이스 로직을 아주 잠깐 지연시켜 렌더링 문제를 해결합니다.
+        setTimeout(() => {
+            const racetrackRect = racetrack.getBoundingClientRect();
+            const finishLineCoord = racetrackRect.right - 30;
 
-        raceInterval = setInterval(() => {
-            updateRaceState(finishLineCoord);
-        }, 100);
+            raceInterval = setInterval(() => {
+                updateRaceState(finishLineCoord);
+            }, 100);
+        }, 10); // 0.01초의 찰나의 지연
     });
     
-    // (이하 updateRaceState, endRace, resetButton 함수는 이전과 동일)
+    // (이하 updateRaceState, endRace 함수는 이전과 동일)
     function updateRaceState(finishLineCoord) {
         const racers = Array.from(document.querySelectorAll('.racer'));
-
         racers.forEach(racer => {
             if (racer.dataset.finished) return;
-
             let move = Math.random() * 10;
             if (Math.random() < 0.005 && !racer.classList.contains('boost')) {
                 racer.classList.add('boost');
                 move *= 3;
                 setTimeout(() => racer.classList.remove('boost'), 1000);
             }
-
             const currentTransform = new DOMMatrix(getComputedStyle(racer).transform).m41;
             racer.style.transform = `translateX(${currentTransform + move}px)`;
         });
@@ -108,4 +102,50 @@ document.addEventListener('DOMContentLoaded', () => {
         racers.forEach((racer, index) => {
             const rankItem = rankingList.querySelector(`li[data-name="${racer.dataset.name}"]`);
             if (rankItem) {
-                rankItem.style.top = `${
+                rankItem.style.top = `${index * 40}px`;
+                rankItem.innerHTML = `<span class="rank-num">${index + 1}</span> ${racer.dataset.name}`;
+                if (index < 5) rankItem.classList.remove('rank-hidden');
+                else rankItem.classList.add('rank-hidden');
+            }
+        });
+
+        racers.forEach(racer => {
+            if (!racer.dataset.finished && racer.getBoundingClientRect().right >= finishLineCoord) {
+                racer.dataset.finished = 'true';
+                winners.push(racer.dataset.name);
+                racer.classList.add(`finished-${winners.length}`);
+                if (winners.length >= 3 || winners.length === participants.length) {
+                    endRace(winners);
+                }
+            }
+        });
+    }
+    
+    function endRace(finalWinners) {
+        clearInterval(raceInterval);
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+        Object.values(podiumStands).forEach(stand => stand.classList.add('hidden'));
+        if (finalWinners[0]) {
+            winnerNames[1].textContent = finalWinners[0];
+            podiumStands[1].classList.remove('hidden');
+        }
+        if (finalWinners[1]) {
+            winnerNames[2].textContent = finalWinners[1];
+            podiumStands[2].classList.remove('hidden');
+        }
+        if (finalWinners[2]) {
+            winnerNames[3].textContent = finalWinners[2];
+            podiumStands[3].classList.remove('hidden');
+        }
+        winnerAnnouncer.classList.remove('hidden');
+    }
+
+    // 다시하기 버튼 로직 수정
+    resetButton.addEventListener('click', () => {
+        winnerAnnouncer.classList.add('hidden');
+        raceScreen.style.display = 'none'; // flex 대신 none으로 설정하여 숨김
+        startButton.classList.add('hidden');
+        startButton.disabled = false;
+        setupScreen.style.display = 'block'; // none 대신 block으로 설정하여 보이게 함
+    });
+});
