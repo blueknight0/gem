@@ -150,8 +150,8 @@ button:active { transform: scale(0.98); }
 /* 부스터 텍스트 오버레이 - 완전히 독립적인 절대 위치 */
 .boost-text {
     position: absolute !important;
-    background-color: rgba(255, 215, 0, 0.95);
-    color: #333;
+    background-color: rgba(255, 107, 107, 0.95);
+    color: white;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 0.75em;
@@ -162,7 +162,7 @@ button:active { transform: scale(0.98); }
     pointer-events: none;
     /* 완전히 독립적인 요소 */
     transform: translateX(-50%);
-    border: 2px solid #ff6b00;
+    border: 2px solid #ff4757;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     /* 레이아웃에 전혀 영향을 주지 않음 */
     width: auto;
