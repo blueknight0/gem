@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // HTML 요소 가져오기 (이전과 동일)
+    // HTML 요소 가져오기
     const setupScreen = document.getElementById('setup-screen');
     const raceScreen = document.getElementById('race-screen');
     const participantsInput = document.getElementById('participants-input');
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const racetrack = document.getElementById('racetrack');
     const startButton = document.getElementById('start-button');
     const winnerAnnouncer = document.getElementById('winner-announcer');
-    const resetButton = document.getElementById('reset-button');
+    const resetButton = document.getElementById('reset-button'); // 'resetButton' 변수 선언
     const rankingList = document.getElementById('ranking-list');
     const podiumStands = {
         1: document.querySelector('.podium-stand.first'),
@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         participants = names;
         setupRacersAndRanking();
-
         setupScreen.style.display = 'none';
         raceScreen.style.display = 'flex';
         startButton.classList.remove('hidden');
@@ -45,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingList.innerHTML = '';
         const trackHeight = participants.length * 40 + 20;
         racetrack.style.height = `${trackHeight}px`;
-
         participants.forEach((name, index) => {
             const racer = document.createElement('div');
             racer.className = 'racer';
@@ -53,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             racer.style.top = `${index * 40 + 10}px`;
             racer.dataset.name = name;
             racetrack.appendChild(racer);
-
             const rankItem = document.createElement('li');
             rankItem.className = 'rank-item';
             rankItem.dataset.name = name;
@@ -77,11 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 10);
     });
     
-    // --- updateRaceState 함수 수정됨 ---
+    // updateRaceState 함수 (이전과 동일)
     function updateRaceState(finishLineCoord) {
         const racers = Array.from(document.querySelectorAll('.racer'));
-
-        // 1. 말 이동 및 부스트 효과 적용 (이전과 동일)
         racers.forEach(racer => {
             if (racer.dataset.finished) return;
             let move = Math.random() * 10;
@@ -94,21 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
             racer.style.transform = `translateX(${currentTransform + move}px)`;
         });
 
-        // 2. 실시간 순위 계산
         racers.sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right);
 
-        // --- 추가된 부분: 실시간 순위 색상 적용 ---
-        // (1) 먼저 모든 말의 순위 클래스를 초기화
         racers.forEach(racer => {
             racer.classList.remove('rank-1', 'rank-2', 'rank-3');
         });
-        // (2) 정렬된 순서에 따라 상위 3명에게만 새로운 순위 클래스 부여
         if (racers[0] && !racers[0].dataset.finished) racers[0].classList.add('rank-1');
         if (racers[1] && !racers[1].dataset.finished) racers[1].classList.add('rank-2');
         if (racers[2] && !racers[2].dataset.finished) racers[2].classList.add('rank-3');
-        // --- 여기까지 추가 ---
 
-        // 3. 실시간 순위 창 UI 업데이트 (이전과 동일)
         racers.forEach((racer, index) => {
             const rankItem = rankingList.querySelector(`li[data-name="${racer.dataset.name}"]`);
             if (rankItem) {
@@ -119,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 4. 결승선 통과 체크 및 세리머니 (이전과 동일)
         racers.forEach(racer => {
             if (!racer.dataset.finished && racer.getBoundingClientRect().right >= finishLineCoord) {
                 racer.dataset.finished = 'true';
@@ -132,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // (이하 endRace, resetButton 함수는 이전과 동일)
+    // endRace 함수 (이전과 동일)
     function endRace(finalWinners) {
         clearInterval(raceInterval);
         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
@@ -152,12 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
         winnerAnnouncer.classList.remove('hidden');
     }
 
-    function resetButton() {
+    // --- 수정된 부분 ---
+    // 함수의 이름을 'resetButton'에서 'resetGame'으로 변경
+    function resetGame() {
         winnerAnnouncer.classList.add('hidden');
         raceScreen.style.display = 'none';
         startButton.classList.add('hidden');
         startButton.disabled = false;
         setupScreen.style.display = 'block';
     }
-    document.getElementById('reset-button').addEventListener('click', resetButton);
+    // 'resetButton' 변수(버튼 요소)에 'resetGame' 함수를 클릭 이벤트로 연결
+    resetButton.addEventListener('click', resetGame);
+    // --- 여기까지 수정 ---
 });
