@@ -335,8 +335,9 @@
                     });
                     brandSelector.appendChild(card);
                 });
-                renderBrandDetails(Object.keys(brandData)[0]);
-                document.querySelector('.brand-card').classList.add('active');
+                const firstBrandKey = Object.keys(brandData)[0];
+                renderBrandDetails(firstBrandKey);
+                document.querySelector(`.brand-card[data-brand='${firstBrandKey}']`).classList.add('active');
             }
 
             function renderBrandDetails(brandKey) {
@@ -370,47 +371,46 @@
             }
             
             function updateRadarChart(brand) {
-                const radarCtx = document.getElementById('brandRadarChart').getContext('2d');
-                const chartData = {
-                    labels: ['의약품 수준 효능', '마이크로바이옴 과학', '두피 장벽 케어', '대중 시장 접근성', '프리미엄 포지셔닝'],
-                    datasets: [{
-                        label: brand.name,
-                        data: brand.radar,
-                        fill: true,
-                        backgroundColor: 'rgba(71, 85, 105, 0.2)',
-                        borderColor: 'rgb(71, 85, 105)',
-                        pointBackgroundColor: 'rgb(71, 85, 105)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgb(71, 85, 105)'
-                    }]
-                };
+                const radarCtx = document.getElementById('brandRadarChart')?.getContext('2d');
+                if (!radarCtx) return;
 
                 if (brandRadarChart) {
-                    brandRadarChart.data = chartData;
-                    brandRadarChart.update();
-                } else {
-                    brandRadarChart = new Chart(radarCtx, {
-                        type: 'radar',
-                        data: chartData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            elements: { line: { tension: 0.1 } },
-                            scales: {
-                                r: {
-                                    angleLines: { color: '#cbd5e1' },
-                                    grid: { color: '#e2e8f0' },
-                                    pointLabels: { font: { size: 10 } },
-                                    suggestedMin: 0,
-                                    suggestedMax: 5,
-                                    ticks: { display: false }
-                                }
-                            },
-                            plugins: { legend: { display: false } }
-                        }
-                    });
+                    brandRadarChart.destroy();
                 }
+                
+                brandRadarChart = new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['의약품 수준 효능', '마이크로바이옴 과학', '두피 장벽 케어', '대중 시장 접근성', '프리미엄 포지셔닝'],
+                        datasets: [{
+                            label: brand.name,
+                            data: brand.radar,
+                            fill: true,
+                            backgroundColor: 'rgba(71, 85, 105, 0.2)',
+                            borderColor: 'rgb(71, 85, 105)',
+                            pointBackgroundColor: 'rgb(71, 85, 105)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(71, 85, 105)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        elements: { line: { tension: 0.1 } },
+                        scales: {
+                            r: {
+                                angleLines: { color: '#cbd5e1' },
+                                grid: { color: '#e2e8f0' },
+                                pointLabels: { font: { size: 10 }, color: '#475569' },
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                                ticks: { display: false }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
             }
             
             function initTechAnalysis() {
@@ -439,22 +439,18 @@
             
             function renderTechDetails(selectedKey) {
                 techDetailView.innerHTML = '';
-                Object.keys(techData).forEach(key => {
-                    if (key === selectedKey) {
-                        const tech = techData[key];
-                        const card = document.createElement('div');
-                        card.className = 'md:col-span-2 lg:col-span-3 p-6 bg-white rounded-lg shadow-lg fade-in';
-                        card.innerHTML = `
-                            <h3 class="text-2xl font-bold text-slate-800 mb-2">${tech.name}</h3>
-                            <p class="text-slate-600 mb-4">${tech.desc}</p>
-                            <h4 class="font-semibold text-slate-700 mb-2">주요 사용 브랜드:</h4>
-                            <div class="flex flex-wrap gap-2">
-                                ${tech.brands.map(b => `<span class="bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">${b}</span>`).join('')}
-                            </div>
-                        `;
-                        techDetailView.appendChild(card);
-                    }
-                });
+                const tech = techData[selectedKey];
+                const card = document.createElement('div');
+                card.className = 'md:col-span-2 lg:col-span-3 p-6 bg-white rounded-lg shadow-lg fade-in';
+                card.innerHTML = `
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">${tech.name}</h3>
+                    <p class="text-slate-600 mb-4">${tech.desc}</p>
+                    <h4 class="font-semibold text-slate-700 mb-2">주요 사용 브랜드:</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${tech.brands.map(b => `<span class="bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">${b}</span>`).join('')}
+                    </div>
+                `;
+                techDetailView.appendChild(card);
             }
 
             initTabs();
