@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비듬/마이크로바이옴 헤어케어 브랜드 전략 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Stone) with a Slate Blue Accent -->
+    <!-- Application Structure Plan: A tab-based dashboard structure was chosen to manage the report's high information density. This design segments the content into four logical, user-selectable themes: 1) Market Trends, 2) Brand Strategy Comparison, 3) Core Technology Analysis, and 4) Future Outlook. This non-linear approach allows users to explore content based on their interests, rather than being forced into the linear structure of the original report. The core of the app is the Brand Comparison tab, which uses a master-detail pattern combined with a dynamic radar chart to facilitate at-a-glance comparison of complex strategies, which is the central goal of the analysis. This structure prioritizes user-driven discovery and comparative analysis over passive reading. -->
+    <!-- Visualization & Content Choices: 
+        1. Market Growth: Report Info (Market Size 2024-2034) -> Goal (Inform Change) -> Viz (Line Chart) -> Interaction (Hover for details) -> Justification (Best for showing trend over time) -> Library (Chart.js).
+        2. Technology Shift: Report Info ('Kill' vs 'Balance' paradigms) -> Goal (Organize & Compare) -> Presentation (Interactive HTML diagram) -> Interaction (Click/hover to reveal details) -> Justification (Visually represents the core strategic conflict in the market) -> Method (HTML/CSS/JS).
+        3. Brand Strategy: Report Info (Brand positioning on various axes) -> Goal (Compare Relationships) -> Viz (Radar Chart) -> Interaction (Updates on brand selection) -> Justification (Excellent for multi-axial comparison of competitors) -> Library (Chart.js).
+        4. Tech Comparison: Report Info (Details of active ingredients) -> Goal (Compare & Inform) -> Presentation (Filtered HTML cards) -> Interaction (Click filter to update content) -> Justification (Allows for a technology-first deep dive, a key report theme) -> Method (HTML/CSS/JS).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .tab-active { border-color: #475569; color: #0f172a; background-color: #f1f5f9; }
+        .tab-inactive { border-color: transparent; color: #475569; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 40vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .brand-card.active { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); border-color: #475569; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">두피 케어 시장 기술 전략 대시보드</h1>
+            <p class="mt-2 text-slate-600">주요 비듬/마이크로바이옴 헤어케어 브랜드의 개발 전략 분석</p>
+        </header>
+
+        <nav class="mb-8 border-b border-slate-300">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                <li class="mr-2">
+                    <button class="nav-tab inline-block p-4 border-b-2 rounded-t-lg transition-colors duration-300" data-tab="trends">📈 시장 트렌드</button>
+                </li>
+                <li class="mr-2">
+                    <button class="nav-tab inline-block p-4 border-b-2 rounded-t-lg transition-colors duration-300" data-tab="comparison">🆚 브랜드 전략 비교</button>
+                </li>
+                <li class="mr-2">
+                    <button class="nav-tab inline-block p-4 border-b-2 rounded-t-lg transition-colors duration-300" data-tab="tech">🔬 핵심 기술 분석</button>
+                </li>
+                <li>
+                    <button class="nav-tab inline-block p-4 border-b-2 rounded-t-lg transition-colors duration-300" data-tab="future">🔭 미래 전망</button>
+                </li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="trends-content" class="content-section fade-in">
+                <div class="p-4 bg-white rounded-lg shadow-sm mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700 mb-3">시장 개요: 비듬 케어를 넘어 두피 생태계로</h2>
+                    <p class="text-slate-600">두피 케어 시장은 단순한 비듬 제거를 넘어, 피부 과학과 마이크로바이옴에 대한 깊은 이해를 바탕으로 한 '스키니피케이션(Skinification)' 현상이 주도하고 있습니다. 소비자들은 이제 두피를 얼굴 피부처럼 관리해야 할 대상으로 인식하며, 이는 브랜드들의 기술 개발과 마케팅 전략에 근본적인 변화를 요구하고 있습니다. 아래 차트는 이러한 관심이 반영된 시장의 견고한 성장세를 보여줍니다.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold text-slate-700 mb-4">글로벌 헤어/두피 케어 시장 성장 전망</h3>
+                        <div class="chart-container h-64 md:h-80">
+                            <canvas id="marketGrowthChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold text-slate-700 mb-4">소비자 인식의 패러다임 전환</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-2xl mr-4">🔬</span>
+                                <div>
+                                    <h4 class="font-semibold text-slate-800">두피 건강의 중요성 증대</h4>
+                                    <p class="text-slate-600 text-sm">비듬을 단순 미용 문제가 아닌, 전반적인 두피 건강의 지표로 인식하기 시작했습니다.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-2xl mr-4">🌿</span>
+                                <div>
+                                    <h4 class="font-semibold text-slate-800">'클린 & 내추럴' 성분 선호</h4>
+                                    <p class="text-slate-600 text-sm">소비자들은 설페이트, 파라벤 등 자극적인 화학 성분을 피하고 자연 유래 성분을 찾습니다.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-2xl mr-4">💧</span>
+                                <div>
+                                    <h4 class="font-semibold text-slate-800">헤어 케어의 '스키니피케이션'</h4>
+                                    <p class="text-slate-600 text-sm">두피 장벽 강화, 수분 공급 등 스킨케어 원리를 두피 관리에 적용하는 트렌드가 확산되고 있습니다.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 p-6 bg-white rounded-lg shadow-sm">
+                     <h3 class="text-xl font-semibold text-slate-700 mb-4 text-center">기술적 접근법의 진화: '사멸(Kill)'에서 '균형(Balance)'으로</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div class="border border-red-200 bg-red-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-red-700 text-center">💥 전통적 접근: 원인균 사멸 (Kill)</h4>
+                            <p class="text-sm text-red-600 text-center mt-1 mb-3">특정 곰팡이균을 강력하게 억제하는 방식</p>
+                            <ul class="space-y-2 text-sm">
+                                <li><strong>피리티온 아연 (ZPT):</strong> 가장 대중적인 항진균 성분 (예: H&S 클래식)</li>
+                                <li><strong>셀레늄 설파이드:</strong> 더 강력한 효과로 심한 비듬에 사용 (예: 더코스 DS)</li>
+                                <li><strong>케토코나졸:</strong> 의약품 수준의 강력한 항진균제로 근본 원인 해결 (예: 니조랄)</li>
+                            </ul>
+                        </div>
+                        <div class="border border-sky-200 bg-sky-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-sky-700 text-center">⚖️ 현대적 접근: 생태계 균형 (Balance)</h4>
+                            <p class="text-sm text-sky-600 text-center mt-1 mb-3">두피 전체의 미생물 생태계를 건강하게 회복</p>
+                             <ul class="space-y-2 text-sm">
+                                <li><strong>마이크로바이옴 과학:</strong> 유익균과 유해균의 균형 회복에 집중 (예: 더코스)</li>
+                                <li><strong>피록톤 올아민:</strong> 원인균 억제와 마이크로바이옴 균형을 동시에 (예: 세바메드)</li>
+                                <li><strong>두피 장벽 케어:</strong> 세라마이드, 히알루론산으로 두피 자체 방어력 강화 (예: 세라비)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison-content" class="content-section fade-in">
+                 <div class="p-4 bg-white rounded-lg shadow-sm mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700 mb-3">브랜드 전략 비교 분석</h2>
+                    <p class="text-slate-600">각 브랜드는 시장을 공략하기 위해 고유한 기술과 마케팅 전략을 구사합니다. 아래에서 브랜드를 선택하여 각자의 포지셔닝과 핵심 전략을 확인해보세요. 우측의 '전략 레이더 차트'는 선택된 브랜드가 어떤 가치에 집중하는지를 시각적으로 보여주어, 경쟁 환경 내에서의 위치를 직관적으로 파악할 수 있게 돕습니다. 이를 통해 브랜드 간의 미묘한 차이와 시장 공략법을 비교 분석할 수 있습니다.</p>
+                </div>
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1">
+                        <h3 class="text-xl font-semibold text-slate-700 mb-4">브랜드 선택</h3>
+                        <div id="brand-selector" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-4">
+                        </div>
+                    </div>
+                    <div id="brand-detail-view" class="lg:col-span-2 p-6 bg-white rounded-lg shadow-sm min-h-[400px]">
+                        
+                    </div>
+                </div>
+            </section>
+
+            <section id="tech-content" class="content-section fade-in">
+                 <div class="p-4 bg-white rounded-lg shadow-sm mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700 mb-3">핵심 기술 성분 분석</h2>
+                    <p class="text-slate-600">비듬 및 두피 케어 제품의 효과는 핵심 유효 성분에 의해 결정됩니다. 각 성분은 고유한 작용 기전을 통해 두피 문제에 접근합니다. 아래 필터를 사용하여 관심 있는 성분을 선택하고, 그 성분의 특징, 작용 원리, 그리고 어떤 브랜드에서 주로 사용하는지 자세히 알아보세요. 이를 통해 제품 뒷면의 성분표를 더 깊이 이해할 수 있습니다.</p>
+                </div>
+                <div class="text-center mb-6">
+                    <div id="tech-filter" class="inline-flex rounded-md shadow-sm" role="group">
+                    </div>
+                </div>
+                <div id="tech-detail-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+            </section>
+            
+            <section id="future-content" class="content-section fade-in">
+                <div class="p-4 bg-white rounded-lg shadow-sm mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700 mb-3">시장의 미래와 새로운 기회</h2>
+                    <p class="text-slate-600">두피 케어 시장은 K-뷰티의 혁신과 지속가능성에 대한 요구, 그리고 개인 맞춤화 기술의 발전으로 또 다른 변혁을 앞두고 있습니다. 브랜드들은 이제 단순히 효과적인 제품을 만드는 것을 넘어, 소비자의 가치와 라이프스타일에 부합하는 종합적인 솔루션을 제공해야 하는 과제에 직면해 있습니다. 미래 시장을 선도할 핵심 전략 방향들을 살펴보세요.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">🇰🇷 K-뷰티의 부상</h3>
+                        <p class="text-slate-600">아모레퍼시픽(라보에이치), LG생건(닥터그루트) 등 한국 브랜드들이 특허받은 프로바이오틱스 기술로 마이크로바이옴 트렌드를 선도하며 글로벌 시장의 새로운 혁신을 이끌고 있습니다.</p>
+                    </div>
+                     <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">🧬 하이브리드 포뮬러</h3>
+                        <p class="text-slate-600">강력한 항진균 효과(예: 피록톤 올아민)와 입증된 장벽 케어 성분(예: 세라마이드)을 결합하여, '효능'과 '순함'을 모두 만족시키는 제품이 시장의 주류가 될 것입니다.</p>
+                    </div>
+                     <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">🧴 샴푸를 넘어서</h3>
+                        <p class="text-slate-600">프리-워시 트리트먼트, 두피 스크럽, 바르는 세럼 등 다단계 '두피 케어 루틴' 개념이 확산되며 새로운 제품 형태와 성장 기회가 창출될 것입니다.</p>
+                    </div>
+                     <div class="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">🎯 초개인화 시대</h3>
+                        <p class="text-slate-600">가정용 진단 키트와 AI 분석을 통해 개인의 두피 마이크로바이옴에 맞춰진 포뮬러를 제공하는 것이 궁극적인 R&D 전략의 지평선이 될 것입니다.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const brandData = {
+                'head-and-shoulders': {
+                    name: '헤드앤숄더',
+                    parent: 'P&G',
+                    identity: '신뢰할 수 있는 다층적 시장 지배자',
+                    strategy: `'Good-Better-Best' 포트폴리오 전략을 통해 모든 소비자 유형과 비듬 심각도에 맞는 솔루션을 제공합니다. '클래식' 라인으로 대중 시장을, '클리니컬 스트렝스'로 고효능 시장을, 'BARE' 라인으로 클린 뷰티 트렌드를 공략하며 시장 지배력을 방어하고 현대화합니다.`,
+                    tech: '피리티온 아연(ZPT), 셀레늄 설파이드',
+                    target: '비듬 심각도와 성분 민감도에 따라 세분화된 대중 시장 소비자',
+                    logo: 'https://logo.clearbit.com/headandshoulders.com',
+                    radar: [3, 2, 4, 5, 2]
+                },
+                'dercos': {
+                    name: '비쉬 더코스',
+                    parent: 'L\'Oréal',
+                    identity: '마이크로바이옴 과학 기반의 두피 전문가',
+                    strategy: `두피 문제를 '마이크로바이옴 불균형'으로 재정의하고, 강력한 유효성분(셀레늄 설파이드)으로 의학적 해결책을 제시합니다. 과학적으로 검증된 프리미엄 솔루션을 찾는 '효능 추구형' 소비자를 타겟으로 합니다.`,
+                    tech: '셀레늄 설파이드, 살리실산, 마이크로바이옴 과학',
+                    target: '두피 문제를 의학적 관심사로 보는 소비자',
+                    logo: 'https://logo.clearbit.com/vichy.com',
+                    radar: [4, 5, 3, 2, 5]
+                },
+                'cerave': {
+                    name: '세라비',
+                    parent: 'L\'Oréal',
+                    identity: '피부과 의사가 개발한 두피 장벽 복구 솔루션',
+                    strategy: `스킨케어에서 쌓은 '장벽 복구' 전문성을 두피로 확장하는 '스키니피케이션' 전략의 선두주자입니다. 3중 세라마이드 기술을 통해, 기존 비듬 샴푸가 너무 강하다고 느끼는 '안전 추구형' 소비자에게 순하고 효과적인 대안을 제공합니다.`,
+                    tech: '피리티온 아연(ZPT), 3중 세라마이드, 히알루론산',
+                    target: '민감성 두피를 가진 소비자, 기존 세라비 사용자',
+                    logo: 'https://logo.clearbit.com/cerave.com',
+                    radar: [3, 2, 5, 3, 3]
+                },
+                'nizoral': {
+                    name: '니조랄',
+                    parent: 'Kenvue',
+                    identity: '강력한 의약품 수준의 비듬 치료제',
+                    strategy: `'케토코나졸'이라는 단일 핵심 성분의 의약품적 신뢰도를 바탕으로 '최종 해결책'으로 포지셔닝합니다. 미용적 가치보다 최대의 항진균 효과를 추구하며, 다른 모든 것이 실패했을 때 찾는 강력한 솔루션이라는 이미지를 구축합니다.`,
+                    tech: '케토코나졸 1%',
+                    target: '기존 제품에 효과를 못 본 완고한 비듬 환자',
+                    logo: 'https://logo.clearbit.com/nizoral.com',
+                    radar: [5, 1, 1, 3, 4]
+                },
+                'clear': {
+                    name: '클리어',
+                    parent: 'Unilever',
+                    identity: '두피 회복력 강화를 위한 성별 맞춤 챔피언',
+                    strategy: `남성과 여성 두피의 과학적 차이점에 기반한 성별 맞춤 솔루션으로 시장을 차별화합니다. '바이오-부스터' 기술로 두피 자체 방어력을 키운다는 컨셉을 통해, 특히 남성 소비자에게 어필하며 쌓은 브랜드 자산을 바탕으로 프리미엄 라인 'SCALPCEUTICALS'로 확장하고 있습니다.`,
+                    tech: '바이오-부스터 (나이아신아마이드 등), 성별 맞춤 성분',
+                    target: '자신감과 퍼포먼스를 중시하는, 성별로 세분화된 대중 시장 소비자',
+                    logo: 'https://logo.clearbit.com/clearhaircare.com',
+                    radar: [3, 3, 3, 5, 2]
+                },
+                'sebamed': {
+                    name: '세바메드',
+                    parent: 'Sebapharma',
+                    identity: 'pH 5.5 균형을 통한 과학적 순수주의자',
+                    strategy: `모든 제품을 'pH 5.5'라는 단일 과학 원칙에 기반하여 개발합니다. 건강한 두피의 산성 보호막을 유지하는 것이 가장 중요하다는 교육적 메시지를 통해, 복잡한 시장에서 명확하고 일관된 정체성을 구축합니다. 피록톤 올아민을 사용하여 순하면서도 효과적인 비듬 관리를 제공합니다.`,
+                    tech: 'pH 5.5 원칙, 피록톤 올아민',
+                    target: '민감성 피부를 가졌거나, 과학적 근거를 중시하는 소비자',
+                    logo: 'https://logo.clearbit.com/sebamed.com',
+                    radar: [3, 4, 4, 2, 4]
+                },
+                'eucerin': {
+                    name: '유세린',
+                    parent: 'Beiersdorf',
+                    identity: '미세 염증 완화에 특화된 더모 전문가',
+                    strategy: `아토피 피부염 등 피부 질환 치료에 대한 의학적 전문성을 두피에 적용합니다. 비듬, 가려움 등 문제의 근본 원인을 '미세 염증'으로 보고, 독자 성분 '리코칼콘 A'를 통해 이를 해결하는 깊이 있는 과학적 서사를 구축합니다.`,
+                    tech: '리코칼콘 A, 우레아, 락테이트',
+                    target: '아토피, 건선 등 문제성/염증성 두피를 가진 소비자',
+                    logo: 'https://logo.clearbit.com/eucerin.com',
+                    radar: [4, 2, 5, 2, 4]
+                }
+            };
+            
+            const techData = {
+                'zpt': { name: '피리티온 아연 (ZPT)', desc: '가장 널리 사용되는 광범위 항진균 성분입니다. 곰팡이의 성장을 억제하여 비듬을 관리합니다.', brands: ['헤드앤숄더', '세라비', '클리어'] },
+                'selenium': { name: '셀레늄 설파이드', desc: 'ZPT보다 강력한 항진균 효과를 지닌 성분으로, 심한 비듬이나 지루성 피부염에 주로 사용됩니다.', brands: ['헤드앤숄더(클리니컬)', '더코스'] },
+                'keto': { name: '케토코나졸', desc: '의약품으로도 쓰이는 강력한 항진균제입니다. 곰팡이 세포막의 합성을 차단하여 근본적인 원인을 해결합니다.', brands: ['니조랄'] },
+                'piroctone': { name: '피록톤 올아민', desc: '비듬 원인균을 효과적으로 억제하면서도 두피 마이크로바이옴의 균형을 해치지 않는 차세대 성분입니다.', brands: ['세바메드', '클리어(Scalpceuticals)'] },
+                'barrier': { name: '장벽 케어 성분', desc: '세라마이드, 히알루론산, 나이아신아마이드 등 스킨케어 성분을 활용하여 두피 자체의 건강과 방어력을 강화합니다.', brands: ['세라비', '클리어', '더코스'] },
+                'anti-inflammatory': { name: '항염/진정 성분', desc: '리코칼콘 A, 우레아 등 두피의 미세 염증을 완화하고 가려움증을 줄여 문제의 근본 원인에 접근합니다.', brands: ['유세린'] },
+            };
+
+            const tabs = document.querySelectorAll('.nav-tab');
+            const contentSections = document.querySelectorAll('.content-section');
+            const brandSelector = document.getElementById('brand-selector');
+            const brandDetailView = document.getElementById('brand-detail-view');
+            const techFilter = document.getElementById('tech-filter');
+            const techDetailView = document.getElementById('tech-detail-view');
+            let brandRadarChart;
+
+            function initTabs() {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const target = tab.dataset.tab;
+                        
+                        tabs.forEach(t => t.classList.replace('tab-active', 'tab-inactive'));
+                        tab.classList.replace('tab-inactive', 'tab-active');
+
+                        contentSections.forEach(section => {
+                            if (section.id === `${target}-content`) {
+                                section.classList.add('active');
+                            } else {
+                                section.classList.remove('active');
+                            }
+                        });
+                    });
+                });
+                tabs[0].click();
+            }
+            
+            function initMarketGrowthChart() {
+                const ctx = document.getElementById('marketGrowthChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['2024', '2026', '2028', '2030', '2032', '2034'],
+                        datasets: [{
+                            label: '글로벌 헤어/두피 케어 시장 규모 (십억 달러)',
+                            data: [104, 118, 134, 153, 174, 200],
+                            borderColor: '#475569',
+                            backgroundColor: 'rgba(71, 85, 105, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: false, ticks: { callback: value => `$${value}B` } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            function initBrandComparison() {
+                Object.keys(brandData).forEach(key => {
+                    const brand = brandData[key];
+                    const card = document.createElement('button');
+                    card.className = 'brand-card p-3 bg-white rounded-lg shadow-sm border-2 border-transparent hover:shadow-md transition-all duration-300 flex flex-col items-center text-center';
+                    card.dataset.brand = key;
+                    card.innerHTML = `
+                        <img src="${brand.logo}" alt="${brand.name} 로고" class="h-10 mb-2 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/120x40/f1f5f9/475569?text=${brand.name}';">
+                        <span class="font-semibold text-sm text-slate-700">${brand.name}</span>
+                        <span class="text-xs text-slate-500">${brand.parent}</span>
+                    `;
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.brand-card').forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        renderBrandDetails(key);
+                    });
+                    brandSelector.appendChild(card);
+                });
+                renderBrandDetails(Object.keys(brandData)[0]);
+                document.querySelector('.brand-card').classList.add('active');
+            }
+
+            function renderBrandDetails(brandKey) {
+                const brand = brandData[brandKey];
+                brandDetailView.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <img src="${brand.logo}" alt="${brand.name} 로고" class="h-10 mr-4" onerror="this.onerror=null;this.src='https://placehold.co/120x40/f1f5f9/475569?text=${brand.name}';">
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800">${brand.name}</h3>
+                            <p class="text-md text-slate-500">${brand.identity}</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-slate-700 mb-2 border-b pb-1">핵심 전략</h4>
+                            <p class="text-sm text-slate-600">${brand.strategy}</p>
+                            <h4 class="font-semibold text-slate-700 mt-4 mb-2 border-b pb-1">주요 기술</h4>
+                            <p class="text-sm text-slate-600">${brand.tech}</p>
+                            <h4 class="font-semibold text-slate-700 mt-4 mb-2 border-b pb-1">핵심 타겟</h4>
+                            <p class="text-sm text-slate-600">${brand.target}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-700 mb-2 text-center">전략 레이더 차트</h4>
+                            <div class="chart-container h-64 md:h-80">
+                                <canvas id="brandRadarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                updateRadarChart(brand);
+            }
+            
+            function updateRadarChart(brand) {
+                const radarCtx = document.getElementById('brandRadarChart').getContext('2d');
+                const chartData = {
+                    labels: ['의약품 수준 효능', '마이크로바이옴 과학', '두피 장벽 케어', '대중 시장 접근성', '프리미엄 포지셔닝'],
+                    datasets: [{
+                        label: brand.name,
+                        data: brand.radar,
+                        fill: true,
+                        backgroundColor: 'rgba(71, 85, 105, 0.2)',
+                        borderColor: 'rgb(71, 85, 105)',
+                        pointBackgroundColor: 'rgb(71, 85, 105)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(71, 85, 105)'
+                    }]
+                };
+
+                if (brandRadarChart) {
+                    brandRadarChart.data = chartData;
+                    brandRadarChart.update();
+                } else {
+                    brandRadarChart = new Chart(radarCtx, {
+                        type: 'radar',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            elements: { line: { tension: 0.1 } },
+                            scales: {
+                                r: {
+                                    angleLines: { color: '#cbd5e1' },
+                                    grid: { color: '#e2e8f0' },
+                                    pointLabels: { font: { size: 10 } },
+                                    suggestedMin: 0,
+                                    suggestedMax: 5,
+                                    ticks: { display: false }
+                                }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            }
+            
+            function initTechAnalysis() {
+                 Object.keys(techData).forEach((key, index) => {
+                    const tech = techData[key];
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `tech-filter-btn px-4 py-2 text-sm font-medium ${index === 0 ? 'text-white bg-slate-700' : 'text-gray-900 bg-white'} border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700`;
+                    if (index === 0) button.classList.add('rounded-l-lg');
+                    if (index === Object.keys(techData).length - 1) button.classList.add('rounded-r-lg');
+                    button.dataset.tech = key;
+                    button.textContent = tech.name;
+                    button.addEventListener('click', () => {
+                        document.querySelectorAll('.tech-filter-btn').forEach(btn => {
+                            btn.classList.remove('bg-slate-700', 'text-white');
+                            btn.classList.add('bg-white', 'text-gray-900');
+                        });
+                        button.classList.add('bg-slate-700', 'text-white');
+                        button.classList.remove('bg-white', 'text-gray-900');
+                        renderTechDetails(key);
+                    });
+                    techFilter.appendChild(button);
+                });
+                renderTechDetails(Object.keys(techData)[0]);
+            }
+            
+            function renderTechDetails(selectedKey) {
+                techDetailView.innerHTML = '';
+                Object.keys(techData).forEach(key => {
+                    if (key === selectedKey) {
+                        const tech = techData[key];
+                        const card = document.createElement('div');
+                        card.className = 'md:col-span-2 lg:col-span-3 p-6 bg-white rounded-lg shadow-lg fade-in';
+                        card.innerHTML = `
+                            <h3 class="text-2xl font-bold text-slate-800 mb-2">${tech.name}</h3>
+                            <p class="text-slate-600 mb-4">${tech.desc}</p>
+                            <h4 class="font-semibold text-slate-700 mb-2">주요 사용 브랜드:</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${tech.brands.map(b => `<span class="bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">${b}</span>`).join('')}
+                            </div>
+                        `;
+                        techDetailView.appendChild(card);
+                    }
+                });
+            }
+
+            initTabs();
+            initMarketGrowthChart();
+            initBrandComparison();
+            initTechAnalysis();
+        });
+    </script>
+</body>
+</html>
