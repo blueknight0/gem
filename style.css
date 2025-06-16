@@ -14,7 +14,7 @@ body {
 
 .container {
     width: 90%;
-    max-width: 800px;
+    max-width: 1000px; /* 너비 확장 */
     background: white;
     padding: 2em;
     border-radius: 15px;
@@ -22,178 +22,125 @@ body {
     text-align: center;
 }
 
-h1 {
-    color: #005a9c;
-    margin-bottom: 1em;
-}
+h1, h2, h3 { color: #005a9c; }
+h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
-h2 {
-    color: #333;
-}
-
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
 
 #setup-screen textarea {
-    width: 95%;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 5px;
-    font-size: 1em;
-    margin-bottom: 1em;
+    width: 95%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em; margin-bottom: 1em;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    font-size: 1.1em;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.1s;
+    background-color: #007bff; color: white; border: none; padding: 12px 25px; font-size: 1.1em; font-weight: bold;
+    border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.1s;
 }
+button:hover { background-color: #0056b3; }
+button:active { transform: scale(0.98); }
 
-button:hover {
-    background-color: #0056b3;
-}
+#start-button { margin-top: 1em; background-color: #28a745; }
+#start-button:hover { background-color: #218838; }
+#start-button:disabled { background-color: #aaa; cursor: not-allowed; }
 
-button:active {
-    transform: scale(0.98);
-}
+/* --- 경주 화면 (레이아웃 수정) --- */
+#race-screen { display: flex; gap: 20px; }
 
-#start-button {
-    margin-top: 1em;
-    background-color: #28a745;
-}
-#start-button:hover {
-    background-color: #218838;
-}
-#start-button:disabled {
-    background-color: #aaa;
-    cursor: not-allowed;
-}
-
-
-/* --- 경주 화면 --- */
 #racetrack {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    max-height: 60vh;
-    overflow-y: auto;
-    background: #e8f5e9;
-    border: 2px solid #a5d6a7;
-    border-radius: 10px;
-    overflow-x: hidden;
+    flex-grow: 1; /* 남은 공간을 모두 차지 */
+    position: relative; height: 500px; max-height: 70vh;
+    overflow-y: auto; overflow-x: hidden;
+    background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px;
 }
 
 .finish-line {
-    position: absolute;
-    right: 30px;
-    top: 0;
-    width: 5px;
-    height: 100%;
-    background-image: repeating-linear-gradient(
-        white 0, white 10px,
-        black 10px, black 20px
-    );
+    position: absolute; right: 30px; top: 0; width: 5px; height: 100%;
+    background-image: repeating-linear-gradient(white 0, white 10px, black 10px, black 20px);
     z-index: 2;
 }
 
-/* --- 말 스타일 (수정됨) --- */
 .racer {
-    position: absolute;
-    /* left: 10px; -> left: 150px; 로 변경하여 출발선 위치를 오른쪽으로 이동 */
-    left: 150px; 
-    height: 30px;
-    background-color: #ff7043;
-    color: white;
-    border-radius: 5px;
-    padding: 0 15px;
-    display: flex;
-    align-items: center;
-    font-size: 0.9em;
-    transition: transform 0.2s linear;
-    /* transform 속성을 추가하여 오른쪽 끝을 기준으로 정렬 */
-    transform: translateX(-100%); 
+    position: absolute; left: 150px; height: 30px; background-color: #ff7043;
+    color: white; border-radius: 5px; padding: 0 15px; display: flex;
+    align-items: center; font-size: 0.9em;
+    transition: transform 0.2s linear, box-shadow 0.3s;
+    transform: translateX(-100%);
+}
+.racer::after {
+    content: '🐎'; margin-left: 10px; font-size: 1.2em; white-space: nowrap;
 }
 
-.racer::after {
-    content: '🐎';
-    margin-left: 10px;
-    font-size: 1.2em;
-    /* white-space: nowrap 추가로 너비 계산이 깨지지 않도록 함 */
-    white-space: nowrap; 
+/* --- 추가 효과 스타일 --- */
+.racer.boost {
+    box-shadow: 0 0 20px 5px #ffeb3b; /* 노란색 부스트 효과 */
+    z-index: 10;
+}
+.racer.finished-1 { box-shadow: 0 0 20px 5px #ffd700; } /* 1등 금색 */
+.racer.finished-2 { box-shadow: 0 0 20px 5px #c0c0c0; } /* 2등 은색 */
+.racer.finished-3 { box-shadow: 0 0 20px 5px #cd7f32; } /* 3등 동색 */
+
+/* --- 실시간 순위 창 스타일 --- */
+#live-ranking {
+    width: 200px; /* 고정 너비 */
+    flex-shrink: 0; /* 창 크기가 줄어도 너비 유지 */
+    background-color: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+}
+#ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+.rank-item {
+    position: absolute;
+    width: 100%;
+    height: 38px;
+    padding: 5px;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    transition: top 0.5s ease-in-out, opacity 0.5s;
+    opacity: 1;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.rank-item.rank-hidden {
+    opacity: 0;
+}
+.rank-num {
+    font-weight: bold;
+    font-size: 1.1em;
+    width: 30px;
+    text-align: center;
+    color: #007bff;
 }
 
 /* --- 우승자 발표 화면 (이전과 동일) --- */
-#winner-announcer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
+#winner-announcer, .winner-box, .podium, .podium-stand { /* 이전 CSS 코드와 동일 */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; align-items: center; z-index: 100;
 }
-
 .winner-box {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(255, 223, 77, 0.8);
+    position: relative; background: white; padding: 30px 40px; border-radius: 20px;
+    text-align: center; box-shadow: 0 0 40px rgba(255, 223, 77, 0.8);
     animation: pop-up 0.5s ease-out;
 }
-
-@keyframes pop-up {
-    from { transform: scale(0.5); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
+@keyframes pop-up { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .podium {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    height: 200px;
-    margin-bottom: 30px;
-    gap: 5px;
+    position: relative; display: flex; align-items: flex-end; justify-content: center;
+    height: 200px; margin-bottom: 30px; gap: 5px;
 }
-
 .podium-stand {
-    width: 120px;
-    padding: 10px;
-    color: black;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    position: relative; width: 120px; padding: 10px; color: black;
+    border-top-left-radius: 5px; border-top-right-radius: 5px;
 }
-
-.podium-stand .place {
-    font-size: 1.5em;
-    font-weight: bold;
-}
-.podium-stand .name {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin-top: 10px;
-    word-break: keep-all;
-}
-
-.podium-stand.first {
-    height: 180px;
-    background-color: #ffd700; /* Gold */
-}
-.podium-stand.second {
-    height: 130px;
-    background-color: #c0c0c0; /* Silver */
-}
-.podium-stand.third {
-    height: 90px;
-    background-color: #cd7f32; /* Bronze */
-}
+.podium-stand .place { font-size: 1.5em; font-weight: bold; }
+.podium-stand .name { font-size: 1.1em; font-weight: bold; margin-top: 10px; word-break: keep-all; }
+.podium-stand.first { height: 180px; background-color: #ffd700; }
+.podium-stand.second { height: 130px; background-color: #c0c0c0; }
+.podium-stand.third { height: 90px; background-color: #cd7f32; }
