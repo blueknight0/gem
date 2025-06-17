@@ -3,17 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2025 PAI Seminar - 럭키드로우 그랑프리</title>
+    <title>다그닥 다그닥 그랑프리</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>2025 PAI Seminar<br>럭키드로우 그랑프리 🐎</h1>
+        <h1>달려라 달려!<br>다그닥 다그닥 그랑프리 🐎</h1>
 
         <div id="setup-screen">
-            <h2>참가자 명단 입력</h2>
-            <p>참가자 이름을 한 줄에 한 명씩 입력해주세요.</p>
-            <textarea id="participants-input" rows="10" placeholder="김민준&#10;이서연&#10;박도윤&#10;최지우&#10;..."></textarea>
+            <h2>경주 설정</h2>
+            <div style="margin-bottom: 1.5em;">
+                <label for="tournament-name" style="display: block; font-weight: bold; margin-bottom: 0.5em; color: #005a9c;">대회 이름</label>
+                <input type="text" id="tournament-name" value="다그닥 다그닥 그랑프리" style="width: 95%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em; margin-bottom: 0.5em;">
+            </div>
+            <div>
+                <label for="participants-input" style="display: block; font-weight: bold; margin-bottom: 0.5em; color: #005a9c;">참가자 명단</label>
+                <p style="margin: 0 0 0.5em 0; font-size: 0.9em; color: #666;">참가자 이름을 한 줄에 한 명씩 입력해주세요.</p>
+                <textarea id="participants-input" rows="10" placeholder="김민준&#10;이서연&#10;박도윤&#10;최지우&#10;..."></textarea>
+            </div>
             <button id="prepare-button">경주 준비</button>
         </div>
 
@@ -32,7 +39,10 @@
                 </div>
             </div>
         </div>
-        <button id="start-button" class="hidden">경주 시작!</button>
+        <div style="display: flex; justify-content: center; align-items: baseline; gap: 20px; margin-top: 1em;">
+            <button id="back-to-setup-button" class="hidden" style="background-color: #6c757d; padding: 12px 25px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; line-height: 1; display: inline-block; vertical-align: baseline;">재설정</button>
+            <button id="start-button" class="hidden" style="background-color: #28a745; color: white; padding: 12px 25px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; line-height: 1; display: inline-block; vertical-align: baseline;">경주 시작!</button>
+        </div>
 
         <div id="winner-announcer" class="hidden">
             <div class="winner-box">
@@ -53,6 +63,12 @@
                 </div>
                 <button id="reset-button">다시하기</button>
             </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; padding: 10px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50;">
+        <div style="transform: scale(0.7);">
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="jjamsoon" data-color="#BD5FFF" data-emoji="🍷"  data-font="Lato" data-text="Buy me a wine" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
         </div>
     </div>
 

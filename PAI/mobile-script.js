@@ -4,8 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const raceScreen = document.getElementById('race-screen');
     const participantsInput = document.getElementById('participants-input');
     const prepareButton = document.getElementById('prepare-button');
+    const tournamentNameInput = document.getElementById('tournament-name');
     const racetrack = document.getElementById('racetrack');
     const startButton = document.getElementById('start-button');
+    const backToSetupButton = document.getElementById('back-to-setup-button');
     const winnerAnnouncer = document.getElementById('winner-announcer');
     const resetButton = document.getElementById('reset-button');
     const rankingList = document.getElementById('ranking-list');
@@ -24,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const commentaryText = document.getElementById('commentary-text');
     const distanceRemaining = document.getElementById('distance-remaining');
 
-    let participants = [];
+    let allParticipants = [];
+    let currentRoundParticipants = [];
     let racersData = [];
     let winners = [];
     let raceInterval;
@@ -33,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let racePixelDistance = 0;
     let raceFinished = false;
     let isRankingVisible = false;
+    
+    // 토너먼트 시스템 관련 변수
+    let tournamentMode = false;
+    let currentRound = 1;
+    let totalRounds = 1;
+    let roundResults = [];
+    let advancedParticipants = [];
+    
+    // 라운드 정보 표시 요소 추가
+    let roundInfoElement;
 
     // 부스터 텍스트 배열
     const boostTexts = [
@@ -52,9 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 모바일 터치 이벤트 처리
     function addTouchSupport() {
-        // 터치 이벤트를 클릭 이벤트로 변환
         document.addEventListener('touchstart', function(e) {
-            // 기본 터치 동작 방지 (더블 탭 줌 등)
             if (e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') {
                 e.preventDefault();
             }
@@ -79,11 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('최소 1명 이상의 참가자를 입력해주세요.');
             return;
         }
-        participants = names;
-        setupRacersAndRanking();
+        if (names.length > 30) {
+            alert('참가자는 최대 30명까지 가능합니다.');
+            return;
+        }
+        
+        allParticipants = names;
+        
+        // 대회 이름 업데이트
+        const tournamentName = tournamentNameInput.value.trim() || '다그닥 다그닥 그랑프리';
+        document.querySelector('h1').innerHTML = `달려라 달려!<br>${tournamentName} 🐎`;
+        
+        setupTournament();
         setupScreen.style.display = 'none';
         raceScreen.style.display = 'flex';
         startButton.classList.remove('hidden');
+        backToSetupButton.classList.remove('hidden');
         
         // 모바일에서는 기본적으로 순위를 숨김
         liveRanking.classList.add('ranking-hidden');
@@ -91,19 +113,130 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleRankingButton.textContent = '순위 보기';
     });
 
+    function setupTournament() {
+        // 초기화
+        currentRound = 1;
+        roundResults = [];
+        advancedParticipants = [];
+        
+        // 토너먼트 모드 설정
+        if (allParticipants.length <= 10) {
+            tournamentMode = false;
+            totalRounds = 1;
+            currentRoundParticipants = [...allParticipants];
+        } else {
+            tournamentMode = true;
+            // 라운드 수 계산
+            if (allParticipants.length <= 20) {
+                totalRounds = 3; // 예선 2라운드 + 결승
+            } else {
+                totalRounds = 4; // 예선 3라운드 + 결승
+            }
+            setupRounds();
+        }
+        
+        // 라운드 정보 표시 요소 생성
+        createRoundInfoDisplay();
+        updateRoundInfo();
+        setupCurrentRound();
+    }
+
+    function createRoundInfoDisplay() {
+        // 기존 라운드 정보 제거
+        const existingRoundInfo = document.getElementById('round-info');
+        if (existingRoundInfo) {
+            existingRoundInfo.remove();
+        }
+        
+        // 새 라운드 정보 요소 생성
+        roundInfoElement = document.createElement('div');
+        roundInfoElement.id = 'round-info';
+        roundInfoElement.style.cssText = `
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            line-height: 1.3;
+        `;
+        
+        // 해설 박스 다음에 삽입
+        const commentaryBox = document.getElementById('race-commentary');
+        commentaryBox.parentNode.insertBefore(roundInfoElement, commentaryBox.nextSibling);
+    }
+
+    function updateRoundInfo() {
+        if (!roundInfoElement) return;
+        
+        if (!tournamentMode) {
+            roundInfoElement.textContent = `전체 ${allParticipants.length}명 단일 경주`;
+        } else {
+            if (currentRound < totalRounds) {
+                roundInfoElement.textContent = `예선 ${currentRound}라운드 (${currentRoundParticipants.length}명)\n상위 3명 결승 진출`;
+            } else {
+                roundInfoElement.textContent = `🏆 결승전 (${currentRoundParticipants.length}명)\n최종 순위 결정`;
+            }
+        }
+    }
+
+    function setupRounds() {
+        // 참가자를 라운드별로 분배
+        const shuffled = [...allParticipants].sort(() => Math.random() - 0.5);
+        
+        if (allParticipants.length <= 20) {
+            // 2개 예선으로 분배
+            const mid = Math.ceil(shuffled.length / 2);
+            roundResults.push({ participants: shuffled.slice(0, mid), winners: [] });
+            roundResults.push({ participants: shuffled.slice(mid), winners: [] });
+        } else {
+            // 3개 예선으로 분배
+            const third = Math.ceil(shuffled.length / 3);
+            roundResults.push({ participants: shuffled.slice(0, third), winners: [] });
+            roundResults.push({ participants: shuffled.slice(third, third * 2), winners: [] });
+            roundResults.push({ participants: shuffled.slice(third * 2), winners: [] });
+        }
+        
+        // 결승전 슬롯 추가
+        roundResults.push({ participants: [], winners: [] });
+    }
+
+    function setupCurrentRound() {
+        if (!tournamentMode) {
+            // 단일 경주
+            currentRoundParticipants = [...allParticipants];
+        } else if (currentRound < totalRounds && roundResults.length > 0) {
+            // 예선 라운드 - roundResults 배열이 존재하는지 확인
+            if (roundResults[currentRound - 1] && roundResults[currentRound - 1].participants) {
+                currentRoundParticipants = roundResults[currentRound - 1].participants;
+            } else {
+                console.error('라운드 데이터가 없습니다:', currentRound, roundResults);
+                currentRoundParticipants = [...allParticipants];
+            }
+        } else {
+            // 결승전
+            currentRoundParticipants = [...advancedParticipants];
+        }
+        
+        setupRacersAndRanking();
+        updateRoundInfo();
+    }
+
     function setupRacersAndRanking() {
         racetrack.innerHTML = '<div class="finish-line"></div>';
         rankingList.innerHTML = '';
         
-        // 모바일에서는 고정 높이 사용
-        const trackHeight = Math.max(300, Math.min(participants.length * 30 + 20, 400));
+        // 모바일에서는 고정 높이 사용 - 최대 10명까지만 표시 가능하도록 제한
+        const trackHeight = Math.max(300, Math.min(currentRoundParticipants.length * 30 + 20, 350));
         racetrack.style.height = `${trackHeight}px`;
 
         const finishLine = racetrack.querySelector('.finish-line');
         finishLine.style.height = `${trackHeight}px`;
 
         racersData = [];
-        participants.forEach((name, index) => {
+        currentRoundParticipants.forEach((name, index) => {
             const racerElement = document.createElement('div');
             racerElement.className = 'racer';
             racerElement.textContent = name;
@@ -141,7 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
             racer.element.className = 'racer';
         });
 
-        commentaryText.textContent = "출발! 2000m 대장정이 시작됩니다!";
+        const roundText = tournamentMode ? 
+            (currentRound < totalRounds ? `예선 ${currentRound}라운드` : '결승전') : '경주';
+        commentaryText.textContent = `${roundText} 출발! 2000m 대장정이 시작됩니다!`;
         distanceRemaining.textContent = "남은 거리: 2000m";
 
         setTimeout(() => {
@@ -204,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 racer.finished = true;
                 winners.push(racer.name);
                 racer.element.classList.add(`finished-${winners.length}`);
-                if (winners.length >= 3 || winners.length === participants.length) {
+                if (winners.length >= 3 || winners.length === currentRoundParticipants.length) {
                     raceFinished = true;
                     endRace(winners);
                 }
@@ -290,17 +425,74 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function endRace(finalWinners) {
         clearInterval(raceInterval);
-        commentaryText.textContent = `경주 종료! ${finalWinners[0]}이(가) 우승했습니다! 🏆`;
-        distanceRemaining.textContent = "경주 완료!";
         
-        // 모바일에서는 confetti 효과를 약간 줄임
-        confetti({ 
-            particleCount: 100, 
-            spread: 80, 
-            origin: { y: 0.6 },
-            colors: ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7']
+        // 라운드 결과 저장
+        if (tournamentMode && currentRound < totalRounds) {
+            // 예선 라운드 완료
+            roundResults[currentRound - 1].winners = finalWinners.slice(0, 3); // 상위 3명만
+            advancedParticipants.push(...finalWinners.slice(0, 3));
+            
+            commentaryText.textContent = `예선 ${currentRound}라운드 종료! ${finalWinners.slice(0, 3).join(', ')}이(가) 결승 진출!`;
+            
+            // 다음 라운드 버튼 표시
+            showNextRoundButton();
+        } else {
+            // 최종 결승 또는 단일 경주 완료
+            const winnerText = tournamentMode ? '최종 우승' : '우승';
+            commentaryText.textContent = `경주 종료! ${finalWinners[0]}이(가) ${winnerText}했습니다! 🏆`;
+            
+            // 모바일에서는 confetti 효과를 약간 줄임
+            confetti({ 
+                particleCount: 100, 
+                spread: 80, 
+                origin: { y: 0.6 },
+                colors: ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7']
+            });
+            
+            showFinalResults(finalWinners);
+        }
+        
+        distanceRemaining.textContent = "경주 완료!";
+    }
+
+    function showNextRoundButton() {
+        // 기존 다음 라운드 버튼 제거
+        const existingNextButton = document.getElementById('next-round-button');
+        if (existingNextButton) {
+            existingNextButton.remove();
+        }
+        
+        const nextButton = document.createElement('button');
+        nextButton.id = 'next-round-button';
+        nextButton.textContent = currentRound < totalRounds - 1 ? 
+            `예선 ${currentRound + 1}라운드 시작` : '결승전 시작';
+        nextButton.style.cssText = `
+            background-color: #fd7e14;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 300px;
+        `;
+        
+        nextButton.addEventListener('click', () => {
+            currentRound++;
+            setupCurrentRound();
+            startButton.disabled = false;
+            startButton.classList.remove('hidden');
+            nextButton.remove();
         });
         
+        const buttonContainer = startButton.parentNode;
+        buttonContainer.insertBefore(nextButton, startButton.nextSibling);
+    }
+
+    function showFinalResults(finalWinners) {
         Object.values(podiumStands).forEach(stand => stand.classList.add('hidden'));
         if (finalWinners[0]) {
             winnerNames[1].textContent = finalWinners[0];
@@ -321,8 +513,24 @@ document.addEventListener('DOMContentLoaded', () => {
         winnerAnnouncer.classList.add('hidden');
         raceScreen.style.display = 'none';
         startButton.classList.add('hidden');
+        backToSetupButton.classList.add('hidden');
         startButton.disabled = false;
         setupScreen.style.display = 'block';
+        
+        // 대회 이름 초기화
+        document.querySelector('h1').innerHTML = '달려라 달려!<br>다그닥 다그닥 그랑프리 🐎';
+        
+        // 다음 라운드 버튼 제거
+        const nextButton = document.getElementById('next-round-button');
+        if (nextButton) {
+            nextButton.remove();
+        }
+        
+        // 라운드 정보 제거
+        if (roundInfoElement) {
+            roundInfoElement.remove();
+            roundInfoElement = null;
+        }
         
         commentaryText.textContent = "경주 준비 중...";
         distanceRemaining.textContent = "남은 거리: 2000m";
@@ -333,8 +541,15 @@ document.addEventListener('DOMContentLoaded', () => {
             allBoostTexts.forEach(text => text.remove());
         }
         
+        // 토너먼트 상태 초기화
+        tournamentMode = false;
+        currentRound = 1;
+        totalRounds = 1;
+        roundResults = [];
+        advancedParticipants = [];
         winners = [];
         raceFinished = false;
+        
         if (raceInterval) {
             clearInterval(raceInterval);
             raceInterval = null;
@@ -345,6 +560,41 @@ document.addEventListener('DOMContentLoaded', () => {
         isRankingVisible = false;
         toggleRankingButton.textContent = '순위 보기';
     }
+
+    // 설정으로 돌아가기 버튼 이벤트
+    backToSetupButton.addEventListener('click', () => {
+        // 경주가 진행 중이면 중지
+        if (raceInterval) {
+            clearInterval(raceInterval);
+            raceInterval = null;
+        }
+        
+        // 기존 부스터 텍스트들 모두 제거
+        if (racetrack) {
+            const allBoostTexts = racetrack.querySelectorAll('.boost-text');
+            allBoostTexts.forEach(text => text.remove());
+        }
+        
+        // 다음 라운드 버튼 제거
+        const nextButton = document.getElementById('next-round-button');
+        if (nextButton) {
+            nextButton.remove();
+        }
+        
+        raceScreen.style.display = 'none';
+        startButton.classList.add('hidden');
+        backToSetupButton.classList.add('hidden');
+        startButton.disabled = false;
+        setupScreen.style.display = 'block';
+        
+        // 대회 이름 초기화
+        document.querySelector('h1').innerHTML = '달려라 달려!<br>다그닥 다그닥 그랑프리 🐎';
+        
+        // 순위 표시 초기화
+        liveRanking.classList.add('ranking-hidden');
+        isRankingVisible = false;
+        toggleRankingButton.textContent = '순위 보기';
+    });
 
     resetButton.addEventListener('click', resetGame);
 
