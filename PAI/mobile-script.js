@@ -47,6 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 라운드 정보 표시 요소 추가
     let roundInfoElement;
 
+    // 🎵 사운드 시스템 추가
+    let audioContext;
+    let raceBackgroundSound;
+    let isAudioEnabled = false;
+
     // 부스터 텍스트 배열
     const boostTexts = [
         "이랏!",
@@ -62,6 +67,150 @@ document.addEventListener('DOMContentLoaded', () => {
         "스피드업!",
         "가속!"
     ];
+
+    // 🎵 사운드 초기화
+    function initAudio() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            isAudioEnabled = true;
+            console.log('오디오 시스템 초기화 완료');
+        } catch (error) {
+            console.warn('오디오 지원하지 않음:', error);
+            isAudioEnabled = false;
+        }
+    }
+
+    // 🎵 말발굽 소리 생성 (반복적인 클립클롭 소리)
+    function createHorseGallopSound() {
+        if (!isAudioEnabled || !audioContext) return null;
+
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.3;
+        
+        let isRunning = true; // 소리가 계속 재생되어야 하는지 확인
+        let intervalId; // setInterval ID 저장
+        
+        function playClop() {
+            if (!isRunning) return; // 경주가 끝나면 중지
+            
+            const currentTime = audioContext.currentTime;
+            
+            // 높은 톤 (앞발)
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            osc1.frequency.setValueAtTime(800, currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(200, currentTime + 0.1);
+            gain1.gain.setValueAtTime(0, currentTime);
+            gain1.gain.linearRampToValueAtTime(0.15, currentTime + 0.01);
+            gain1.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.1);
+            
+            osc1.connect(gain1);
+            gain1.connect(gainNode);
+            osc1.start(currentTime);
+            osc1.stop(currentTime + 0.1);
+            
+            // 낮은 톤 (뒷발) - 약간 지연
+            setTimeout(() => {
+                if (!isRunning) return;
+                const currentTime2 = audioContext.currentTime;
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.frequency.setValueAtTime(600, currentTime2);
+                osc2.frequency.exponentialRampToValueAtTime(150, currentTime2 + 0.1);
+                gain2.gain.setValueAtTime(0, currentTime2);
+                gain2.gain.linearRampToValueAtTime(0.15, currentTime2 + 0.01);
+                gain2.gain.exponentialRampToValueAtTime(0.001, currentTime2 + 0.1);
+                
+                osc2.connect(gain2);
+                gain2.connect(gainNode);
+                osc2.start(currentTime2);
+                osc2.stop(currentTime2 + 0.1);
+            }, 100);
+        }
+        
+        // 0.25초마다 말발굽 소리 재생
+        intervalId = setInterval(playClop, 250);
+        
+        // 소리 중지 함수를 gainNode에 추가
+        gainNode.stopGallop = function() {
+            isRunning = false;
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        };
+        
+        gainNode.connect(audioContext.destination);
+        return gainNode;
+    }
+
+    // 🎵 부스터 효과음
+    function playBoostSound() {
+        if (!isAudioEnabled || !audioContext) return;
+
+        const osc = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        osc.frequency.setValueAtTime(220, audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.5);
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + 0.5);
+    }
+
+    // 🎵 우승 팡파레
+    function playVictoryFanfare() {
+        if (!isAudioEnabled || !audioContext) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        let delay = 0;
+        
+        notes.forEach((freq, i) => {
+            setTimeout(() => {
+                const osc = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.8);
+            }, delay);
+            delay += 200;
+        });
+    }
+
+    // 🎵 카운트다운 효과음
+    function playCountdownBeep(isStart = false) {
+        if (!isAudioEnabled || !audioContext) return;
+
+        const osc = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        osc.frequency.setValueAtTime(isStart ? 880 : 440, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + 0.3);
+    }
 
     // 모바일 터치 이벤트 처리
     function addTouchSupport() {
@@ -100,6 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 대회 이름 업데이트
         const tournamentName = tournamentNameInput.value.trim() || '다그닥 다그닥 그랑프리';
         document.querySelector('h1').innerHTML = `달려라 달려!<br>${tournamentName} 🐎`;
+        
+        // 🎵 오디오 초기화 (사용자 상호작용 후)
+        if (!isAudioEnabled) {
+            initAudio();
+        }
         
         setupTournament();
         setupScreen.style.display = 'none';
@@ -276,17 +430,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const roundText = tournamentMode ? 
             (currentRound < totalRounds ? `예선 ${currentRound}라운드` : '결승전') : '경주';
-        commentaryText.textContent = `${roundText} 출발! 2000m 대장정이 시작됩니다!`;
-        distanceRemaining.textContent = "남은 거리: 2000m";
-
+        
+        // 🎵 카운트다운 효과음과 함께 시작
+        commentaryText.textContent = "3...";
+        playCountdownBeep();
+        
         setTimeout(() => {
+            commentaryText.textContent = "2...";
+            playCountdownBeep();
+        }, 1000);
+        
+        setTimeout(() => {
+            commentaryText.textContent = "1...";
+            playCountdownBeep();
+        }, 2000);
+        
+        setTimeout(() => {
+            commentaryText.textContent = `${roundText} 출발! 2000m 대장정이 시작됩니다!`;
+            playCountdownBeep(true); // 시작 신호
+            
+            // 🎵 말발굽 소리 시작
+            if (isAudioEnabled && audioContext) {
+                raceBackgroundSound = createHorseGallopSound();
+            }
+            
+            distanceRemaining.textContent = "남은 거리: 2000m";
+
             const racetrackRect = racetrack.getBoundingClientRect();
             // 모바일에 맞게 조정된 거리 계산
             racePixelDistance = racetrackRect.width - 80 - 15; // 시작점 80px, 결승선 15px
             pixelsPerMeter = racePixelDistance / totalDistance;
 
             raceInterval = setInterval(updateRaceState, 100);
-        }, 10);
+        }, 3000);
     });
 
     function updateRaceState() {
@@ -298,6 +474,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Math.random() < 0.015 && !racer.element.classList.contains('boost')) {
                 racer.element.classList.add('boost');
                 move *= 3;
+                
+                // 🎵 부스터 효과음 재생
+                playBoostSound();
                 
                 // 랜덤 부스터 텍스트 표시
                 const randomText = boostTexts[Math.floor(Math.random() * boostTexts.length)];
@@ -426,6 +605,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function endRace(finalWinners) {
         clearInterval(raceInterval);
         
+        // 🎵 말발굽 소리 중지
+        if (raceBackgroundSound) {
+            if (raceBackgroundSound.stopGallop) {
+                raceBackgroundSound.stopGallop();
+            }
+            raceBackgroundSound.disconnect();
+            raceBackgroundSound = null;
+        }
+        
         // 라운드 결과 저장
         if (tournamentMode && currentRound < totalRounds) {
             // 예선 라운드 완료
@@ -440,6 +628,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // 최종 결승 또는 단일 경주 완료
             const winnerText = tournamentMode ? '최종 우승' : '우승';
             commentaryText.textContent = `경주 종료! ${finalWinners[0]}이(가) ${winnerText}했습니다! 🏆`;
+            
+            // 🎵 우승 팡파레 재생
+            playVictoryFanfare();
             
             // 모바일에서는 confetti 효과를 약간 줄임
             confetti({ 
@@ -535,6 +726,15 @@ document.addEventListener('DOMContentLoaded', () => {
         commentaryText.textContent = "경주 준비 중...";
         distanceRemaining.textContent = "남은 거리: 2000m";
         
+        // 🎵 사운드 정리
+        if (raceBackgroundSound) {
+            if (raceBackgroundSound.stopGallop) {
+                raceBackgroundSound.stopGallop();
+            }
+            raceBackgroundSound.disconnect();
+            raceBackgroundSound = null;
+        }
+        
         // 모든 부스터 텍스트 제거
         if (racetrack) {
             const allBoostTexts = racetrack.querySelectorAll('.boost-text');
@@ -567,6 +767,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (raceInterval) {
             clearInterval(raceInterval);
             raceInterval = null;
+        }
+        
+        // 🎵 사운드 정리
+        if (raceBackgroundSound) {
+            if (raceBackgroundSound.stopGallop) {
+                raceBackgroundSound.stopGallop();
+            }
+            raceBackgroundSound.disconnect();
+            raceBackgroundSound = null;
         }
         
         // 기존 부스터 텍스트들 모두 제거
