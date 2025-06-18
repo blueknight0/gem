@@ -3,22 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LG H&H 2025 Tech Fair - Interactive Space v3</title>
+    <title>LG H&H 2025 Tech Fair - Interactive Space (Final Fix)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; cursor: crosshair; }
         canvas { display: block; }
         .ui-container, .label-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .label-container { z-index: 10; }
-
-        /* --- 클러스터 & 이모지 레이블 --- */
         .cluster-label { color: #fff; background: rgba(0, 20, 30, 0.7); padding: 5px 15px; border-radius: 20px; font-size: 20px; font-weight: bold; border: 1px solid; text-shadow: 0 0 5px #fff; }
         .cosmetics-label { border-color: #FF69B4; color: #FF69B4; }
         .household-label { border-color: #00CED1; color: #00CED1; }
         .health-label { border-color: #32CD32; color: #32CD32; }
         .emoji-label { font-size: 40px; cursor: pointer; pointer-events: all; transition: transform 0.2s; text-shadow: 0 0 15px #fff; }
         .emoji-label:hover { transform: scale(1.3); }
-
-        /* --- 모달 스타일 --- */
         .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; pointer-events: all; z-index: 200; }
         .modal-content { width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; background: #111; padding: 2em; border-radius: 10px; border: 1px solid #00ffdd; }
         .modal-content h2 { color: #00ffdd; margin-top: 0; }
@@ -29,19 +25,15 @@
         #details-modal-content p { color: #ddd; line-height: 1.6; }
         .modal-button { display: block; width: 100%; padding: 1em; margin-top: 1.5em; background: #00ffdd; border: none; color: #000; font-size: 1em; font-weight: bold; cursor: pointer; border-radius: 5px; transition: background 0.3s; }
         .modal-button:hover { background: #fff; }
-
-        /* --- 기타 UI --- */
         #info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 2em; background: rgba(0, 0, 0, 0.7); border-radius: 10px; text-align: center; pointer-events: all; border: 1px solid #00ffdd; z-index: 100;}
         #info h1 { margin-top: 0; color: #00ffdd; }
         #cart-button { position: absolute; bottom: 30px; right: 30px; padding: 1em; background: rgba(0, 255, 221, 0.8); border-radius: 50%; cursor: pointer; pointer-events: all; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; color: #000; transition: transform 0.3s; border: 2px solid rgba(255,255,255,0.5); z-index: 100;}
         #cart-button:hover { transform: scale(1.1); }
-        #tooltip { position: absolute; display: none; background: rgba(0, 0, 0, 0.8); border: 1px solid #fff; padding: 10px; border-radius: 5px; color: #fff; z-index: 100;}
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
     <div class="label-container" id="label-renderer-container"></div>
-
     <div class="ui-container">
         <div id="info">
             <h1>LG H&H 2025 Tech Fair</h1>
@@ -52,9 +44,7 @@
             </p>
             <button id="start-button">탐험 시작하기</button>
         </div>
-
         <div id="cart-button" style="display: none;">0</div>
-
         <div id="details-modal" class="modal">
             <div id="details-modal-content" class="modal-content">
                 <span id="close-details-modal" class="close-modal-btn">&times;</span>
@@ -63,7 +53,6 @@
                 <button id="add-to-cart-btn" class="modal-button">혁신 저장소에 담기</button>
             </div>
         </div>
-
         <div id="cart-modal" class="modal">
             <div class="modal-content">
                 <span id="close-cart-modal" class="close-modal-btn">&times;</span>
@@ -75,9 +64,8 @@
                 <ol id="tour-guide"></ol>
             </div>
         </div>
-
     </div>
-
+    
     <script type="importmap">
         {
             "imports": {
@@ -87,13 +75,13 @@
             }
         }
     </script>
-
+    
     <script type="module">
         import * as THREE from 'three';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
         import TWEEN from '@tweenjs/tween.js';
 
-        // --- 기본 설정 및 렌더러 ---
+        // 1. --- 기본 설정 및 렌더러 ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -105,7 +93,7 @@
         labelRenderer.domElement.style.top = '0px';
         document.getElementById('label-renderer-container').appendChild(labelRenderer.domElement);
 
-        // --- UI 요소 ---
+        // 2. --- UI 요소 및 상태 변수 ---
         const infoDiv = document.getElementById('info');
         const startButton = document.getElementById('start-button');
         const cartButton = document.getElementById('cart-button');
@@ -114,8 +102,11 @@
         const closeDetailsModal = document.getElementById('close-details-modal');
         const closeCartModal = document.getElementById('close-cart-modal');
         let currentlySelectedItem = null;
-
-        // --- Mock 데이터 (이모지 및 상세 설명 추가) ---
+        const cart = [];
+        let isExploring = false, isNavigating = false, isRightMouseDown = false;
+        const keyboard = {};
+        
+        // 3. --- Mock 데이터 ---
         const techData = [
             { id: 1, category: '화장품', emoji: '💄', title: 'AI 딥러닝 컬러매칭 파운데이션', desc: '사용자의 피부톤을 0.1초 만에 스캔하여 수천개의 컬러 데이터베이스와 매칭, 완벽한 색상의 파운데이션을 즉석에서 제조하는 혁신 기술입니다.', location: 'A-01'},
             { id: 2, category: '화장품', emoji: '✨', title: '나노-리포좀 비타민C 안정화 기술', desc: '빛과 열에 쉽게 파괴되는 순수 비타민C를 나노 리포좀 캡슐에 담아 안정성을 200% 향상시키고 피부 깊숙이 전달하는 기술입니다.', location: 'A-02'},
@@ -129,12 +120,21 @@
             { id: 10, category: '화장품', emoji: '☀️', title: '하이브리드 자외선 차단 신소재', desc: '유기자차의 발림성과 무기자차의 안정성을 모두 갖춘 신개념 하이브리드 자외선 차단 소재를 개발, 피부 자극을 최소화했습니다.', location: 'A-04'},
         ];
 
-        // --- 클러스터 및 배경 생성 ---
-        const clusterInfo = { '화장품': { position: new THREE.Vector3(-150, 20, -200), color: 0xFF69B4 }, '생활용품': { position: new THREE.Vector3(150, -20, -200), color: 0x00CED1 }, '건강기능식품': { position: new THREE.Vector3(0, 50, -350), color: 0x32CD32 } };
+        // 4. --- 씬(Scene) 구성: 배경, 클러스터, 이모지 ---
+        // 별 배경
         const starGeometry = new THREE.SphereGeometry(1500, 64, 64);
         const starMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/starry-night.jpg'), side: THREE.BackSide });
         const starSphere = new THREE.Mesh(starGeometry, starMaterial);
         scene.add(starSphere);
+
+        // 클러스터 정보
+        const clusterInfo = {
+            '화장품': { position: new THREE.Vector3(-150, 20, -200), color: 0xFF69B4 },
+            '생활용품': { position: new THREE.Vector3(150, -20, -200), color: 0x00CED1 },
+            '건강기능식품': { position: new THREE.Vector3(0, 50, -350), color: 0x32CD32 }
+        };
+
+        // 클러스터 조명 및 레이블
         for (const [name, info] of Object.entries(clusterInfo)) {
             const light = new THREE.PointLight(info.color, 5000, 300);
             light.position.copy(info.position);
@@ -147,11 +147,148 @@
             label.position.y += 40;
             scene.add(label);
         }
-
-        // --- 이모지 네비게이션 포인트 및 포스터 생성 ---
+        
+        // 이모지 네비게이션 포인트 생성
         techData.forEach(data => {
-            // 1. 최종 목적지가 될 (보이지 않는) 포스터 생성
             const posterGeometry = new THREE.PlaneGeometry(15, 20);
-            const posterMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }); // 안보이게
+            const posterMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
             const poster = new THREE.Mesh(posterGeometry, posterMaterial);
-            const center = clusterInfo
+            const center = clusterInfo[data.category].position;
+            poster.position.set( center.x + (Math.random() - 0.5) * 100, center.y + (Math.random() - 0.5) * 80, center.z + (Math.random() - 0.5) * 100 );
+            poster.lookAt(center);
+            scene.add(poster);
+            data.posterObject = poster;
+
+            const emojiDiv = document.createElement('div');
+            emojiDiv.className = 'emoji-label';
+            emojiDiv.textContent = data.emoji;
+            const emojiLabel = new CSS2DObject(emojiDiv);
+            emojiLabel.position.copy(poster.position);
+            scene.add(emojiLabel);
+
+            emojiDiv.addEventListener('click', () => {
+                if (isNavigating) return;
+                navigateTo(data);
+            });
+        });
+
+        camera.position.z = 50;
+
+        // 5. --- 핵심 기능 함수 ---
+        // 자동 이동 함수
+        function navigateTo(targetData) {
+            isNavigating = true;
+            currentlySelectedItem = targetData;
+            
+            const targetPoster = targetData.posterObject;
+            const camTargetPos = new THREE.Vector3();
+            const offset = new THREE.Vector3(0, 0, 30);
+            offset.applyQuaternion(targetPoster.quaternion);
+            targetPoster.getWorldPosition(camTargetPos).add(offset);
+            
+            const startPos = camera.position.clone();
+            const startQuaternion = camera.quaternion.clone();
+            
+            const endCam = camera.clone();
+            endCam.position.copy(camTargetPos);
+            endCam.lookAt(targetPoster.position);
+            const endQuaternion = endCam.quaternion;
+
+            new TWEEN.Tween({ t: 0 }).to({ t: 1 }, 2000).easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(({ t }) => {
+                    camera.position.lerpVectors(startPos, camTargetPos, t);
+                    camera.quaternion.slerpQuaternions(startQuaternion, endQuaternion, t);
+                })
+                .onComplete(() => {
+                    isNavigating = false;
+                    showDetailsModal(targetData);
+                })
+                .start();
+        }
+
+        // 모달 관련 함수
+        function showDetailsModal(data) {
+            document.getElementById('details-title').textContent = data.title;
+            document.getElementById('details-desc').textContent = data.desc;
+            detailsModal.style.display = 'flex';
+        }
+        function updateCartButton() {
+            cartButton.textContent = cart.length;
+            cartButton.style.transform = 'scale(1.2)';
+            setTimeout(() => cartButton.style.transform = 'scale(1)', 200);
+        }
+        function renderCartModal() {
+            const cartList = document.getElementById('cart-list');
+            const tourGuide = document.getElementById('tour-guide');
+            cartList.innerHTML = ''; tourGuide.innerHTML = '';
+            if (cart.length === 0) { cartList.innerHTML = '<li>저장된 기술이 없습니다.</li>'; return; }
+            cart.forEach(item => { const li = document.createElement('li'); li.innerHTML = `<strong>${item.title}</strong><br>분야: ${item.category} / 발표 위치: ${item.location}`; cartList.appendChild(li); });
+            const sortedCart = [...cart].sort((a, b) => a.location.localeCompare(b.location));
+            sortedCart.forEach((item, index) => { const li = document.createElement('li'); li.innerHTML = `<strong>경로 ${index + 1}: 부스 ${item.location}</strong><br>${item.title}`; tourGuide.appendChild(li); });
+        }
+        
+        // 6. --- 이벤트 리스너 ---
+        // 조작
+        document.addEventListener('keydown', (e) => keyboard[e.key.toLowerCase()] = true);
+        document.addEventListener('keyup', (e) => keyboard[e.key.toLowerCase()] = false);
+        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('mousedown', (e) => { if (e.button === 2) isRightMouseDown = true; });
+        document.addEventListener('mouseup', (e) => { if (e.button === 2) isRightMouseDown = false; });
+        document.addEventListener('mousemove', (e) => {
+            if (isExploring && isRightMouseDown && !isNavigating) {
+                camera.rotation.y -= e.movementX * 0.003;
+                camera.rotation.x -= e.movementY * 0.003;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            }
+        });
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // UI 버튼
+        startButton.addEventListener('click', () => {
+            infoDiv.style.transition = 'opacity 0.5s';
+            infoDiv.style.opacity = '0';
+            setTimeout(() => {
+                infoDiv.style.display = 'none';
+                cartButton.style.display = 'flex';
+                isExploring = true;
+            }, 500);
+        });
+        closeDetailsModal.addEventListener('click', () => detailsModal.style.display = 'none');
+        closeCartModal.addEventListener('click', () => cartModal.style.display = 'none');
+        cartButton.addEventListener('click', () => { renderCartModal(); cartModal.style.display = 'flex'; });
+        document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+            if (currentlySelectedItem && !cart.find(item => item.id === currentlySelectedItem.id)) {
+                cart.push(currentlySelectedItem);
+                updateCartButton();
+            }
+            detailsModal.style.display = 'none';
+        });
+
+        // 7. --- 애니메이션 루프 실행 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+
+            if (isExploring && !isNavigating) {
+                const moveVector = new THREE.Vector3();
+                if (keyboard['arrowup'] || keyboard['w']) moveVector.z -= 1.0;
+                if (keyboard['arrowdown'] || keyboard['s']) moveVector.z += 1.0;
+                if (keyboard['arrowleft'] || keyboard['a']) moveVector.x -= 1.0;
+                if (keyboard['arrowright'] || keyboard['d']) moveVector.x += 1.0;
+                camera.translateZ(moveVector.z);
+                camera.translateX(moveVector.x);
+            }
+            
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
