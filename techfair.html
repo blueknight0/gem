@@ -100,8 +100,7 @@
         const detailsModal = document.getElementById('details-modal');
         const cartModal = document.getElementById('cart-modal');
         const closeDetailsModal = document.getElementById('close-details-modal');
-        const closeCartModal = document.getElementById('close-cart-modal'); // ★ 장바구니 닫기 버튼
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const closeCartModal = document.getElementById('close-cart-modal');
         let currentlySelectedItem = null;
         const cart = [];
         let isExploring = false, isNavigating = false, isRightMouseDown = false;
@@ -122,12 +121,9 @@
         ];
 
         // 4. --- 씬(Scene) 구성: 배경, 클러스터, 이모지 ---
-        // ★ 별 배경 (수정)
+        // 별 배경
         const starGeometry = new THREE.SphereGeometry(1500, 64, 64);
-        const starMaterial = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/starry-night.jpg'),
-            side: THREE.BackSide // 안쪽에서 보이도록 설정
-        });
+        const starMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/starry-night.jpg'), side: THREE.BackSide });
         const starSphere = new THREE.Mesh(starGeometry, starMaterial);
         scene.add(starSphere);
 
@@ -179,6 +175,7 @@
         camera.position.z = 50;
 
         // 5. --- 핵심 기능 함수 ---
+        // 자동 이동 함수
         function navigateTo(targetData) {
             isNavigating = true;
             currentlySelectedItem = targetData;
@@ -209,18 +206,17 @@
                 .start();
         }
 
+        // 모달 관련 함수
         function showDetailsModal(data) {
             document.getElementById('details-title').textContent = data.title;
             document.getElementById('details-desc').textContent = data.desc;
             detailsModal.style.display = 'flex';
         }
-
         function updateCartButton() {
             cartButton.textContent = cart.length;
             cartButton.style.transform = 'scale(1.2)';
             setTimeout(() => cartButton.style.transform = 'scale(1)', 200);
         }
-
         function renderCartModal() {
             const cartList = document.getElementById('cart-list');
             const tourGuide = document.getElementById('tour-guide');
@@ -232,6 +228,7 @@
         }
         
         // 6. --- 이벤트 리스너 ---
+        // 조작
         document.addEventListener('keydown', (e) => keyboard[e.key.toLowerCase()] = true);
         document.addEventListener('keyup', (e) => keyboard[e.key.toLowerCase()] = false);
         renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -251,6 +248,7 @@
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // UI 버튼
         startButton.addEventListener('click', () => {
             infoDiv.style.transition = 'opacity 0.5s';
             infoDiv.style.opacity = '0';
@@ -260,13 +258,10 @@
                 isExploring = true;
             }, 500);
         });
-
-        // ★★★ 모달 닫기 버튼 이벤트 리스너 (수정/추가) ★★★
         closeDetailsModal.addEventListener('click', () => detailsModal.style.display = 'none');
-        closeCartModal.addEventListener('click', () => cartModal.style.display = 'none'); // 장바구니 닫기
+        closeCartModal.addEventListener('click', () => cartModal.style.display = 'none');
         cartButton.addEventListener('click', () => { renderCartModal(); cartModal.style.display = 'flex'; });
-        
-        addToCartBtn.addEventListener('click', () => {
+        document.getElementById('add-to-cart-btn').addEventListener('click', () => {
             if (currentlySelectedItem && !cart.find(item => item.id === currentlySelectedItem.id)) {
                 cart.push(currentlySelectedItem);
                 updateCartButton();
