@@ -3,162 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LG H&H 2025 Tech Fair - Interactive Space</title>
+    <title>LG H&H 2025 Tech Fair - Interactive Space v2</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; cursor: crosshair; }
         canvas { display: block; }
-        .ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        /* --- 초기 안내 메시지 --- */
-        #info {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 2em;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            text-align: center;
-            pointer-events: all;
-            border: 1px solid #00ffdd;
-        }
-        #info h1 { margin-top: 0; color: #00ffdd; }
-        #info button {
-            margin-top: 1em;
-            padding: 0.8em 1.5em;
-            background: #00ffdd;
-            border: none;
-            color: #000;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        #info button:hover { background: #fff; }
+        .ui-container, .label-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .label-container { z-index: 10; }
 
-        /* --- 장바구니 (혁신 저장소) --- */
-        #cart-button {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            padding: 1em;
-            background: rgba(0, 255, 221, 0.8);
-            border-radius: 50%;
-            cursor: pointer;
-            pointer-events: all;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #000;
-            transition: transform 0.3s;
-            border: 2px solid rgba(255,255,255,0.5);
-        }
-        #cart-button:hover { transform: scale(1.1); }
-        
-        /* --- 모달 (장바구니 및 동선 안내) --- */
-        #modal {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            justify-content: center;
-            align-items: center;
-            pointer-events: all;
-        }
-        .modal-content {
-            width: 80%;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-            background: #111;
-            padding: 2em;
-            border-radius: 10px;
-            border: 1px solid #00ffdd;
-        }
-        .modal-content h2 { color: #00ffdd; }
-        .modal-content #cart-list, .modal-content #tour-guide { list-style: none; padding: 0; }
-        .modal-content li { background: #222; margin-bottom: 1em; padding: 1em; border-radius: 5px; }
-        #close-modal {
-            position: absolute;
-            top: 15px;
-            right: 25px;
-            font-size: 2em;
-            cursor: pointer;
-            color: #aaa;
-        }
-        #close-modal:hover { color: #fff; }
-
-        /* --- 포스터 툴팁 --- */
-        #tooltip {
-            position: absolute;
-            display: none;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #fff;
-            padding: 10px;
-            border-radius: 5px;
+        /* --- 클러스터 레이블 스타일 --- */
+        .cluster-label {
             color: #fff;
+            background: rgba(0, 20, 30, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid;
+            text-shadow: 0 0 5px #fff;
         }
+        .cosmetics-label { border-color: #FF69B4; color: #FF69B4; }
+        .household-label { border-color: #00CED1; color: #00CED1; }
+        .health-label { border-color: #32CD32; color: #32CD32; }
+        
+        /* --- 나머지 UI 스타일 (이전과 동일) --- */
+        #info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 2em; background: rgba(0, 0, 0, 0.7); border-radius: 10px; text-align: center; pointer-events: all; border: 1px solid #00ffdd; z-index: 100;}
+        #info h1 { margin-top: 0; color: #00ffdd; }
+        #info button { margin-top: 1em; padding: 0.8em 1.5em; background: #00ffdd; border: none; color: #000; font-size: 1em; font-weight: bold; cursor: pointer; border-radius: 5px; transition: background 0.3s; }
+        #info button:hover { background: #fff; }
+        #cart-button { position: absolute; bottom: 30px; right: 30px; padding: 1em; background: rgba(0, 255, 221, 0.8); border-radius: 50%; cursor: pointer; pointer-events: all; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; color: #000; transition: transform 0.3s; border: 2px solid rgba(255,255,255,0.5); z-index: 100;}
+        #cart-button:hover { transform: scale(1.1); }
+        #modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; pointer-events: all; z-index: 200;}
+        .modal-content { width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto; background: #111; padding: 2em; border-radius: 10px; border: 1px solid #00ffdd; }
+        .modal-content h2 { color: #00ffdd; }
+        .modal-content ul, .modal-content ol { list-style: none; padding: 0; }
+        .modal-content li { background: #222; margin-bottom: 1em; padding: 1em; border-radius: 5px; }
+        #close-modal { position: absolute; top: 15px; right: 25px; font-size: 2em; cursor: pointer; color: #aaa; }
+        #close-modal:hover { color: #fff; }
+        #tooltip { position: absolute; display: none; background: rgba(0, 0, 0, 0.8); border: 1px solid #fff; padding: 10px; border-radius: 5px; color: #fff; z-index: 100;}
     </style>
 </head>
 <body>
-
+    <div id="canvas-container"></div>
+    
+    <div class="label-container" id="label-renderer-container"></div>
     <div class="ui-container">
         <div id="info">
-            <h1>LG H&H 2025 테크페어</h1>
-            <p>기술의 우주에 오신 것을 환영합니다.<br>
-            마우스로 둘러보고, 키보드 화살표(↑↓←→)로 이동하세요.<br>
-            마음에 드는 기술 포스터를 클릭하여 저장할 수 있습니다.</p>
+            <h1>LG H&H 2025 Tech Fair</h1>
+            <p>
+                <b>이동:</b> 키보드 화살표 (↑↓←→) 또는 W/A/S/D<br>
+                <b>시점 변경:</b> 마우스 우클릭 + 드래그<br>
+                <b>선택:</b> 포스터 클릭하여 저장
+            </p>
             <button id="start-button">탐험 시작하기</button>
         </div>
-
         <div id="cart-button" style="display: none;">0</div>
-
         <div id="modal">
             <div class="modal-content">
                 <span id="close-modal">&times;</span>
                 <h2>혁신 저장소 & 동선 안내</h2>
-                <div id="cart-items-container">
-                    <h3>저장된 기술 목록</h3>
-                    <ul id="cart-list">
-                        </ul>
-                    <hr>
-                    <h3>나만의 탐험 지도 (최적 동선)</h3>
-                    <ol id="tour-guide">
-                        </ol>
-                </div>
+                <h3>저장된 기술 목록</h3>
+                <ul id="cart-list"></ul>
+                <hr>
+                <h3>나만의 탐험 지도 (최적 동선)</h3>
+                <ol id="tour-guide"></ol>
             </div>
         </div>
-
         <div id="tooltip"></div>
     </div>
     
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.165.0/build/three.module.js"
+                "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
             }
         }
     </script>
     
     <script type="module">
         import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         // --- 기본 설정 ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- UI 요소 ---
+        // --- CSS2D 렌더러 (레이블용) ---
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        document.getElementById('label-renderer-container').appendChild(labelRenderer.domElement);
+
+        // --- UI 요소 (이전과 동일) ---
         const infoDiv = document.getElementById('info');
         const startButton = document.getElementById('start-button');
         const cartButton = document.getElementById('cart-button');
@@ -168,96 +108,119 @@
         const tourGuide = document.getElementById('tour-guide');
         const tooltip = document.getElementById('tooltip');
 
-        // --- Mock 데이터 (실제로는 서버에서 가져옴) ---
+        // --- Mock 데이터 (이전과 동일) ---
         const postersData = [
-            // 화장품 클러스터
             { id: 1, title: 'AI 기반 개인 맞춤형 피부 진단 기술', category: '화장품', location: 'A-01', texture: 'https://via.placeholder.com/300x400.png/FF69B4/000000?text=Cosmetic+1' },
             { id: 2, title: '마이크로바이옴 활용 차세대 안티에이징', category: '화장품', location: 'A-02', texture: 'https://via.placeholder.com/300x400.png/FF69B4/000000?text=Cosmetic+2' },
             { id: 3, title: '지속가능한 친환경 용기 신소재', category: '화장품', location: 'A-03', texture: 'https://via.placeholder.com/300x400.png/FF69B4/000000?text=Cosmetic+3' },
-            // 생활용품 클러스터
             { id: 4, title: '식물유래 계면활성제 고효율화 연구', category: '생활용품', location: 'B-01', texture: 'https://via.placeholder.com/300x400.png/00CED1/000000?text=Household+1' },
             { id: 5, title: '스마트 디퓨저를 위한 향기 제어 시스템', category: '생활용품', location: 'B-02', texture: 'https://via.placeholder.com/300x400.png/00CED1/000000?text=Household+2' },
             { id: 6, title: '생분해성 세제 패키징 기술', category: '생활용품', location: 'B-03', texture: 'https://via.placeholder.com/300x400.png/00CED1/000000?text=Household+3' },
-            // 건강기능식품 클러스터
             { id: 7, title: '장내 미생물 분석 기반 맞춤 건기식', category: '건강기능식품', location: 'C-01', texture: 'https://via.placeholder.com/300x400.png/32CD32/000000?text=Health+1' },
             { id: 8, title: '흡수율을 높인 액상형 콜라겐 신제형', category: '건강기능식품', location: 'C-02', texture: 'https://via.placeholder.com/300x400.png/32CD32/000000?text=Health+2' },
             { id: 9, title: '수면 건강 개선을 위한 천연물 소재 발굴', category: '건강기능식품', location: 'C-03', texture: 'https://via.placeholder.com/300x400.png/32CD32/000000?text=Health+3' }
         ];
 
-        const clusterCenters = {
-            '화장품': new THREE.Vector3(-100, 0, -50),
-            '생활용품': new THREE.Vector3(100, 0, -50),
-            '건강기능식품': new THREE.Vector3(0, 50, -150)
+        // --- 클러스터 위치 및 색상 정의 ---
+        const clusterInfo = {
+            '화장품': { position: new THREE.Vector3(-150, 20, -200), color: 0xFF69B4 },
+            '생활용품': { position: new THREE.Vector3(150, -20, -200), color: 0x00CED1 },
+            '건강기능식품': { position: new THREE.Vector3(0, 50, -350), color: 0x32CD32 }
         };
         
         const posters = [];
         const textureLoader = new THREE.TextureLoader();
 
-        // --- 우주 공간 생성 ---
-        // 별 배경
+        // --- 우주 공간 생성 (이전과 동일) ---
         const starGeometry = new THREE.SphereGeometry(1500, 64, 64);
-        const starMaterial = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/starry-night.jpg'),
-            side: THREE.BackSide
-        });
+        const starMaterial = new THREE.MeshBasicMaterial({ map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/starry-night.jpg'), side: THREE.BackSide });
         const starSphere = new THREE.Mesh(starGeometry, starMaterial);
         scene.add(starSphere);
-
-        // 떠다니는 파티클
         const particleGeometry = new THREE.BufferGeometry;
         const particleCount = 5000;
         const posArray = new Float32Array(particleCount * 3);
-        for(let i = 0; i < particleCount * 3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 1000;
-        }
+        for(let i = 0; i < particleCount * 3; i++) { posArray[i] = (Math.random() - 0.5) * 1000; }
         particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
         const particleMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xffffff });
         const particles = new THREE.Points(particleGeometry, particleMaterial);
         scene.add(particles);
 
+        // --- ★ 클러스터 가시성 확보: 조명과 레이블 추가 ★ ---
+        for (const [name, info] of Object.entries(clusterInfo)) {
+            // 1. 클러스터 중심에 조명 추가
+            const light = new THREE.PointLight(info.color, 5000, 300); // (색상, 강도, 거리)
+            light.position.copy(info.position);
+            scene.add(light);
+
+            // 2. 클러스터 이름 레이블 추가
+            const div = document.createElement('div');
+            div.className = 'cluster-label';
+            div.textContent = name;
+            // CSS 클래스로 색상 부여
+            if (name === '화장품') div.classList.add('cosmetics-label');
+            if (name === '생활용품') div.classList.add('household-label');
+            if (name === '건강기능식품') div.classList.add('health-label');
+            
+            const label = new CSS2DObject(div);
+            label.position.copy(info.position);
+            label.position.y += 30; // 조명보다 살짝 위에 위치
+            scene.add(label);
+        }
+
         // --- 포스터 클러스터 생성 ---
         postersData.forEach(data => {
             const texture = textureLoader.load(data.texture);
-            const material = new THREE.MeshBasicMaterial({ map: texture });
+            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.9 });
             const geometry = new THREE.PlaneGeometry(15, 20);
             const poster = new THREE.Mesh(geometry, material);
 
-            const center = clusterCenters[data.category];
+            const center = clusterInfo[data.category].position;
             poster.position.set(
-                center.x + (Math.random() - 0.5) * 50,
-                center.y + (Math.random() - 0.5) * 50,
-                center.z + (Math.random() - 0.5) * 50
+                center.x + (Math.random() - 0.5) * 80,
+                center.y + (Math.random() - 0.5) * 80,
+                center.z + (Math.random() - 0.5) * 80
             );
-            poster.lookAt(camera.position);
-
-            poster.userData = data; // 포스터 메타데이터 저장
+            
+            poster.userData = data;
             scene.add(poster);
             posters.push(poster);
         });
 
         camera.position.z = 50;
 
-        // --- 조작 및 인터랙션 ---
+        // --- ★ 조작 및 인터랙션 (마우스 컨트롤 수정) ★ ---
         const keyboard = {};
         const moveSpeed = 1.0;
-        const lookSpeed = 0.002;
+        const lookSpeed = 0.003;
         let isExploring = false;
+        let isRightMouseDown = false;
 
         document.addEventListener('keydown', (e) => keyboard[e.key.toLowerCase()] = true);
         document.addEventListener('keyup', (e) => keyboard[e.key.toLowerCase()] = false);
+        
+        // 우클릭 메뉴 방지
+        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        let mouseX = 0, mouseY = 0;
+        // 마우스 버튼 상태 추적
+        document.addEventListener('mousedown', (e) => {
+            if (e.button === 2) isRightMouseDown = true; // 우클릭 시 true
+        });
+        document.addEventListener('mouseup', (e) => {
+            if (e.button === 2) isRightMouseDown = false; // 우클릭 뗄 때 false
+        });
+        
         document.addEventListener('mousemove', (e) => {
-            if (isExploring) {
-                mouseX = (e.clientX - window.innerWidth / 2);
-                mouseY = (e.clientY - window.innerHeight / 2);
+            // 오직 우클릭 상태에서만 카메라 회전
+            if (isExploring && isRightMouseDown) {
+                camera.rotation.y -= e.movementX * lookSpeed;
+                camera.rotation.x -= e.movementY * lookSpeed;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
             }
-            // 툴팁 위치 업데이트
+            // 툴팁 위치는 항상 업데이트
             tooltip.style.left = e.clientX + 15 + 'px';
             tooltip.style.top = e.clientY + 15 + 'px';
         });
 
-        // Raycaster (마우스 포인팅 감지)
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let intersectedObject = null;
@@ -266,113 +229,70 @@
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
         });
-
-        // --- 장바구니 로직 ---
-        const cart = [];
         
+        // --- 장바구니/모달 로직 (이전과 동일) ---
+        const cart = [];
         document.addEventListener('click', () => {
             if (intersectedObject) {
                 const posterData = intersectedObject.userData;
                 if (!cart.find(item => item.id === posterData.id)) {
                     cart.push(posterData);
                     updateCartUI();
-                    
-                    // 담기 애니메이션 효과
                     intersectedObject.material.color.set(0x00ffdd);
-                    setTimeout(() => {
-                        intersectedObject.material.color.set(0xffffff);
-                    }, 500);
+                    setTimeout(() => { intersectedObject.material.color.set(0xffffff); }, 500);
                 }
             }
         });
-
         function updateCartUI() {
             cartButton.textContent = cart.length;
             cartButton.style.transform = 'scale(1.2)';
             setTimeout(() => cartButton.style.transform = 'scale(1)', 200);
         }
-        
-        // --- 모달 로직 ---
-        cartButton.addEventListener('click', () => {
-            modal.style.display = 'flex';
-            renderModalContent();
-        });
-
+        cartButton.addEventListener('click', () => { modal.style.display = 'flex'; renderModalContent(); });
         closeModal.addEventListener('click', () => modal.style.display = 'none');
-
         function renderModalContent() {
-            cartList.innerHTML = '';
-            tourGuide.innerHTML = '';
-            
-            if (cart.length === 0) {
-                cartList.innerHTML = '<li>저장된 기술이 없습니다. 우주를 탐험하며 관심 기술을 클릭해보세요.</li>';
-                return;
-            }
-            
-            // 카트 목록 렌더링
-            cart.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${item.title}</strong><br>분야: ${item.category} / 발표 위치: ${item.location}`;
-                cartList.appendChild(li);
-            });
-            
-            // 동선 안내 렌더링 (위치 코드로 정렬)
+            cartList.innerHTML = ''; tourGuide.innerHTML = '';
+            if (cart.length === 0) { cartList.innerHTML = '<li>저장된 기술이 없습니다.</li>'; return; }
+            cart.forEach(item => { const li = document.createElement('li'); li.innerHTML = `<strong>${item.title}</strong><br>분야: ${item.category} / 발표 위치: ${item.location}`; cartList.appendChild(li); });
             const sortedCart = [...cart].sort((a, b) => a.location.localeCompare(b.location));
-            sortedCart.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>부스 ${item.location}</strong>: ${item.title}`;
-                tourGuide.appendChild(li);
-            });
+            sortedCart.forEach(item => { const li = document.createElement('li'); li.innerHTML = `<strong>부스 ${item.location}</strong>: ${item.title}`; tourGuide.appendChild(li); });
         }
-
+        
         // --- 애니메이션 루프 ---
         function animate() {
             requestAnimationFrame(animate);
 
-            // 파티클 움직임
-            particles.rotation.y += 0.0001;
-
             if (isExploring) {
-                // 키보드 이동
                 const moveVector = new THREE.Vector3();
                 if (keyboard['arrowup'] || keyboard['w']) moveVector.z -= moveSpeed;
                 if (keyboard['arrowdown'] || keyboard['s']) moveVector.z += moveSpeed;
                 if (keyboard['arrowleft'] || keyboard['a']) moveVector.x -= moveSpeed;
                 if (keyboard['arrowright'] || keyboard['d']) moveVector.x += moveSpeed;
-                camera.translateX(moveVector.x);
                 camera.translateZ(moveVector.z);
-
-                // 마우스로 둘러보기
-                camera.rotation.y -= mouseX * lookSpeed;
-                camera.rotation.x -= mouseY * lookSpeed;
-                // 상하 회전 제한
-                camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                camera.translateX(moveVector.x);
             }
             
-            // Raycasting
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(posters);
 
-            if (intersects.length > 0) {
-                if (intersectedObject !== intersects[0].object) {
-                    if (intersectedObject) {
-                        intersectedObject.scale.set(1, 1, 1); // 이전 객체 크기 복원
-                    }
-                    intersectedObject = intersects[0].object;
-                    intersectedObject.scale.set(1.1, 1.1, 1.1); // 새 객체 크기 확대
-                    
-                    tooltip.style.display = 'block';
-                    tooltip.textContent = `[클릭] ${intersectedObject.userData.title}`;
-                }
-            } else {
-                if (intersectedObject) {
-                    intersectedObject.scale.set(1, 1, 1);
-                }
+            posters.forEach(p => p.material.opacity = 0.9); // 모든 포스터 투명도 초기화
+            if (intersectedObject) {
+                intersectedObject.scale.set(1, 1, 1);
                 intersectedObject = null;
-                tooltip.style.display = 'none';
+            }
+            tooltip.style.display = 'none';
+
+            if (intersects.length > 0) {
+                intersectedObject = intersects[0].object;
+                intersectedObject.scale.set(1.1, 1.1, 1.1);
+                intersectedObject.material.opacity = 1.0; // 하이라이트된 포스터는 불투명하게
+                tooltip.style.display = 'block';
+                tooltip.textContent = `[클릭] ${intersectedObject.userData.title}`;
             }
             
+            // 렌더링
             renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
         }
         
         // --- 창 크기 조절 대응 ---
@@ -380,13 +300,11 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
         
         // --- 탐험 시작 ---
         startButton.addEventListener('click', () => {
-            const targetPosition = new THREE.Vector3(0, 0, 100);
-            
-            // 간단한 페이드아웃 및 이동 효과
             infoDiv.style.transition = 'opacity 0.5s';
             infoDiv.style.opacity = '0';
             setTimeout(() => {
