@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>닥터그루트 리브랜딩 전략 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Corporate Green -->
+    <!-- Application Structure Plan: The SPA is designed as a top-down, "problem-to-solution" interactive dashboard. It begins with a hero section summarizing the core challenge. Section 1, "The Diagnosis," uses an interactive scatter chart for competitive positioning and a tabbed view for channel analysis to clearly define the problem. Section 2, "The Phoenix Strategy," presents the solution through a clear depiction of the new brand identity and an interactive diagram showing the portfolio restructuring. Section 3, "Global Expansion," uses interactive cards to detail market-specific strategies. Finally, Section 4, "The Roadmap," provides a clear, visual timeline for implementation. This structure was chosen to guide the user logically from understanding the 'why' (the problem) to the 'how' (the solution and execution plan), making complex strategic information highly digestible and engaging. -->
+    <!-- Visualization & Content Choices: 1. Competitive Positioning Map: Goal(Compare) -> Viz(Interactive Scatter Chart) -> Interaction(Click on points to see brand summary) -> Justification(Visually demonstrates Dr. Groot's fragmented identity vs. focused competitors) -> Library(Chart.js). 2. Channel Analysis: Goal(Inform) -> Viz(Tabbed Content) -> Interaction(Click tabs to switch channels) -> Justification(Clearly shows brand dilution across different sales channels) -> Library(HTML/JS). 3. Portfolio Restructuring: Goal(Organize/Change) -> Viz(Interactive Before/After Diagram) -> Interaction(Click on new tiers to see details) -> Justification(Visually simplifies the complex portfolio into the proposed strategic structure) -> Library(HTML/CSS/JS). 4. Global Strategy: Goal(Inform/Compare) -> Viz(Tabbed Cards) -> Interaction(Click tabs for different markets) -> Justification(Presents dense market-specific information in a scannable, comparable format) -> Library(HTML/JS). 5. Roadmap: Goal(Show Change) -> Viz(Visual Timeline) -> Interaction(Hover for details) -> Justification(Provides a clear, high-level overview of the implementation plan) -> Library(HTML/CSS/JS). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 60vh; }
+        @media (min-width: 768px) { .chart-container { height: 500px; } }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active { color: #10B981; border-bottom-color: #10B981; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .tab-button.active { background-color: #047857; color: white; }
+        .portfolio-item { transition: all 0.3s ease; }
+        .timeline-item::before { content: ''; position: absolute; top: 10px; left: -20px; width: 10px; height: 10px; background-color: #047857; border-radius: 50%; border: 2px solid white; }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-emerald-700">Project Phoenix</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#diagnosis" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-emerald-600 border-b-2 border-transparent">진단</a>
+                        <a href="#strategy" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-emerald-600 border-b-2 border-transparent">전략</a>
+                        <a href="#global" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-emerald-600 border-b-2 border-transparent">글로벌 확장</a>
+                        <a href="#roadmap" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-emerald-600 border-b-2 border-transparent">로드맵</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="hero" class="text-center py-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">닥터그루트, 재도약의 서막</h1>
+            <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">파편화된 브랜드 정체성을 넘어, '모발을 위한 진보된 더마 사이언스'라는 단일하고 강력한 가치 아래 글로벌 리더로 거듭나기 위한 종합 전략</p>
+        </section>
+
+        <div class="space-y-24">
+            <section id="diagnosis" class="scroll-mt-16">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900">1. 현황 진단: 왜 변화해야 하는가?</h2>
+                    <p class="mt-2 text-md text-slate-500">닥터그루트는 명확한 정체성 부재와 채널별 이미지 파편화라는 이중고를 겪고 있습니다.</p>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-1 text-slate-800">브랜드 정체성 분열: 국내 탈모샴푸 시장 포지셔닝 맵</h3>
+                    <p class="text-slate-600 mb-4">닥터그루트의 라인업은 4개 사분면에 모두 걸쳐있어 소비자에게 혼란을 야기합니다. 아래 차트의 점을 클릭하여 각 브랜드의 포지션을 확인해보세요.</p>
+                    <div class="chart-container">
+                        <canvas id="positioningMap"></canvas>
+                    </div>
+                    <div id="brand-info-box" class="mt-4 p-4 bg-emerald-50 rounded-lg text-center text-emerald-800 font-medium hidden"></div>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg mt-12">
+                     <h3 class="text-xl font-bold mb-1 text-slate-800">채널별 다른 얼굴: 일관성 없는 브랜드 경험</h3>
+                     <p class="text-slate-600 mb-6">닥터그루트는 판매 채널에 따라 전혀 다른 브랜드로 인식됩니다. 이는 일관된 브랜드 자산 구축에 심각한 장애물로 작용합니다. 각 채널 탭을 클릭해 보세요.</p>
+                     
+                     <div class="flex flex-wrap gap-2 mb-4 border-b border-gray-200">
+                         <button data-tab="channel-hb" class="channel-tab-button py-2 px-4 text-sm font-medium rounded-t-lg transition duration-300">H&B 스토어 (올리브영)</button>
+                         <button data-tab="channel-online" class="channel-tab-button py-2 px-4 text-sm font-medium rounded-t-lg transition duration-300">온라인 마켓 (쿠팡)</button>
+                         <button data-tab="channel-d2c" class="channel-tab-button py-2 px-4 text-sm font-medium rounded-t-lg transition duration-300">D2C (공식몰)</button>
+                     </div>
+
+                     <div id="channel-content" class="min-h-[150px]">
+                         <div id="channel-hb" class="channel-content-section p-4 bg-stone-100 rounded-b-lg rounded-r-lg">
+                             <h4 class="font-bold text-lg text-emerald-700">트렌디한 더마 코스메틱</h4>
+                             <p class="mt-1 text-slate-700">'애딕트', '아쿠아 딥클린' 라인 중심으로 '정수리냄새', '지성두피' 등 젊은 층의 고민을 공략. 즉각적인 사용감과 시각적 매력이 중요한 구매 요인. '신뢰할 수 있는 중간 가격대 더마 브랜드'로 인식됩니다.</p>
+                         </div>
+                         <div id="channel-online" class="channel-content-section p-4 bg-stone-100 rounded-b-lg rounded-r-lg hidden">
+                             <h4 class="font-bold text-lg text-emerald-700">가성비 중심의 생필품</h4>
+                             <p class="mt-1 text-slate-700">대용량 묶음 판매와 공격적인 가격 경쟁. TS샴푸와 같은 매스 브랜드와 직접 경쟁하며, '탈모샴푸'라는 기능적 상품(commodity)으로 소비됩니다. 프리미엄 이미지는 희석됩니다.</p>
+                         </div>
+                         <div id="channel-d2c" class="channel-content-section p-4 bg-stone-100 rounded-b-lg rounded-r-lg hidden">
+                             <h4 class="font-bold text-lg text-emerald-700">복잡한 과학 브랜드</h4>
+                             <p class="mt-1 text-slate-700">프리미엄 '마이크로바이옴'부터 모든 라인을 전시. 브랜드의 과학적 스토리를 온전히 전달할 수 있으나, 65개가 넘는 제품 수는 오히려 '선택의 마비'를 유발할 수 있습니다.</p>
+                         </div>
+                     </div>
+                </div>
+
+            </section>
+
+            <section id="strategy" class="scroll-mt-16">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900">2. 피닉스 전략: 어떻게 재건할 것인가?</h2>
+                    <p class="mt-2 text-md text-slate-500">명확한 정체성 확립과 포트폴리오 재편을 통해 브랜드 가치를 극대화합니다.</p>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg text-center">
+                    <h3 class="text-xl font-bold text-slate-800">새로운 핵심 정체성</h3>
+                    <p class="mt-4 text-2xl md:text-3xl font-bold text-emerald-600 bg-emerald-50 py-4 px-6 rounded-lg inline-block">"Advanced Derma-Science for Hair"</p>
+                    <p class="mt-4 text-slate-600 max-w-2xl mx-auto">'닥터'의 권위, R&D 역량, 시장 리더십을 통합한 이 정체성은 브랜드를 '과학 대 향기'라는 혼란에서 벗어나게 하고, 명확하며 프리미엄한 영역을 구축합니다.</p>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg mt-12">
+                    <h3 class="text-xl font-bold mb-1 text-slate-800">포트폴리오 재편: 복잡함에서 명료함으로</h3>
+                    <p class="text-slate-600 mb-6">복잡한 라인업을 세 개의 명확한 티어로 재구성하여 소비자 혼란을 줄이고 브랜드 메시지를 강화합니다. 'AFTER'의 각 티어를 클릭하여 상세 설명을 확인하세요.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <div class="border-2 border-red-200 p-4 rounded-lg">
+                            <h4 class="font-bold text-lg text-red-600 text-center mb-4">BEFORE: 복잡한 구조</h4>
+                            <div class="flex flex-wrap gap-2 justify-center">
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">마이크로바이옴</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">밀도케어</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">집중케어</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">클리니컬 릴리프</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">애딕트</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">블랙리커버</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">제이몬스터즈</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">아쿠아케어</span>
+                            </div>
+                        </div>
+
+                        <div class="border-2 border-emerald-200 p-4 rounded-lg">
+                             <h4 class="font-bold text-lg text-emerald-700 text-center mb-4">AFTER: 명확한 3-Tier 구조</h4>
+                             <div class="space-y-3">
+                                <div data-tier="tier1" class="portfolio-item p-3 bg-emerald-50 rounded-lg cursor-pointer hover:bg-emerald-100 hover:shadow-md">
+                                    <span class="font-bold text-emerald-800">Tier 1: DR. GROOT ᴰᴱᴿᴹᴬ</span>
+                                    <p id="tier1-desc" class="text-xs text-emerald-700 mt-1 hidden">과학 기술의 정점. '마이크로바이옴'과 '밀도케어'를 포함. 최고의 기술을 찾는 소비자를 위한 프리미엄 라인.</p>
+                                </div>
+                                <div data-tier="tier2" class="portfolio-item p-3 bg-emerald-50 rounded-lg cursor-pointer hover:bg-emerald-100 hover:shadow-md">
+                                    <span class="font-bold text-emerald-800">Tier 2: DR. GROOT ᴿˣ</span>
+                                    <p id="tier2-desc" class="text-xs text-emerald-700 mt-1 hidden">핵심 효능의 기반. '집중케어'와 '클리니컬 릴리프'를 통합. 특정 고민을 위한 솔루션.</p>
+                                </div>
+                                <div data-tier="tier3" class="portfolio-item p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 hover:shadow-md">
+                                    <span class="font-bold text-orange-800">Sub-Brand: GROOT ADDICT</span>
+                                    <p id="tier3-desc" class="text-xs text-orange-700 mt-1 hidden">전략적 서브 브랜드. '애딕트' 라인을 독립시켜 감성적 매력을 극대화. 마스터 브랜드의 과학 정체성을 보호.</p>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="global" class="scroll-mt-16">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900">3. 글로벌 확장: 어디로 나아갈 것인가?</h2>
+                    <p class="mt-2 text-md text-slate-500">주요 시장의 특성을 고려한 맞춤형 진출 전략이 필요합니다.</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-2 mb-6 border-b-2 border-gray-200">
+                    <button data-tab="market-us" class="market-tab-button tab-button py-3 px-5 text-sm font-medium rounded-t-lg transition duration-300 active">미국</button>
+                    <button data-tab="market-cn" class="market-tab-button tab-button py-3 px-5 text-sm font-medium rounded-t-lg transition duration-300">중국</button>
+                    <button data-tab="market-jp" class="market-tab-button tab-button py-3 px-5 text-sm font-medium rounded-t-lg transition duration-300">일본</button>
+                </div>
+                <div id="market-us" class="market-content-section p-6 bg-white rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold text-slate-800">미국: 'Skinification' & D2C 시장 선점</h3>
+                    <div class="mt-4 grid md:grid-cols-2 gap-6">
+                        <div>
+                           <p class="text-slate-600">성분 중심의 과학적 접근(Skinification)과 D2C 채널이 급성장하는 시장. FDA 규제를 고려해 '화장품'으로서의 효능에 집중해야 합니다.</p>
+                           <ul class="mt-4 space-y-2 text-sm text-slate-700">
+                               <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>진출 라인:</strong> '밀도케어' 또는 '마이크로바이옴'</li>
+                               <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>포지셔닝:</strong> 프리미엄 더마 사이언스</li>
+                               <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>채널 전략:</strong> D2C 우선 런칭 후 Ulta 등 프리미엄 리테일 파트너십</li>
+                               <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>핵심 과제:</strong> '탈모'가 아닌 '풍성해 보이는 모발' 등 화장품적 표현 사용</li>
+                           </ul>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-lg flex items-center justify-center">
+                            <p class="text-slate-500 text-center">🇺🇸<br>D2C 중심의<br>프리미엄 시장 선점</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="market-cn" class="market-content-section p-6 bg-white rounded-lg shadow-lg hidden">
+                    <h3 class="text-2xl font-bold text-slate-800">중국: 첨단 기술 & 럭셔리 시장 공략</h3>
+                    <div class="mt-4 grid md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-slate-600">젊은 층의 탈모 고민과 프리미엄 제품 선호도가 높은 거대 시장. NMPA 특수용도화장품 등록의 장벽을 고려한 진입 전략이 필요합니다.</p>
+                            <ul class="mt-4 space-y-2 text-sm text-slate-700">
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>진출 라인:</strong> '마이크로바이옴'</li>
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>포지셔닝:</strong> 궁극의 사이언스-럭스</li>
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>채널 전략:</strong> 티몰 글로벌(CBEC) 우선 진출 후 정식 등록 추진</li>
+                               <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>핵심 과제:</strong> 왕홍/KOL을 활용한 대규모 디지털 마케팅</li>
+                           </ul>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-lg flex items-center justify-center">
+                            <p class="text-slate-500 text-center">🇨🇳<br>'Advanced Tech' 소구,<br>프리미엄 럭스 시장 공략</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="market-jp" class="market-content-section p-6 bg-white rounded-lg shadow-lg hidden">
+                    <h3 class="text-2xl font-bold text-slate-800">일본: 신뢰도 & 감성 이중 전략</h3>
+                     <div class="mt-4 grid md:grid-cols-2 gap-6">
+                         <div>
+                            <p class="text-slate-600">성분과 효능을 중시하며 브랜드 충성도가 높은 성숙 시장. '의약부외품' 등록으로 신뢰를 확보하고, K-뷰티 감성으로 틈새를 공략해야 합니다.</p>
+                            <ul class="mt-4 space-y-2 text-sm text-slate-700">
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>진출 라인:</strong> '집중케어'(의약부외품) & '애딕트'(화장품)</li>
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>포지셔닝:</strong> 효과적 의약부외품 케어 + 프리미엄 K-뷰티 리추얼</li>
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>채널 전략:</strong> 드럭스토어/온라인(집중케어) & 라이프스타일 편집샵(애딕트)</li>
+                                <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✔</span><strong>핵심 과제:</strong> 의약부외품 등록을 통한 시장 진입 자격 획득</li>
+                            </ul>
+                         </div>
+                         <div class="bg-slate-100 p-4 rounded-lg flex items-center justify-center">
+                            <p class="text-slate-500 text-center">🇯🇵<br>신뢰도(의약부외품)와<br>감성(K-뷰티) 결합</p>
+                         </div>
+                     </div>
+                </div>
+            </section>
+
+            <section id="roadmap" class="scroll-mt-16">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900">4. 로드맵: 어떻게 실행할 것인가?</h2>
+                    <p class="mt-2 text-md text-slate-500">단계적 실행 계획을 통해 브랜드 재건과 글로벌 성장을 달성합니다.</p>
+                </div>
+                <div class="relative pl-5 border-l-2 border-slate-200">
+                    <div class="mb-10 timeline-item">
+                        <h4 class="text-xl font-bold text-emerald-700">1단계 (1년 차): 국내 시장 재활성화</h4>
+                        <p class="text-slate-600 mt-2">포트폴리오 재편 및 신규 브랜드 정체성 확립. 재정비된 포트폴리오 국내 런칭 및 커뮤니케이션 집중. 글로벌 진출을 위한 규제 절차 개시.</p>
+                    </div>
+                    <div class="mb-10 timeline-item">
+                        <h4 class="text-xl font-bold text-emerald-700">2단계 (2년 차): 글로벌 시장 진출 (Phase 1)</h4>
+                        <p class="text-slate-600 mt-2">미국(D2C), 중국(티몰 글로벌), 일본(이중 전략) 시장에 순차적으로 런칭. 초기 시장 반응을 기반으로 전략 미세 조정.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 class="text-xl font-bold text-emerald-700">3단계 (3년 차 이후): 글로벌 확장 및 최적화</h4>
+                        <p class="text-slate-600 mt-2">초기 진출 시장 내 채널 확장 및 2차 시장(동남아 등) 진출 검토. 기술 리더십 유지를 위한 지속적인 제품 혁신.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-24">
+        <div class="container mx-auto py-6 px-4 text-center text-sm text-slate-400">
+            <p>본 자료는 닥터그루트 브랜드 재구성 전략 제안을 위한 시뮬레이션입니다.</p>
+            <p>&copy; 2025 Project Phoenix. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const positioningData = {
+        labels: ['감성적/감각적 소구', '이성적/과학적 소구'],
+        datasets: [
+            { label: 'Dr. Groot (애딕트)', data: [{x: 2, y: 6}], backgroundColor: '#F97316', pointRadius: 8, pointHoverRadius: 10 },
+            { label: 'Dr. Groot (마이크로바이옴)', data: [{x: 7, y: 8.5}], backgroundColor: '#059669', pointRadius: 8, pointHoverRadius: 10 },
+            { label: 'Dr. Groot (집중케어)', data: [{x: 6, y: 4}], backgroundColor: '#10B981', pointRadius: 8, pointHoverRadius: 10 },
+            { label: '려 (루트젠)', data: [{x: 3, y: 8}], backgroundColor: '#DC2626', pointRadius: 6, pointHoverRadius: 8 },
+            { label: '그래비티', data: [{x: 8, y: 9}], backgroundColor: '#4F46E5', pointRadius: 6, pointHoverRadius: 8 },
+            { label: '케라시스 퍼퓸', data: [{x: 1, y: 2}], backgroundColor: '#EC4899', pointRadius: 6, pointHoverRadius: 8 },
+            { label: '닥터포헤어', data: [{x: 7.5, y: 5}], backgroundColor: '#3B82F6', pointRadius: 6, pointHoverRadius: 8 },
+            { label: 'TS샴푸', data: [{x: 8, y: 3}], backgroundColor: '#F59E0B', pointRadius: 6, pointHoverRadius: 8 },
+            { label: '헤드&숄더', data: [{x: 9, y: 2}], backgroundColor: '#64748B', pointRadius: 6, pointHoverRadius: 8 }
+        ]
+    };
+
+    const brandDescriptions = {
+        'Dr. Groot (애딕트)': '감성/향기 중심, 매스티지 포지션',
+        'Dr. Groot (마이크로바이옴)': '과학/기술 중심, 프리미엄 포지션',
+        'Dr. Groot (집중케어)': '기능성 중심, 매스/매스티지 포지션',
+        '려 (루트젠)': '한방 헤리티지/여성성, 프리미엄 포지션',
+        '그래비티': '혁신 과학(KAIST), 프리미엄 포지션',
+        '케라시스 퍼퓸': '향기 중심, 매스 포지션',
+        '닥터포헤어': '임상적 권위, 매스티지 포지션',
+        'TS샴푸': '가성비/효과, 매스 포지션',
+        '헤드&숄더': '비듬케어/효과, 매스 포지션',
+    };
+
+    const ctx = document.getElementById('positioningMap').getContext('2d');
+    const positioningMap = new Chart(ctx, {
+        type: 'scatter',
+        data: positioningData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+                title: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += `(${context.parsed.x}, ${context.parsed.y})`;
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: '감성적 소구  <-     경쟁축     ->  이성적/과학적 소구', font: {size: 14} },
+                    min: 0,
+                    max: 10,
+                    ticks: { display: false }
+                },
+                y: {
+                    title: { display: true, text: '매스 마켓  <-     가격대     ->  프리미엄 마켓', font: {size: 14} },
+                    min: 0,
+                    max: 10,
+                     ticks: { display: false }
+                }
+            },
+            onClick: (e) => {
+                const points = positioningMap.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                const infoBox = document.getElementById('brand-info-box');
+                if (points.length) {
+                    const firstPoint = points[0];
+                    const label = positioningMap.data.datasets[firstPoint.datasetIndex].label;
+                    const description = brandDescriptions[label];
+                    infoBox.textContent = `${label}: ${description}`;
+                    infoBox.classList.remove('hidden');
+                } else {
+                    infoBox.classList.add('hidden');
+                }
+            }
+        }
+    });
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('main section[id]');
+    
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 80) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes(current)) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector(link.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    const channelTabs = document.querySelectorAll('.channel-tab-button');
+    const channelContents = document.querySelectorAll('.channel-content-section');
+    channelTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            channelTabs.forEach(t => t.classList.remove('active', 'bg-emerald-600', 'text-white'));
+            tab.classList.add('active', 'bg-emerald-600', 'text-white');
+            
+            channelContents.forEach(content => content.classList.add('hidden'));
+            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        });
+    });
+    document.querySelector('.channel-tab-button').click();
+
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+    portfolioItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const desc = document.getElementById(`${item.dataset.tier}-desc`);
+            desc.classList.toggle('hidden');
+            item.classList.toggle('bg-emerald-100');
+        });
+    });
+
+    const marketTabs = document.querySelectorAll('.market-tab-button');
+    const marketContents = document.querySelectorAll('.market-content-section');
+    marketTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            marketTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            marketContents.forEach(content => content.classList.add('hidden'));
+            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>
