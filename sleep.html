@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>슬립 뷰티 시장 대화형 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Off-white, Dark Gray, Dusty Blue) -->
+    <!-- Application Structure Plan: A top-down, thematic single-page application. The core is an interactive '4 Pillars' section where users select a strategic pillar to explore detailed content, including interactive charts and case studies. This non-linear structure prioritizes user-driven exploration over the report's linear format, making dense information more digestible and engaging. The flow moves from high-level market context to deep-dive strategies, and finally to future opportunities. -->
+    <!-- Visualization & Content Choices: Market Size -> Goal: Compare -> Viz: Interactive Bar Chart (Chart.js) -> Interaction: Toggle datasets -> Justification: Easy comparison of market scales. | 4 Pillars Framework -> Goal: Organize/Explore -> Viz: Tab-like card navigation (HTML/CSS/JS) -> Interaction: Click to reveal content -> Justification: Focuses user on one topic at a time. | Tech/Product Data -> Goal: Compare -> Viz: HTML Table -> Interaction: Static display -> Justification: Optimal for structured data. | Future Concepts -> Goal: Inform/Inspire -> Viz: HTML/CSS Flow Diagram -> Interaction: Hover for details -> Justification: More engaging than a list for forward-looking ideas. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F8F7F4;
+            color: #3D3D3D;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link.active {
+            color: #6B7280;
+            font-weight: 700;
+        }
+        .pillar-card.active {
+            background-color: #E2E8F0;
+            border-color: #94A3B8;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .content-panel {
+            display: none;
+        }
+        .content-panel.active {
+            display: block;
+        }
+        .table-auto th, .table-auto td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+         .table-auto th {
+            background-color: #f1f5f9;
+        }
+        .wow-card {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .wow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-[#F8F7F4]/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">슬립 뷰티 혁명</h1>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#market" class="nav-link text-gray-500 hover:text-gray-900 transition-colors">시장 개요</a>
+                    <a href="#pillars" class="nav-link text-gray-500 hover:text-gray-900 transition-colors">4대 핵심 전략</a>
+                    <a href="#future" class="nav-link text-gray-500 hover:text-gray-900 transition-colors">미래 전망</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Hero Section -->
+        <section class="text-center mb-20">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">새로운 웰니스 프론티어의 부상</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-8">단순한 스킨케어를 넘어 수면, 웰니스, 뷰티 산업이 융합되는 거대한 패러다임의 전환, '슬립 뷰티'의 모든 것을 탐색하세요.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-lg wow-card">
+                    <p class="text-sm text-gray-500">글로벌 수면 경제</p>
+                    <p class="text-3xl font-bold text-slate-700">$5,850억</p>
+                    <p class="text-xs text-gray-400">2024년 전망</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg wow-card">
+                    <p class="text-sm text-gray-500">뷰티 & 웰니스 시장</p>
+                    <p class="text-3xl font-bold text-slate-700">$3조 3,000억</p>
+                    <p class="text-xs text-gray-400">2032년 전망</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg wow-card">
+                    <p class="text-sm text-gray-500">뉴트리코스메틱 시장</p>
+                    <p class="text-3xl font-bold text-slate-700">~17.1%</p>
+                    <p class="text-xs text-gray-400">연평균 성장률(CAGR)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Overview Section -->
+        <section id="market" class="mb-20 scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-2">시장 개요: 다차원적 기회의 정량화</h3>
+            <p class="text-center text-gray-600 mb-12">슬립 뷰티는 세 개의 거대 시장이 융합된 영역으로, 과학적 효능과 총체적 경험을 동시에 요구하는 소비자들이 성장을 주도하고 있습니다.</p>
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div class="flex justify-center mb-4 space-x-2">
+                    <button id="btn-sleep" class="chart-toggle-btn bg-slate-200 text-slate-800 px-4 py-2 rounded-full text-sm font-semibold">수면 경제</button>
+                    <button id="btn-beauty" class="chart-toggle-btn bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-semibold">뷰티&웰니스</button>
+                    <button id="btn-nutri" class="chart-toggle-btn bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-semibold">뉴트리코스메틱</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="marketChart"></canvas>
+                </div>
+                <p id="chart-description" class="text-center text-sm text-gray-500 mt-4">버튼을 클릭하여 시장별 성장 전망을 확인하세요.</p>
+            </div>
+        </section>
+
+        <!-- 4 Pillars Section -->
+        <section id="pillars" class="mb-20 scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-2">4대 핵심 전략: 시장 상용화의 기둥</h3>
+            <p class="text-center text-gray-600 mb-12">글로벌 선도 기업들은 4가지 핵심 전략을 통해 슬립 뷰티 시장을 공략하고 있습니다. 카드를 클릭하여 각 전략을 자세히 알아보세요.</p>
+            
+            <div id="pillar-nav" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="pillar-card active border-2 border-transparent bg-white p-6 rounded-xl shadow-md cursor-pointer transition-all duration-300" data-pillar="p1">
+                    <h4 class="font-bold text-lg mb-2">1. 크로노코스메틱</h4>
+                    <p class="text-sm text-gray-600">피부의 24시간 생체리듬과 동기화하여 야간 재생을 극대화합니다.</p>
+                </div>
+                <div class="pillar-card border-2 border-transparent bg-white p-6 rounded-xl shadow-md cursor-pointer transition-all duration-300" data-pillar="p2">
+                    <h4 class="font-bold text-lg mb-2">2. 섭취형 뷰티</h4>
+                    <p class="text-sm text-gray-600">수면의 질을 개선하고 내부로부터 피부 건강을 지원합니다.</p>
+                </div>
+                <div class="pillar-card border-2 border-transparent bg-white p-6 rounded-xl shadow-md cursor-pointer transition-all duration-300" data-pillar="p3">
+                    <h4 class="font-bold text-lg mb-2">3. 감각 & 환경</h4>
+                    <p class="text-sm text-gray-600">아로마와 기능성 소재로 최적의 수면 환경을 조성합니다.</p>
+                </div>
+                <div class="pillar-card border-2 border-transparent bg-white p-6 rounded-xl shadow-md cursor-pointer transition-all duration-300" data-pillar="p4">
+                    <h4 class="font-bold text-lg mb-2">4. 하이테크 개인화</h4>
+                    <p class="text-sm text-gray-600">AI와 웨어러블 기술로 초개인화된 솔루션을 제공합니다.</p>
+                </div>
+            </div>
+
+            <div id="pillar-content-area" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <!-- Pillar 1 Content -->
+                <div id="p1" class="content-panel active">
+                    <h4 class="text-xl font-bold mb-4">기둥 1: 크로노코스메틱 - 피부 시계와의 동기화</h4>
+                    <p class="mb-6 text-gray-700">이 전략은 피부의 자연적인 야간 복구 주기에 맞춰 효능을 극대화하는 국소용 제품에 중점을 둡니다. 핵심은 피부의 24시간 생체리듬 유전자를 조절하거나 지원하는 독점 기술을 개발하고 특허를 확보하는 것입니다.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto">
+                            <thead>
+                                <tr><th>기술/성분명</th><th>선도 기업</th><th>대표 제품</th><th>작용 메커니즘</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>트라이펩타이드-32 (Chronolux™)</td><td>에스티 로더</td><td>ANR 세럼</td><td>CLOCK/PER1 유전자 활성화, 야간 DNA 복구 강화</td></tr>
+                                <tr><td>슬리핑 마이크로바이옴™</td><td>아모레퍼시픽</td><td>워터 슬리핑 마스크</td><td>프로바이오틱스로 피부 수분 장벽 강화</td></tr>
+                                <tr><td>린데라 스트리크니폴리아</td><td>No7</td><td>퓨처 리뉴 나이트 세럼</td><td>피부 세포의 24시간 리듬 동기화 촉진</td></tr>
+                                <tr><td>서칸블루(Circanblue)</td><td>프로바이탈</td><td>(원료)</td><td>블루라이트로부터 피부 생체리듬 보호</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pillar 2 Content -->
+                <div id="p2" class="content-panel">
+                    <h4 class="text-xl font-bold mb-4">기둥 2: 섭취형 뷰티 - 내부로부터의 복구</h4>
+                    <p class="mb-6 text-gray-700">'내면의 아름다움(beauty from within)' 접근 방식으로, 수면의 질을 직접 개선하고 피부 복구에 필요한 영양소를 공급하는 보충제에 초점을 맞춥니다. 멜라토닌, GABA, L-테아닌 등이 핵심 성분입니다.</p>
+                     <div class="overflow-x-auto">
+                        <table class="w-full table-auto">
+                            <thead>
+                                <tr><th>제품명</th><th>브랜드</th><th>제형</th><th>주요 활성 성분</th><th>핵심 주장</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>매그니시-옴</td><td>문주스</td><td>파우더</td><td>마그네슘, L-테아닌</td><td>휴식 + 수면</td></tr>
+                                <tr><td>뷰티 즛 구미</td><td>험 뉴트리션</td><td>구미</td><td>멜라토닌, FOS, 캐모마일</td><td>빠른 수면 + 장 건강</td></tr>
+                                <tr><td>슬리피 매그니시-옴</td><td>문주스</td><td>파우더</td><td>마그네슘, L-테아닌, 멜라토닌</td><td>빠른 수면 + 깊은 수면</td></tr>
+                                <tr><td>뷰티 즛</td><td>험 뉴트리션</td><td>정제</td><td>멜라토닌, 비타민 B6, 칼슘</td><td>깊은 뷰티 수면</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pillar 3 Content -->
+                <div id="p3" class="content-panel">
+                    <h4 class="text-xl font-bold mb-4">기둥 3: 감각 & 환경 - 수면 분위기 조성</h4>
+                    <p class="mb-6 text-gray-700">이 전략은 향(아로마콜로지)과 기능성 직물을 통해 사용자의 환경과 감각 경험을 최적화하여 수면과 피부 건강을 개선합니다. 뇌의 감정 중추에 직접 작용하여 스트레스를 완화하고 이완을 유도합니다.</p>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                        <h5 class="font-bold text-gray-800">사례 연구: 시세이도의 신경과학 프론티어</h5>
+                        <p class="text-sm text-gray-600 mt-2">시세이도는 30년 이상 '마음과 피부의 연결고리'를 연구하며 전통적인 아로마테라피를 넘어 정신피부과학 영역을 개척했습니다. 이들은 향이 피부 장벽 기능 회복을 촉진하고, 스트레스를 줄여 피부에 긍정적인 영향을 미친다는 사실을 과학적으로 입증했습니다. 이는 경쟁사가 모방하기 어려운 총체적이고 과학적인 감각 경험을 통해 강력한 경쟁 우위를 구축하는 전략입니다.</p>
+                    </div>
+                </div>
+
+                <!-- Pillar 4 Content -->
+                <div id="p4" class="content-panel">
+                    <h4 class="text-xl font-bold mb-4">기둥 4: 하이테크 개인화 - 맞춤형 케어의 미래</h4>
+                    <p class="mb-6 text-gray-700">슬립 뷰티의 최전선으로, 웨어러블 기기의 실시간 데이터와 AI를 활용하여 개인의 라이프스타일, 환경, 피부 상태에 따른 초개인화된 피드백 루프를 구축합니다.</p>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                        <h5 class="font-bold text-gray-800">AI 비즈니스 모델: 프로븐 스킨케어 (Proven Skincare)</h5>
+                        <p class="text-sm text-gray-600 mt-2">프로븐의 핵심은 2천만 건 이상의 소비자 후기와 4천 개 이상의 과학 간행물을 분석한 AI 기반 데이터베이스 '스킨 게놈 프로젝트'입니다. 사용자는 수면 시간, 스트레스 수준, 거주 지역의 UV 지수 등 47가지 요소를 포함한 설문을 통해 개인에게 최적화된 3단계 스킨케어 루틴을 구독 기반으로 제공받습니다. 이는 제품이 아닌 '지속적으로 최적화되는 데이터 기반 서비스'를 판매하는 강력한 비즈니스 모델입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Future Outlook Section -->
+        <section id="future" class="scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-2">미래 전망: 위대한 융합과 새로운 기회</h3>
+            <p class="text-center text-gray-600 mb-12">미래의 슬립 뷰티 시장은 개별 제품을 넘어 완전한 솔루션을 제공하는 '통합 시스템'으로 진화할 것입니다. 다음은 미개척 혁신 기회 영역입니다.</p>
+            <div class="space-y-6">
+                <div class="wow-card bg-white p-6 rounded-lg shadow-md">
+                    <h5 class="font-bold text-lg text-slate-800">동적 개인화 (Dynamic Personalization)</h5>
+                    <p class="text-gray-600 mt-1">웨어러블 기기의 실시간 생체 데이터(스트레스, 수면 질)가 제품 제형이나 사용량을 직접 조절하는 폐쇄 루프 시스템.</p>
+                </div>
+                <div class="wow-card bg-white p-6 rounded-lg shadow-md">
+                    <h5 class="font-bold text-lg text-slate-800">수면 단계별 코스메슈티컬</h5>
+                    <p class="gray-600 mt-1">특정 수면 단계(깊은 수면, 렘수면 등)에서 특정 성분을 방출하는 시간차 방출 기술을 적용한 제품.</p>
+                </div>
+                 <div class="wow-card bg-white p-6 rounded-lg shadow-md">
+                    <h5 class="font-bold text-lg text-slate-800">개인화된 뉴트리코스메틱</h5>
+                    <p class="gray-600 mt-1">개인의 유전, 라이프스타일, 수면 데이터에 기반하여 맞춤형으로 배합된 섭취형 보충제.</p>
+                </div>
+                 <div class="wow-card bg-white p-6 rounded-lg shadow-md">
+                    <h5 class="font-bold text-lg text-slate-800">임상적으로 검증된 아로마콜로지</h5>
+                    <p class="gray-600 mt-1">엄격한 임상 시험을 통해 수면의 질 개선 효과를 입증하고, 이를 바탕으로 기능성 주장을 확보한 독점적인 향기 블렌드.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2024 Interactive Report. All data synthesized from the provided Sleep Beauty Market Analysis.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const marketData = {
+                sleep: {
+                    labels: ['2019', '2024 (전망)'],
+                    values: [4320, 5850],
+                    description: '글로벌 수면 경제 시장 규모 (단위: 억 달러)',
+                    bgColor: 'rgba(100, 116, 139, 0.6)',
+                    borderColor: 'rgba(100, 116, 139, 1)',
+                },
+                beauty: {
+                    labels: ['2024', '2032 (전망)'],
+                    values: [17285, 33098],
+                    description: '글로벌 뷰티 & 웰니스 시장 규모 (단위: 억 달러)',
+                    bgColor: 'rgba(148, 163, 184, 0.6)',
+                    borderColor: 'rgba(148, 163, 184, 1)',
+                },
+                nutri: {
+                    labels: ['시장 최저 전망 CAGR', '시장 최고 전망 CAGR'],
+                    values: [6.9, 17.14],
+                    description: '글로벌 뉴트리코스메틱 시장 연평균 성장률(CAGR) (%)',
+                    bgColor: 'rgba(203, 213, 225, 0.6)',
+                    borderColor: 'rgba(203, 213, 225, 1)',
+                }
+            };
+
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            let marketChart;
+            const chartDescriptionEl = document.getElementById('chart-description');
+
+            function createMarketChart(dataKey) {
+                if (marketChart) {
+                    marketChart.destroy();
+                }
+                
+                const data = marketData[dataKey];
+                chartDescriptionEl.textContent = data.description;
+                
+                marketChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: data.description,
+                            data: data.values,
+                            backgroundColor: data.bgColor,
+                            borderColor: data.borderColor,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            if(dataKey === 'nutri') {
+                                                label += context.parsed.y + '%';
+                                            } else {
+                                                label += '$' + new Intl.NumberFormat('en-US').format(context.parsed.y) + '억';
+                                            }
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#e2e8f0'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const chartToggleButtons = document.querySelectorAll('.chart-toggle-btn');
+            chartToggleButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    chartToggleButtons.forEach(b => {
+                        b.classList.remove('bg-slate-200', 'text-slate-800');
+                        b.classList.add('bg-gray-100', 'text-gray-600');
+                    });
+                    e.target.classList.remove('bg-gray-100', 'text-gray-600');
+                    e.target.classList.add('bg-slate-200', 'text-slate-800');
+                    const dataKey = e.target.id.split('-')[1];
+                    createMarketChart(dataKey);
+                });
+            });
+
+            createMarketChart('sleep');
+
+            const pillarNav = document.getElementById('pillar-nav');
+            const pillarCards = document.querySelectorAll('.pillar-card');
+            const contentPanels = document.querySelectorAll('.content-panel');
+
+            pillarNav.addEventListener('click', (e) => {
+                const targetCard = e.target.closest('.pillar-card');
+                if (!targetCard) return;
+
+                const pillarId = targetCard.dataset.pillar;
+
+                pillarCards.forEach(card => card.classList.remove('active'));
+                targetCard.classList.add('active');
+
+                contentPanels.forEach(panel => {
+                    panel.classList.remove('active');
+                    if (panel.id === pillarId) {
+                        panel.classList.add('active');
+                    }
+                });
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+
+            sections.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>
