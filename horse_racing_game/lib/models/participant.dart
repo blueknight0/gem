@@ -19,7 +19,7 @@ class Participant {
     if (!isFinished) {
       double currentSpeed = speed;
       if (isBoosting) {
-        currentSpeed *= 1.3; // 부스터 효과 감소 (2.0 -> 1.3)
+        currentSpeed *= 2.0; // 부스터 효과 2배로 증가
       }
       position += currentSpeed * deltaTime * 50; // 이동 거리 감소 (100 -> 50)
     }
