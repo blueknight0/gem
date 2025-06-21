@@ -4,6 +4,7 @@ import '../providers/race_provider.dart';
 import '../widgets/setup_widget.dart';
 import '../widgets/race_widget.dart';
 import '../widgets/result_widget.dart';
+import '../widgets/cutscene_widget.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -39,20 +40,25 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<RaceProvider>(
-        builder: (context, raceProvider, child) {
-          switch (raceProvider.raceState) {
-            case RaceState.setup:
-              return const SetupWidget();
-            case RaceState.ready:
-            case RaceState.racing:
-              return const RaceWidget();
-            case RaceState.finished:
-              return const ResultWidget();
-            default:
-              return const SetupWidget();
-          }
-        },
+      body: Stack(
+        children: [
+          Consumer<RaceProvider>(
+            builder: (context, raceProvider, child) {
+              switch (raceProvider.raceState) {
+                case RaceState.setup:
+                  return const SetupWidget();
+                case RaceState.ready:
+                case RaceState.racing:
+                  return const RaceWidget();
+                case RaceState.finished:
+                  return const ResultWidget();
+                default:
+                  return const SetupWidget();
+              }
+            },
+          ),
+          const CutsceneWidget(),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import '../models/participant.dart';
 
@@ -12,6 +13,10 @@ class RaceProvider with ChangeNotifier {
   List<Participant> _participants = [];
   List<Participant> _winners = [];
   
+  // 컷씬 관련 상태
+  String? _cutsceneImagePath;
+  bool _cutsceneFromLeft = true;
+  
   // 경주 설정
   final double _raceDistance = 500.0; // 픽셀 단위
   Timer? _raceTimer;
@@ -21,13 +26,12 @@ class RaceProvider with ChangeNotifier {
   
   // 사운드 관련
   bool _isSoundEnabled = true;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   
-  // 웹용 간단한 사운드 효과 (beep)
-  void _playSound(int frequency, int duration) {
+  // 실제 사운드 재생
+  void _playSound(String soundFile) {
     if (_isSoundEnabled) {
-      // 웹에서는 간단한 알림음으로 대체
-      // 실제 사운드는 향후 HTML5 오디오로 구현 가능
-      print('🔊 사운드 재생: ${frequency}Hz ${duration}ms');
+      _audioPlayer.play(AssetSource('sounds/$soundFile'));
     }
   }
   
@@ -40,6 +44,10 @@ class RaceProvider with ChangeNotifier {
   double get remainingDistance => _remainingDistance;
   String get commentary => _commentary;
   bool get isSoundEnabled => _isSoundEnabled;
+  
+  // Getters for cutscene
+  String? get cutsceneImagePath => _cutsceneImagePath;
+  bool get cutsceneFromLeft => _cutsceneFromLeft;
   
   // 참가자 순위 정렬
   List<Participant> get sortedParticipants {
@@ -99,7 +107,7 @@ class RaceProvider with ChangeNotifier {
         notifyListeners();
       } else if (countdown == 0) {
         _commentary = "출발! 🏁";
-        _playSound(1000, 500); // 출발 신호음
+        _playSound('start.mp3'); // 출발 신호음
         notifyListeners();
       } else {
         timer.cancel();
@@ -133,7 +141,7 @@ class RaceProvider with ChangeNotifier {
       if (!participant.isFinished) {
         // 랜덤한 속도 변화
         double speedVariation = 0.8 + Random().nextDouble() * 0.4; // 0.8 ~ 1.2
-        participant.updatePosition(0.02 * speedVariation); // 더 느린 업데이트
+        participant.updatePosition(0.02 * 1.5 * speedVariation); // 전체 속도 1.5배 증가
         
         // 결승선 도착 체크
         if (participant.position >= _raceDistance) {
@@ -164,18 +172,37 @@ class RaceProvider with ChangeNotifier {
   }
 
   void _randomBoost() {
-    if (_participants.isNotEmpty && Random().nextDouble() < 0.3) {
+    // 컷씬이 이미 표시중이면 중복 실행 방지
+    if (_cutsceneImagePath != null) return;
+
+    if (_participants.isNotEmpty && Random().nextDouble() < 0.15) { // 부스터 빈도 1/2로 감소
       final randomParticipant = _participants[Random().nextInt(_participants.length)];
       if (!randomParticipant.isFinished && !randomParticipant.isBoosting) {
         randomParticipant.boost();
-        _playSound(800, 300); // 부스터 효과음
+        _playSound('booster.mp3'); // 부스터 효과음
         
+        // 컷씬 실행
+        _triggerCutscene();
+
         // 1초 후 부스터 해제
         Timer(const Duration(seconds: 1), () {
           randomParticipant.resetBoost();
         });
       }
     }
+  }
+
+  void _triggerCutscene() {
+    final randomImageIndex = Random().nextInt(7) + 1;
+    _cutsceneImagePath = 'assets/images/1 ($randomImageIndex).png';
+    _cutsceneFromLeft = Random().nextBool();
+    notifyListeners();
+
+    // 2초 후 컷씬 이미지 제거
+    Timer(const Duration(seconds: 2), () {
+      _cutsceneImagePath = null;
+      notifyListeners();
+    });
   }
 
   void _updateCommentary() {
@@ -200,7 +227,7 @@ class RaceProvider with ChangeNotifier {
     
     if (_winners.isNotEmpty) {
       _commentary = "🏆 ${_winners.first.name}님이 우승하셨습니다!";
-      _playSound(600, 1000); // 우승 팡파레
+      _playSound('finish.mp3'); // 우승 팡파레
     }
     
     notifyListeners();
