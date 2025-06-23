@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&G 두피 효능 평가 인터랙티브 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Scientific -->
+    <!-- Application Structure Plan: 사용자의 핵심 질문(피지, 항균, 비듬)에 직접 답하기 위해 주제별 탐색 구조를 채택했습니다. 사용자는 상단 네비게이션을 통해 세 가지 핵심 평가 영역을 자유롭게 이동할 수 있습니다. 각 영역은 개요, 핵심 원리, 상세 프로토콜, 인터랙티브 데이터 시각화로 구성된 미니 대시보드 형태로 설계되었습니다. 이 구조는 복잡한 과학 보고서를 선형적으로 읽는 대신, 관심 주제를 중심으로 정보를 능동적으로 탐색하게 하여 사용자 이해도와 참여도를 높입니다. 보고서의 순서를 따르지 않고, 가장 논리적이고 사용자 친화적인 정보 흐름을 만드는 데 집중했습니다. -->
+    <!-- Visualization & Content Choices: 1) P&G 철학(커버리지>부착량): Goal(비교/정보) -> Viz(HTML/CSS 시각적 대비) -> Interaction(호버) -> Justification(핵심 개념을 즉시 시각적으로 전달). 2) ZnPT 부착량 데이터(표3.1): Goal(비교/정보) -> Viz(Chart.js 바 차트) -> Interaction(툴팁) -> Justification(숫자 데이터를 시각적으로 비교하여 이해도 증진). 3) Time-Kill Assay: Goal(시간에 따른 변화) -> Viz(Chart.js 라인 차트) -> Interaction(툴팁) -> Justification(시간 경과에 따른 효능을 직관적으로 표현). 4) ASFS 척도: Goal(정보/조직) -> Viz(HTML/CSS 시각적 스케일) -> Interaction(호버) -> Justification(단순 표보다 심각도 수준을 직관적으로 인지시킴). 모든 시각화는 사용자가 복잡한 프로토콜과 데이터를 쉽게 소화하도록 돕기 위해 선택되었습니다. Library/Method: Chart.js(Canvas), HTML/CSS/Tailwind. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .step-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header id="header" class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-lg text-blue-600">P&G Scalp Science</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" data-section="overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600">개요</a>
+                        <a href="#sebum" data-section="sebum" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600">피지 평가</a>
+                        <a href="#antimicrobial" data-section="antimicrobial" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600">항균 평가</a>
+                        <a href="#dandruff" data-section="dandruff" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600">비듬 평가</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="overview">개요</option>
+                        <option value="sebum">피지 평가</option>
+                        <option value="antimicrobial">항균 평가</option>
+                        <option value="dandruff">비듬 평가</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        
+        <section id="overview" class="mb-16 scroll-mt-24">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2 text-center">P&G 두피 효능 평가 프레임워크</h1>
+            <p class="text-center text-lg text-slate-600 mb-12">피지, 항균, 비듬 관리에 대한 P&G의 과학적 접근법 탐구</p>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">핵심 철학: 단순 부착을 넘어 생체이용률로</h2>
+                <p class="mb-6 text-center max-w-3xl mx-auto">
+                    P&G의 두피 케어 기술은 중요한 패러다임 전환에 기반합니다. 과거에는 활성 성분을 두피에 많이 '부착'시키는 것이 중요하다고 여겨졌습니다. 하지만 P&G는 연구를 통해, 실제 효능은 단순히 부착된 양이 아니라, 활성 성분이 얼마나 넓게 '커버'되고 두피에 실질적으로 작용할 수 있는 '생체이용률'에 의해 결정된다는 사실을 발견했습니다. 이는 "72시간 비듬 방지"와 같은 지속적인 효과를 구현하는 핵심 원리입니다.
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 text-center">
+                    <div class="border border-red-200 bg-red-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-red-800 mb-2">과거의 접근법: 부착 효율성</h3>
+                        <p class="text-red-700">활성 성분이 국소적으로 고농축되어 두피 전체를 커버하지 못함</p>
+                        <div class="mt-4 h-24 flex justify-center items-center space-x-1" aria-hidden="true">
+                           <div class="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center text-white font-bold text-xs">고농축</div>
+                           <div class="w-2 h-2 bg-red-300 rounded-full"></div>
+                           <div class="w-2 h-2 bg-red-300 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="border border-green-200 bg-green-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-green-800 mb-2">P&G의 통찰: 커버리지 & 생체이용률</h3>
+                        <p class="text-green-700">활성 성분이 두피 전체에 균일하게 분포하여 지속적인 효과 제공</p>
+                         <div class="mt-4 h-24 flex justify-center items-center space-x-4" aria-hidden="true">
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                           <div class="w-4 h-4 bg-green-400 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 text-center">통합 평가 모델</h2>
+                 <p class="mb-8 text-center max-w-3xl mx-auto">
+                    P&G는 단편적인 평가가 아닌, 여러 관점을 통합한 다각적 모델을 통해 두피 건강을 총체적으로 분석합니다. 이 프레임워크는 분자 수준의 변화부터 소비자가 느끼는 실질적인 개선까지 모든 단계를 연결하여 강력한 효능의 과학적 근거를 마련합니다.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="text-center p-4">
+                        <div class="text-4xl mb-2 text-blue-500">🔬</div>
+                        <h3 class="text-lg font-semibold mb-1">분자/미생물 분석</h3>
+                        <p class="text-sm">마이크로바이옴 분석을 통해 근본 원인 규명</p>
+                    </div>
+                    <div class="text-center p-4">
+                        <div class="text-4xl mb-2 text-blue-500">📈</div>
+                        <h3 class="text-lg font-semibold mb-1">기기 측정</h3>
+                        <p class="text-sm">피지량, 수분량 등 객관적 데이터 확보</p>
+                    </div>
+                    <div class="text-center p-4">
+                        <div class="text-4xl mb-2 text-blue-500">🧑‍⚕️</div>
+                        <h3 class="text-lg font-semibold mb-1">전문가 임상 평가</h3>
+                        <p class="text-sm">훈련된 전문가가 눈에 보이는 개선 효과를 평가</p>
+                    </div>
+                    <div class="text-center p-4">
+                        <div class="text-4xl mb-2 text-blue-500">🤖</div>
+                        <h3 class="text-lg font-semibold mb-1">AI/자동화 시스템</h3>
+                        <p class="text-sm">이미지 분석 등으로 평가의 객관성 및 효율성 증대</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sebum" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">두피 피지 평가</h2>
+            <p class="text-lg text-slate-600 mb-8">단순한 피지량 측정을 넘어, 소비자의 실생활과 연관된 질적 관리 방법을 평가합니다. P&G는 피지 분포의 불균일성을 이해하고, 이를 해결하기 위한 맞춤형 사용법까지 제안하며 전인적인 접근 방식을 보여줍니다.</p>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">표준 프로토콜: Sebumeter® 측정법</h3>
+                    <p class="mb-4">피지 분비율을 객관적으로 정량화하는 업계 표준 방법입니다. 특정 부위의 피지를 시간당, 단위 면적당 분비량(µg/cm²/hr)으로 측정합니다.</p>
+                    <ol class="list-decimal list-inside space-y-2 text-slate-600">
+                        <li><span class="font-semibold">부위 선정:</span> 3점 좌표 시스템으로 측정 부위 지정</li>
+                        <li><span class="font-semibold">전처리:</span> 70% 에탄올로 측정 부위 세정</li>
+                        <li><span class="font-semibold">측정:</span> 1시간 후 Sebumeter® 프로브로 피지량 측정</li>
+                        <li><span class="font-semibold">데이터 산출:</span> µg/cm²/hr 단위로 결과 계산</li>
+                    </ol>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">P&G의 진보된 프로토콜: 선택적 피지 제거</h3>
+                    <p class="mb-4">"메이크업을 유지하면서 번들거림만 관리할 수 없을까?" 라는 소비자 니즈에서 출발한 혁신적인 평가법입니다.</p>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl">💧</div>
+                            <p class="text-sm mt-1 font-medium">1. 미스트 분사</p>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="text-center">
+                             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl">닦</div>
+                            <p class="text-sm mt-1 font-medium">2. 가볍게 제거</p>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="text-center">
+                             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl">✨</div>
+                            <p class="text-sm mt-1 font-medium">결과</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-slate-600">액상 조성물이 과도한 피지만 용해시키고, 흡수재로 이를 제거하여 메이크업 손상 없이 피지를 관리하는 능력을 평가합니다.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="antimicrobial" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">지속적 항균 효능 평가</h2>
+            <p class="text-lg text-slate-600 mb-8">일시적인 균 감소가 아닌, 시간이 지나도 항균 효과가 '지속'되는지를 증명하는 것이 핵심입니다. 이를 위해 P&G는 활성 성분이 두피에 얼마나 잘 남아있는지(잔존성), 그리고 실제 원인균에 어떤 영향을 미치는지 다각도로 평가합니다.</p>
+            
+            <div class="bg-white p-8 rounded-2xl shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">In Vivo 활성 성분(ZnPT) 잔존량 정량화</h3>
+                <p class="mb-6">샴푸 사용 후, 항비듬 성분인 징크 피리치온(ZnPT)이 두피와 모낭에 얼마나 오래 남아있는지를 직접 측정하여 지속적인 보호 효과의 증거를 확보합니다. 아래 차트는 다양한 샘플링 기법으로 측정한 ZnPT의 부착량을 보여줍니다.</p>
+                <div class="chart-container">
+                    <canvas id="znptDepositionChart"></canvas>
+                </div>
+                <p class="text-xs text-center mt-2 text-slate-500">핵심 요약: 시아노아크릴레이트 생검법이 두피 표면에서 가장 많은 ZnPT를 검출했으며, 모낭에서도 미량이지만 성분이 전달됨을 확인했습니다. 이는 성분이 두피 표면뿐 아니라 모낭 깊숙이 작용할 가능성을 시사합니다.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">분자 분석을 통한 마이크로바이옴 반응 평가</h3>
+                    <p class="mb-4">배양이 어려운 비듬 원인균(*Malassezia*)을 분자 분석(PCR) 기술로 직접 정량화하여 제품의 효과를 정밀하게 평가합니다.</p>
+                    <ol class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 w-8 h-8 bg-slate-200 text-slate-700 font-bold rounded-full flex items-center justify-center mr-3">1</span>
+                            <div><span class="font-semibold">피험자 선정:</span> 임상적 비듬 점수(ASFS)로 그룹 분류</div>
+                        </li>
+                        <li class="flex items-start">
+                             <span class="flex-shrink-0 w-8 h-8 bg-slate-200 text-slate-700 font-bold rounded-full flex items-center justify-center mr-3">2</span>
+                            <div><span class="font-semibold">샘플링:</span> 멸균 면봉으로 두피 샘플 채취</div>
+                        </li>
+                        <li class="flex items-start">
+                             <span class="flex-shrink-0 w-8 h-8 bg-slate-200 text-slate-700 font-bold rounded-full flex items-center justify-center mr-3">3</span>
+                            <div><span class="font-semibold">DNA 추출 및 분석:</span> 특수 프로토콜로 DNA 추출 후 Nested PCR로 *Malassezia* 종 정량화</div>
+                        </li>
+                    </ol>
+                     <p class="text-xs text-slate-500 mt-4">핵심 요약: 이 방법은 임상적 개선(비듬 감소)과 특정 미생물 감소 간의 직접적인 연결고리를 만들어, "우리 제품이 비듬 원인균을 줄여줍니다"와 같은 강력한 주장의 근거가 됩니다.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">In Vitro 사멸 시간 분석</h3>
+                    <p class="mb-4">실험실 환경에서 항비듬 제형이 원인균을 얼마나 빠르고 효과적으로 사멸시키는지 시간대별로 평가하는 스크리닝 방법입니다.</p>
+                     <div class="h-48 chart-container">
+                        <canvas id="timeKillAssayChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center mt-2 text-slate-500">핵심 요약: 시간에 따른 균 수(CFU/mL) 감소를 통해 제형의 살진균 활성 속도와 정도를 신속하게 확인할 수 있습니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="dandruff" class="scroll-mt-24">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">비듬 평가</h2>
+            <p class="text-lg text-slate-600 mb-8">P&G는 신뢰도 높은 전문가 육안 평가(ASFS)를 기본으로, 이를 보완하고 객관성을 높이기 위한 생화학적, 대사체적, AI 기반의 혁신적인 자동화 평가법들을 지속적으로 개발하고 있습니다.</p>
+            
+            <div class="bg-white p-8 rounded-2xl shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">임상 표준: 부착성 두피 각질 점수 (ASFS)</h3>
+                <p class="mb-6">훈련된 전문가가 두피를 8개 구역으로 나누어 각질의 양과 부착 정도를 0~10점으로 평가하는, 신뢰도 높은 비듬 평가의 표준입니다. 총점(0~80점)에 따라 심각도를 분류합니다.</p>
+                <div class="w-full bg-slate-100 rounded-full h-8 flex overflow-hidden">
+                    <div class="flex items-center justify-center h-full bg-green-300" style="width: 30%">
+                        <span class="text-xs font-medium text-green-800">경증 (16-24)</span>
+                    </div>
+                    <div class="flex items-center justify-center h-full bg-yellow-300" style="width: 22.5%">
+                         <span class="text-xs font-medium text-yellow-800">중등증 (25-34)</span>
+                    </div>
+                    <div class="flex items-center justify-center h-full bg-red-400" style="width: 47.5%">
+                         <span class="text-xs font-medium text-red-800">중증 (35-80)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">객관성 증대를 위한 자동화 평가법</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg text-center transform hover:scale-105 transition-transform">
+                        <div class="text-4xl mb-3">🧪</div>
+                        <h4 class="font-semibold text-lg mb-2">생화학적 분석</h4>
+                        <p class="text-sm">단백질 시약의 색상 변화(녹색→보라색)로 비듬 심각도를 신속하게 평가합니다.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg text-center transform hover:scale-105 transition-transform">
+                        <div class="text-4xl mb-3">🧬</div>
+                        <h4 class="font-semibold text-lg mb-2">대사체 바이오마커</h4>
+                        <p class="text-sm">두피 세포의 대사 물질(예: 가려움 유발 히스타민)을 분석하여 분자 수준의 변화를 감지합니다.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg text-center transform hover:scale-105 transition-transform">
+                        <div class="text-4xl mb-3">🤖</div>
+                        <h4 class="font-semibold text-lg mb-2">AI 이미지 분석</h4>
+                        <p class="text-sm">AI(신경망)가 두피 현미경 이미지를 분석하여 객관적인 비듬 등급을 자동으로 산출합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2024 Interactive Report. All rights reserved.</p>
+            <p class="text-slate-400 mt-1">본 자료는 제공된 보고서를 기반으로 생성된 정보 시각화 애플리케이션입니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.dataset.section === id);
+                        });
+                        mobileNav.value = id;
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            mobileNav.addEventListener('change', (e) => {
+                const targetId = e.target.value;
+                const targetElement = document.getElementById(targetId);
+                if(targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            const znptCtx = document.getElementById('znptDepositionChart').getContext('2d');
+            const znptDepositionChart = new Chart(znptCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['시아노아크릴레이트 생검 (표면)', '스크럽 용액 추출', '모발 채취 (모낭)', '시아노아크릴레이트 생검 (모낭)'],
+                    datasets: [{
+                        label: 'ZnPT 부착량 (ng/cm² 또는 ng/follicle)',
+                        data: [2770, 1360, 0.6 * 150 , 11],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(34, 197, 94, 0.7)',
+                            'rgba(249, 115, 22, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(249, 115, 22, 1)',
+                            'rgba(139, 92, 246, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             title: {
+                                display: true,
+                                text: '부착량 (ng/cm²)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 15 ? label.substring(0, 15) + '...' : label;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '다양한 샘플링 기법별 ZnPT 부착량',
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        let unit = context.label.includes('모발') ? 'ng/follicle' : 'ng/cm²';
+                                        let value = context.label.includes('모발') ? (context.parsed.y / 150).toFixed(3) : context.parsed.y;
+                                        label += `${value} ${unit}`;
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const timeKillCtx = document.getElementById('timeKillAssayChart').getContext('2d');
+            const timeKillAssayChart = new Chart(timeKillCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0시간', '1시간', '6시간', '24시간'],
+                    datasets: [{
+                        label: '생존 균 수 (CFU/mL)',
+                        data: [10000000, 5000000, 100000, 5000],
+                        fill: false,
+                        borderColor: 'rgb(239, 68, 68)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'logarithmic',
+                            beginAtZero: false,
+                             title: {
+                                display: true,
+                                text: '생존 균 수 (CFU/mL, Log Scale)'
+                            }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: '시간'
+                            }
+                        }
+                    },
+                     plugins: {
+                        title: {
+                            display: true,
+                            text: '시간에 따른 균 사멸 효과',
+                            font: { size: 16 }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
