@@ -340,7 +340,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentRoundParticipants = [...allParticipants];
             }
         } else {
-            // 결승전
+            // 결승전 - 모든 예선 라운드의 승자들을 수집
+            advancedParticipants = [];
+            roundResults.forEach(round => {
+                if (round.winners && round.winners.length > 0) {
+                    advancedParticipants.push(...round.winners);
+                }
+            });
             currentRoundParticipants = [...advancedParticipants];
         }
         
@@ -586,9 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 라운드 결과 저장
         if (tournamentMode && currentRound < totalRounds) {
-            // 예선 라운드 완료
+            // 예선 라운드 완료 - 승자만 저장하고 advancedParticipants는 결승전 시작 시 수집
             roundResults[currentRound - 1].winners = finalWinners.slice(0, 3); // 상위 3명만
-            advancedParticipants.push(...finalWinners.slice(0, 3));
             
             commentaryText.textContent = `예선 ${currentRound}라운드 종료! ${finalWinners.slice(0, 3).join(', ')}이(가) 결승 진출!`;
             
