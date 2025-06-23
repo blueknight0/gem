@@ -2,9 +2,19 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: #f0f4f8; display: flex; justify-content: center; align-items: center;
-    min-height: 100vh; margin: 0; padding: 20px 0; color: #333;
+    background-color: #f0f4f8;
+    margin: 0;
+    color: #333;
 }
+
+#app-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
 .container {
     width: 95%; max-width: 1400px; background: white; padding: 2em; border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
@@ -111,6 +121,8 @@ button:active { transform: scale(0.98); }
     margin-left: 10px;
     font-size: 1.2em;
     white-space: nowrap;
+    display: inline-block;
+    transform: scaleX(-1);
 }
 
 /* Rank and Boost styles */
@@ -255,3 +267,22 @@ button:active { transform: scale(0.98); }
 .podium-stand.first { height: 180px; background-color: #ffd700; }
 .podium-stand.second { height: 130px; background-color: #c0c0c0; }
 .podium-stand.third { height: 90px; background-color: #cd7f32; }
+
+@media (max-width: 768px) {
+    .race-content { flex-direction: column; }
+    #live-ranking { width: 100%; height: auto; max-height: 40vh; }
+}
+
+.flipped-emoji {
+    display: inline-block;
+    transform: scaleX(-1);
+}
+
+.bmc-button-container {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    z-index: 100;
+}
