@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Writer v4 - 지능형 법률 보고서 생성기</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --primary-color: #4CAF50;
+            --secondary-color: #2c2c2c;
+            --header-color: #ffffff;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--header-color);
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        header p {
+            color: var(--primary-color);
+            font-size: 1.2em;
+            margin-top: 5px;
+        }
+
+        main section {
+            padding: 60px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        main section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 2em;
+            color: var(--header-color);
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background-color: var(--primary-color);
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background-color: var(--secondary-color);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-card h3 {
+            margin-top: 0;
+            color: var(--header-color);
+        }
+
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .workflow::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .workflow-step {
+            background: var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .workflow-step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: -58px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 3px solid var(--bg-color);
+        }
+
+        .workflow-step h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+
+        .workflow-step h4 { /* For smaller headers inside workflow */
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+
+        .outputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .output-description {
+            padding-right: 20px;
+        }
+        
+        .placeholder-image {
+            background-color: #333;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 1.2em;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .tech-item {
+            background-color: var(--secondary-color);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        pre {
+            background-color: #0d0d0d;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        code {
+            font-family: "Courier New", Courier, monospace;
+            background-color: #2b2b2b;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            background-color: var(--secondary-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .outputs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .output-item h3 {
+            color: var(--header-color);
+            margin-top: 0;
+        }
+        
+        .output-image {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .output-image:hover {
+            transform: scale(1.03);
+        }
+        
+        .output-files {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+        }
+        
+        .output-files h3 {
+            margin-top: 0;
+            color: var(--header-color);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #5ac85e;
+        }
+
+        .pipeline-stage {
+            background: var(--secondary-color);
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .pipeline-stage h3 {
+             text-align: left;
+             margin: 0 0 15px 0;
+        }
+
+        .pipeline-stage h3::after {
+            display: none;
+        }
+
+        .pipeline-stage ul {
+            padding-left: 20px;
+        }
+
+        .pipeline-stage li {
+            margin-bottom: 10px;
+        }
+
+
+        @media (max-width: 768px) {
+            .outputs {
+                grid-template-columns: 1fr;
+            }
+            .outputs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>🏛️ RAG Writer v4</h1>
+            <p>지능형 법률 연구 보고서 생성기</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="intro">
+            <h2>프로젝트 소개</h2>
+            <p>
+                RAG Writer v4는 복잡하고 전문적인 법률 연구 보고서 생성 과정을 완전히 자동화하는 지능형 시스템입니다.
+                RAG(Retrieval-Augmented Generation) 기법과 LangGraph의 에이전트 워크플로우를 결합하여, 사용자는 간단한 GUI를 통해 주제와 실행 모드만 선택하면 됩니다.
+                시스템은 스스로 초안 작성부터 편집장 수준의 검토, 자동 수정, 최종 서식 정리, 그리고 시각적 분석 대시보드 생성까지의 모든 과정을 자율적으로 수행하여, 전문가 수준의 보고서를 신속하게 완성합니다.
+            </p>
+        </section>
+
+        <section id="features">
+            <h2>핵심 기능</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <h3>🖥️ 사용자 친화적 GUI</h3>
+                    <p>Tkinter로 제작된 간단한 인터페이스를 통해 보고서 주제 입력 및 생성 모드(Production/Test)를 쉽게 선택할 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🧠 지능형 워크플로우</h3>
+                    <p>LangGraph 기반의 자가 교정(self-correcting) 루프를 구현, AI가 스스로 초안의 문제점을 분석하고 재작성하여 완성도를 높입니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 자동 분석 대시보드</h3>
+                    <p>파이프라인의 모든 과정을 시각화합니다. 작업별 소요시간, 품질 지표, 참고문헌 통계 등을 포함한 종합 대시보드를 생성합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🗂️ 체계적인 결과물 관리</h3>
+                    <p>모든 생성물(보고서, 로그, 시각화 자료)을 타임스탬프 기반 폴더에 체계적으로 저장하여 이력 관리가 용이합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚙️ 동적 모델 선택</h3>
+                    <p>GUI에서 고품질(Pro) 모드와 비용 효율적(Flash) 모드를 선택하여 목적에 맞는 AI 모델을 유연하게 활용할 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📚 FAISS 기반 벡터 DB</h3>
+                    <p>수만 건의 법률 문서 청크를 FAISS 벡터 DB에 저장하여, 보고서 내용과 가장 관련성 높은 참고자료를 실시간으로 검색 및 활용합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pipeline">
+            <h2>데이터 파이프라인</h2>
+            <div class="pipeline-stage">
+                <h3>1단계: 데이터 준비 및 벡터 DB 구축</h3>
+                <p>
+                    보고서 생성의 첫 단계는 고품질의 지식 기반을 구축하는 것입니다. 이 과정은 다음과 같이 진행됩니다.
+                </p>
+                <ul>
+                    <li><strong>심층 리서치 자료 수집:</strong> Gemini, Genspark 등 다양한 AI 도구를 활용하여 '사내변호사 ACP'와 관련된 논문, 기사, 법률 문서 등 심층 리서치 자료를 수집하고 <code>/sources</code> 폴더에 저장합니다.</li>
+                    <li><strong>데이터 전처리 (<code>Data_Processor.py</code>):</strong> 수집된 원본 마크다운(<code>.md</code>) 파일들을 파싱하여 문장 단위로 분할하고, 각 문장에 연결된 목차 정보와 참고문헌 번호를 추출합니다. 동시에 각 문장에 고유 ID(UUID)를 부여하고, 참고문헌 텍스트를 연결하여 <code>_processed.json</code> 파일을 생성합니다.</li>
+                    <li><strong>벡터 DB 생성 (<code>Vector_DB_Creator.py</code>):</strong> 전처리된 <code>_processed.json</code> 파일의 모든 문장들을 Google의 <code>text-embedding-004</code> 모델을 통해 고차원 벡터로 변환합니다. 이 벡터들은 FAISS 라이브러리를 통해 인덱싱되어, 빠른 유사도 검색이 가능한 <code>vector_db.faiss</code> 파일로 저장됩니다. 문장과 ID 등 메타데이터는 <code>vector_db_data.json</code>에 저장됩니다.</li>
+                </ul>
+            </div>
+            
+            <div class="pipeline-stage">
+                <h3>2단계: 지능형 보고서 생성 (LangGraph 워크플로우)</h3>
+                <p>강력한 벡터 DB가 준비되면, LangGraph로 설계된 에이전트 워크플로우가 보고서 생성을 시작합니다.</p>
+                <div class="workflow">
+                    <div class="workflow-step" data-step="1">
+                        <h4>개요 생성</h4>
+                        <p>사용자 주제와 벡터 DB의 핵심 정보를 분석하여 논리적인 보고서 목차를 생성합니다.</p>
+                    </div>
+                    <div class="workflow-step" data-step="2">
+                        <h4>초안 작성</h4>
+                        <p>목차의 각 섹션에 대해, 벡터 DB에서 관련 내용을 검색하여 상세한 초안을 작성합니다.</p>
+                    </div>
+                    <div class="workflow-step" data-step="3">
+                        <h4>편집장 검토 (AI Self-Correction)</h4>
+                        <p>AI 편집장이 초안의 논리적 비약, 내용 부실 등을 검토합니다. 기준 미달 시, 개선 지침을 생성하여 재작성을 요청합니다.</p>
+                    </div>
+                    <div class="workflow-step" data-step="4">
+                        <h4>섹션 재작성</h4>
+                        <p>편집장의 개선 지침에 따라 문제가 된 섹션의 본문을 다시 생성하고, 통과할 때까지 재검토를 받습니다. (최대 3회)</p>
+                    </div>
+                    <div class="workflow-step" data-step="5">
+                        <h4>최종화 및 저장</h4>
+                        <p>모든 검토를 통과한 보고서의 서식을 정리하고, 참고문헌을 처리한 후, 보고서, 로그, 시각화 자료를 폴더에 저장합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="outputs">
+            <h2>결과물 예시</h2>
+            <div class="outputs-grid">
+                <div class="output-item">
+                    <h3>GUI 스크린샷</h3>
+                    <p>사용자는 아래와 같은 간단한 GUI로 프로그램을 시작할 수 있습니다. 주제를 입력하고 모드를 선택한 뒤 버튼을 클릭하면 모든 프로세스가 자동으로 진행됩니다.</p>
+                    <img src="capture.png" alt="RAG Writer GUI 스크린샷" class="output-image">
+                </div>
+                <div class="output-item">
+                    <h3>자동 생성 대시보드</h3>
+                    <p>작업이 완료되면, 파이프라인의 성과를 한눈에 파악할 수 있는 종합 분석 대시보드가 자동으로 생성됩니다. 이를 통해 프로세스의 투명성을 확보하고 품질을 객관적으로 평가할 수 있습니다.</p>
+                     <a href="results_20250713_022613/visualizations/dashboard_20250713_023054.png" target="_blank" class="example-link">
+                        <img src="results_20250713_022613/visualizations/dashboard_20250713_023054.png" alt="대시보드 예시" class="output-image">
+                    </a>
+                </div>
+            </div>
+            <div class="output-files">
+                <h3>결과물 파일 예시</h3>
+                <p>실제 생성된 최종 보고서와 편집장 검토 로그를 직접 확인해 보세요.</p>
+                <div class="button-group">
+                    <a href="results_20250713_022613/final_report_20250713_023054.md" target="_blank" class="btn">최종 보고서 예시 (.md)</a>
+                    <a href="results_20250713_022613/editorial_review_log_20250713_023054.md" target="_blank" class="btn">편집장 검토 로그 예시 (.md)</a>
+                </div>
+            </div>
+        </section>
+        
+        <section id="tech">
+            <h2>기술 스택</h2>
+            <div class="tech-stack">
+                <span class="tech-item">Python</span>
+                <span class="tech-item">Google Gemini</span>
+                <span class="tech-item">LangGraph</span>
+                <span class="tech-item">FAISS</span>
+                <span class="tech-item">Tkinter</span>
+                <span class="tech-item">Matplotlib</span>
+                <span class="tech-item">Seaborn</span>
+                <span class="tech-item">Pandas</span>
+                <span class="tech-item">Numpy</span>
+            </div>
+        </section>
+
+        <section id="getting-started">
+            <h2>시작하기</h2>
+            <p>프로젝트를 로컬 환경에서 실행하는 방법입니다.</p>
+            <h3>1. 소스 코드 복제</h3>
+            <pre><code>git clone [repository_url]
+cd Rag-writer</code></pre>
+            <h3>2. 필수 라이브러리 설치</h3>
+            <p>스크립트가 자동으로 설치를 시도하지만, 수동으로 설치할 수도 있습니다.</p>
+            <pre><code>pip install -r requirements.txt  # (requirements.txt 파일이 있다면)
+# 또는
+pip install google-generativeai python-dotenv faiss-cpu numpy scikit-learn langgraph matplotlib seaborn pandas Pillow</code></pre>
+            <h3>3. 환경 변수 설정</h3>
+            <p><code>.env</code> 파일을 만들고 Gemini API 키를 입력하세요.</p>
+            <pre><code>GEMINI_API_KEY="YOUR_GEMINI_API_KEY"</code></pre>
+            <h3>4. 애플리케이션 실행</h3>
+            <pre><code>python generate_report_v3.py</code></pre>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Developed with ❤️ by Gemini 2.5 Pro</p>
+        </div>
+    </footer>
+
+</body>
+</html> 
