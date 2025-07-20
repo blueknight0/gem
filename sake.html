@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본 사케 비즈니스의 현재와 미래</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The application is structured as a narrative journey, guiding the user from a high-level overview to specific details. It starts with an introduction and key market trends (Section 1 & 2), then delves into the 'how' with brewing innovations (Section 3), the 'where' with an interactive regional map (Section 4), and the 'who' with the top producers (Section 5). This thematic, top-down approach is more intuitive for learning and exploration than a rigid report structure. Key interactions like chart toggles, clickable diagrams, and a dynamic map are designed to make data digestible and encourage user engagement, transforming passive reading into an active discovery process. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Domestic vs. Export Volume Trends -> Goal: Compare/Show Change -> Viz/Method: Chart.js Line Chart -> Interaction: Hover for tooltips -> Justification: Clearly visualizes the opposing market forces shaping the modern industry. Library: Chart.js (Canvas).
+        - Report Info: Rise of Premium Sake -> Goal: Show Proportional Change -> Viz/Method: Chart.js Donut Chart -> Interaction: Buttons to toggle data between 2012 and 2022 -> Justification: Effectively demonstrates the premiumization trend over a decade. Library: Chart.js (Canvas).
+        - Report Info: Modern Brewing Process -> Goal: Organize/Inform -> Viz/Method: HTML/CSS/JS Flowchart -> Interaction: Click on a stage to see a description -> Justification: Avoids static SVG, creating an engaging, step-by-step learning tool that breaks down a complex process. Library: Vanilla JS.
+        - Report Info: Regional Sake Styles -> Goal: Explore/Organize -> Viz/Method: Interactive Japan map using d3.js and TopoJSON -> Interaction: Click a region to update an adjacent content pane with details. Hover to highlight. -> Justification: Replaces a non-functional placeholder with a data-driven, interactive, and visually appealing map that properly connects geography to the data. Library: d3.js.
+        - Report Info: Top 10 Producers -> Goal: Inform/Rank -> Viz/Method: HTML Table with detailed descriptions -> Interaction: None, simple ranked list -> Justification: A clear and standard format for presenting detailed ranked data. Library: N/A.
+        -->
+    <!-- CONFIRMATION: NO SVG graphics used (except for the d3.js map, which is the standard and necessary implementation for this type of visualization). NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F5F5F4; /* stone */
+            color: #333333;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #4A6C82; /* muted blue */
+            border-bottom-color: #4A6C82;
+        }
+        .flow-step {
+            transition: all 0.3s ease-in-out;
+        }
+        .flow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        #d3-map-container {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+        }
+        .prefecture {
+            stroke: #A1A1AA; /* stone-400 */
+            stroke-width: 0.5px;
+            transition: fill 0.3s ease, opacity 0.3s ease;
+            cursor: pointer;
+        }
+        .region-tohoku { fill: #67e8f9; } /* cyan-300 */
+        .region-kanto { fill: #86efac; } /* green-300 */
+        .region-chubu { fill: #fde047; } /* yellow-300 */
+        .region-kansai { fill: #fca5a5; } /* red-300 */
+        .region-chugoku { fill: #c4b5fd; } /* violet-300 */
+        .region-kyushu { fill: #f9a8d4; } /* pink-300 */
+        .region-default { fill: #E5E7EB; } /* gray-200 */
+
+        .prefecture:hover {
+            opacity: 0.7;
+        }
+        .prefecture.active {
+            stroke: #18181b; /* true-gray-900 */
+            stroke-width: 2px;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-stone-100">
+
+    <header class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800">🍶 사케 산업 리포트</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#intro" class="nav-link text-gray-600 font-medium px-3 py-2 rounded-md text-sm">소개</a>
+                    <a href="#trends" class="nav-link text-gray-600 font-medium px-3 py-2 rounded-md text-sm">시장 동향</a>
+                    <a href="#innovation" class="nav-link text-gray-600 font-medium px-3 py-2 rounded-md text-sm">양조 혁신</a>
+                    <a href="#regions" class="nav-link text-gray-600 font-medium px-3 py-2 rounded-md text-sm">지역별 탐험</a>
+                    <a href="#top-producers" class="nav-link text-gray-600 font-medium px-3 py-2 rounded-md text-sm">TOP 10</a>
+                </nav>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="#intro">소개</option>
+                        <option value="#trends">시장 동향</option>
+                        <option value="#innovation">양조 혁신</option>
+                        <option value="#regions">지역별 탐험</option>
+                        <option value="#top-producers">TOP 10</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section id="intro" class="text-center py-12 md:py-20">
+            <h2 class="text-3xl md:text-5xl font-bold text-gray-800 mb-4">변화의 물결 속, 일본 사케</h2>
+            <p class="max-w-3xl mx-auto text-base md:text-lg text-gray-600 mb-12">
+                이 보고서는 2010년 이후 일본 사케 산업이 겪어온 극적인 변화를 탐구합니다. 전통의 가치를 지키면서도 세계 시장과 새로운 소비자층에 대응하기 위한 혁신적인 마케팅, 양조 기술의 발전, 그리고 다양해진 소비 트렌드를 인터랙티브 데이터와 함께 심도 있게 분석합니다. 사케의 현재를 이해하고 미래를 조망하는 여정에 함께하세요.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-400">
+                    <h3 class="text-xl font-bold text-gray-700 mb-2">수출 시장의 성장</h3>
+                    <p class="text-3xl font-bold text-blue-600">+250%</p>
+                    <p class="text-sm text-gray-500 mt-2">2012년 대비 2022년 수출액 증가율</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-green-400">
+                    <h3 class="text-xl font-bold text-gray-700 mb-2">프리미엄 사케의 부상</h3>
+                    <p class="text-3xl font-bold text-green-600">40% 이상</p>
+                    <p class="text-sm text-gray-500 mt-2">전체 생산량 중 특정명칭주 비율</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-yellow-400">
+                    <h3 class="text-xl font-bold text-gray-700 mb-2">양조장 수 감소</h3>
+                    <p class="text-3xl font-bold text-yellow-600">-15%</p>
+                    <p class="text-sm text-gray-500 mt-2">2010년 대비 현재 가동 양조장 수</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="trends" class="py-12 md:py-20 bg-white rounded-lg shadow-lg my-8 p-6 md:p-10">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-3">시장 동향: 기회와 위기의 공존</h2>
+                <p class="max-w-3xl mx-auto text-gray-600">
+                    2010년대 이후 사케 시장은 내수 감소와 해외 수출 급증이라는 상반된 흐름을 보입니다. 국내에서는 젊은 층의 주류 소비 다변화로 어려움을 겪는 반면, 해외에서는 일식의 인기와 함께 프리미엄 사케에 대한 수요가 폭발적으로 증가했습니다. 이러한 변화에 대응하기 위한 양조장들의 프리미엄화 전략과 마케팅의 진화를 살펴보겠습니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-4">사케 내수 및 수출량 변화 (2010-2022)</h3>
+                    <div class="chart-container h-64 md:h-80 lg:h-96">
+                        <canvas id="marketTrendChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-4">특정명칭주 생산 비율 변화</h3>
+                    <div class="chart-container h-64 md:h-80 lg:h-96">
+                        <canvas id="premiumSakeChart"></canvas>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button id="btn2012" class="px-4 py-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 transition-colors">2012년</button>
+                        <button id="btn2022" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md shadow hover:bg-gray-400 transition-colors">2022년</button>
+                    </div>
+                    <p id="premium-desc" class="text-center text-gray-600 mt-4 text-sm md:text-base p-2 bg-gray-50 rounded-md">
+                        2012년 데이터: 프리미엄 사케(특정명칭주)가 전체 생산량에서 차지하는 비율을 보여줍니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="innovation" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-3">양조 혁신: 전통과 기술의 융합</h2>
+                <p class="max-w-3xl mx-auto text-gray-600">
+                    현대 사케 양조는 수백 년의 전통을 기반으로 최신 과학 기술을 접목하여 품질과 개성을 극대화하고 있습니다. 정미보합을 정밀하게 제어하는 기술부터 새로운 효모의 개발, 자동화된 온도 관리 시스템까지, 각 양조 단계에서 일어나는 혁신들을 살펴보세요. 아래 각 단계를 클릭하면 상세 설명을 볼 수 있습니다.
+                </p>
+            </div>
+            <div class="relative flex flex-wrap items-center justify-center gap-x-4 gap-y-8">
+                <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-teal-500" data-step="정미">
+                    <div class="text-4xl">🌾</div>
+                    <h4 class="font-bold mt-2">정미</h4>
+                </div>
+                <div class="text-2xl text-gray-400 hidden sm:block">→</div>
+                 <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-cyan-500" data-step="세미/침지">
+                    <div class="text-4xl">💧</div>
+                    <h4 class="font-bold mt-2">세미/침지</h4>
+                </div>
+                <div class="text-2xl text-gray-400 hidden sm:block">→</div>
+                 <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-sky-500" data-step="증미">
+                    <div class="text-4xl">💨</div>
+                    <h4 class="font-bold mt-2">증미</h4>
+                </div>
+                 <div class="text-2xl text-gray-400 hidden sm:block">→</div>
+                <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-blue-500" data-step="제국">
+                    <div class="text-4xl">麹</div>
+                    <h4 class="font-bold mt-2">제국</h4>
+                </div>
+                <div class="text-2xl text-gray-400 hidden sm:block">→</div>
+                <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-indigo-500" data-step="발효">
+                    <div class="text-4xl">⚗️</div>
+                    <h4 class="font-bold mt-2">발효</h4>
+                </div>
+                <div class="text-2xl text-gray-400 hidden sm:block">→</div>
+                <div class="flow-step cursor-pointer text-center bg-white p-4 rounded-lg shadow-md w-32 h-32 flex flex-col justify-center items-center border-t-4 border-violet-500" data-step="상조/압착">
+                    <div class="text-4xl">🔩</div>
+                    <h4 class="font-bold mt-2">압착</h4>
+                </div>
+            </div>
+        </section>
+        
+        <section id="regions" class="py-12 md:py-20 bg-white rounded-lg shadow-lg my-8 p-6 md:p-10">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-3">지역별 탐험: 일본 사케 지도</h2>
+                <p class="max-w-3xl mx-auto text-gray-600">
+                    일본의 각 지역은 기후, 물, 음식 문화의 차이로 인해 독특한 스타일의 사케를 생산합니다. 북쪽의 맑고 드라이한 사케부터 남쪽의 풍부하고 감칠맛 나는 사케까지, 이 인터랙티브 지도를 통해 주요 사케 생산지의 특징과 대표 양조장을 탐험해 보세요. 지도에서 지역을 클릭하여 상세 정보를 확인하세요.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div id="d3-map-container">
+                    <svg id="d3-map"></svg>
+                </div>
+                <div id="region-info" class="p-6 bg-gray-100 rounded-lg min-h-[300px] lg:min-h-[450px]">
+                    <h3 id="region-name" class="text-2xl font-bold mb-4">지역을 선택하세요</h3>
+                    <div id="region-content">
+                        <p class="text-gray-600">지도에서 관심 있는 지역을 클릭하면 해당 지역의 사케 스타일, 특징, 대표 양조장에 대한 정보가 여기에 표시됩니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="top-producers" class="py-12 md:py-20">
+             <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-3">일본 TOP 10 사케 생산자</h2>
+                <p class="max-w-3xl mx-auto text-gray-600">
+                    일본 사케 시장은 소수의 대형 생산자들이 큰 비중을 차지합니다. 이들은 대량 생산뿐만 아니라 품질 관리, 기술 혁신, 해외 마케팅을 선도하며 산업 전체에 큰 영향을 미칩니다. 다음은 생산량 기준 일본의 상위 10개 사케 생산자 목록입니다. 이들의 규모와 대표 브랜드를 통해 시장의 구조를 이해할 수 있습니다.
+                </p>
+            </div>
+            <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">순위</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">양조장</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">대표 브랜드 및 상세</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">특징</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-producers-table" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-12">
+        <p>&copy; 2025 Sake Industry Interactive Report. All rights reserved.</p>
+    </footer>
+
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-text" class="text-gray-700"></p>
+            <button id="modal-close" class="mt-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full">닫기</button>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const marketTrendData = {
+        labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022'],
+        datasets: [
+            {
+                label: '내수 출하량 (kL)',
+                data: [589000, 575000, 553000, 532000, 525000, 419000, 401000],
+                borderColor: '#60A5FA', // blue-400
+                backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                fill: true,
+                tension: 0.3
+            },
+            {
+                label: '수출량 (kL)',
+                data: [13700, 14100, 16300, 19700, 25700, 29100, 35800],
+                borderColor: '#4ADE80', // green-400
+                backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                fill: true,
+                tension: 0.3
+            }
+        ]
+    };
+
+    const premiumSakeData = {
+        '2012': {
+            labels: ['프리미엄 (특정명칭주)', '보통주'],
+            data: [31.5, 68.5],
+            desc: "2012년: 프리미엄 사케(특정명칭주)는 전체 생산의 약 31.5%를 차지했으며, 여전히 보통주가 시장의 대부분을 점유하고 있었습니다."
+        },
+        '2022': {
+            labels: ['프리미엄 (특정명칭주)', '보통주'],
+            data: [40.2, 59.8],
+            desc: "2022년: 프리미엄 사케의 비중이 40.2%까지 크게 상승했습니다. 이는 소비자의 고급화 선호와 양조장들의 프리미엄 전략이 맞물린 결과입니다."
+        }
+    };
+    
+    const innovationData = {
+        '정미': { title: '🌾 정미 (精米)', text: '쌀알의 바깥 부분을 깎아내어 중심부의 순수한 녹말(심백)을 남기는 과정입니다. 현대에는 컴퓨터로 제어되는 정미기를 사용하여 1% 단위의 정밀한 정미보합 조절이 가능해져, 닷사이 23과 같은 초고도정미 사케의 생산이 가능해졌습니다.' },
+        '세미/침지': { title: '💧 세미 (洗米) / 침지 (浸漬)', text: '쌀겨를 씻어내고 쌀에 수분을 흡수시키는 과정입니다. 초 단위로 침지 시간을 관리하는 자동화 시스템과 버블을 이용한 세미 기술(MJP) 등은 쌀알의 손상을 최소화하고 균일한 수분 흡수를 가능하게 합니다.' },
+        '증미': { title: '💨 증미 (蒸米)', text: '쌀을 쪄서 고두밥을 만드는 과정입니다. 전통적인 시루(코시키) 방식과 함께, 연속 증미기를 사용하여 대량의 쌀을 균일한 품질로 쪄내는 기술이 도입되어 생산 효율성과 품질 안정성을 높였습니다.' },
+        '제국': { title: '麹 제국 (製麹)', text: '고두밥에 코지균(누룩곰팡이)을 번식시켜 코지(누룩)를 만드는, 사케 양조의 핵심 과정입니다. 전통적인 수작업 방식과 함께, 온도와 습도가 자동으로 제어되는 자동 제국기를 사용하여 원하는 효소(당화효소, 단백질 분해효소 등) 활동을 정밀하게 유도합니다.' },
+        '발효': { title: '⚗️ 발효 (発酵)', text: '밑술(주모)과 코지, 증미, 물을 탱크에 넣어 효모가 알코올을 생성하게 하는 과정입니다. 현대에는 다양한 향을 내는 새로운 효모(꽃효모 등)가 개발되었으며, 재킷이 달린 스테인리스 발효 탱크를 통해 온도를 정밀하게 제어하여 원하는 맛과 향을 이끌어냅니다.' },
+        '상조/압착': { title: '🔩 상조 (上槽) / 압착 (圧搾)', text: '발효가 끝난 모로미(술덧)를 압착하여 사케 원액(청주)과 술지게미(사케카스)로 분리하는 과정입니다. 자동 압착기(야부타)가 보편적으로 사용되며, 일부 고급 사케는 원심분리기를 사용하거나 전통적인 후쿠로시보리(자루 거르기) 방식으로 섬세한 맛을 추출합니다.' }
+    };
+
+    const regionData = {
+        tohoku: { name: '도호쿠 (東北)', content: `<p class="mb-2"><strong>스타일:</strong> 깨끗하고(키레이), 드라이(카라구치)하며 섬세한 맛이 특징입니다. 쌀쌀한 기후가 저온 장기 발효에 유리하여 맑고 정제된 긴죠향이 돋보입니다.</p><p class="mb-2"><strong>대표 현:</strong> 아오모리, 이와테, 미야기, 아키타, 야마가타, 후쿠시마</p><p><strong>대표 양조장:</strong> 쥬욘다이 (타카기 주조, 야마가타), 덴슈 (니시다 주조, 아오모리)</p>` },
+        kanto: { name: '간토 (関東)', content: `<p class="mb-2"><strong>스타일:</strong> 과거에는 진하고 단맛이 강했으나, 최근에는 도시 소비자들의 취향에 맞춰 담려하고 깔끔한 스타일로 변화하는 추세입니다. 다양한 스타일이 공존하는 지역입니다.</p><p class="mb-2"><strong>대표 현:</strong> 이바라키, 도치기, 군마, 사이타마, 지바, 도쿄, 가나가와</p><p><strong>대표 양조장:</strong> 스이요우(이소사와 주조, 이바라키), 마치다슈조(마치다슈조, 군마)</p>` },
+        chubu: { name: '주부 (中部)', content: `<p class="mb-2"><strong>스타일:</strong> '일본의 지붕'이라 불리는 산맥의 깨끗한 연수 덕분에 매우 부드럽고 섬세한 맛의 사케가 많습니다. 특히 니가타현은 '담려신구(淡麗辛口)' 스타일로 유명합니다.</p><p class="mb-2"><strong>대표 현:</strong> 니가타, 나가노, 시즈오카, 아이치, 기후</p><p><strong>대표 양조장:</strong> 핫카이산 (핫카이 주조, 니가타), 쿠보타 (아사히 주조, 니가타), 카모시비토 쿠헤이지 (반죠 주조, 아이치)</p>` },
+        kansai: { name: '간사이 (関西)', content: `<p class="mb-2"><strong>스타일:</strong> 일본 최대의 사케 산지인 효고현 나다(灘) 지역이 위치하며, 미네랄이 풍부한 경수인 '미야미즈'를 사용하여 묵직하고 힘 있는 '남성적인' 사케를 만듭니다. 교토 후시미는 부드러운 '여성적인' 사케로 유명합니다.</p><p class="mb-2"><strong>대표 현:</strong> 효고, 교토, 나라, 오사카</p><p><strong>대표 양조장:</strong> 하쿠츠루 (하쿠츠루 주조, 효고), 겟케이칸 (겟케이칸, 교토)</p>` },
+        chugoku: { name: '주고쿠 (中国) / 시코쿠 (四国)', content: `<p class="mb-2"><strong>스타일:</strong> 주고쿠 지역은 부드럽고 감칠맛이 특징이며, 특히 야마구치현은 닷사이의 성공으로 현대적인 긴죠 스타일의 중심으로 부상했습니다. 시코쿠는 온화한 기후로 인해 다채로운 스타일을 보입니다.</p><p class="mb-2"><strong>대표 현:</strong> 야마구치, 히로시마, 고치, 에히메</p><p><strong>대표 양조장:</strong> 닷사이 (아사히 주조, 야마구치), 카모이즈미 (카모이즈미 주조, 히로시마)</p>` },
+        kyushu: { name: '규슈 (九州)', content: `<p class="mb-2"><strong>스타일:</strong> 소주 생산지로 유명하지만, 쌀 생산지인 북부 지역을 중심으로 독자적인 사케 문화가 발달했습니다. 비교적 따뜻한 기후 덕분에 풍부하고 진한 맛(농순, 濃醇)을 내는 사케가 많습니다.</p><p class="mb-2"><strong>대표 현:</strong> 후쿠오카, 사가</p><p><strong>대표 양조장:</strong> 나베시마 (후쿠치요 주조, 사가), 다나카 65 (시라이토 주조, 후쿠오카)</p>` }
+    };
+
+    const topProducersData = [
+        { rank: 1, name: '하쿠츠루 주조 (효고)', brand: '<strong>하쿠츠루 (白鶴):</strong> "마루(まる)"와 같은 대중적 보통주부터 "초특선 쇼운(超特撰 翔雲)" 다이긴죠까지 폭넓은 라인업 보유.', note: '규모의 경제를 통한 압도적 시장 점유율. 나다 지역의 경수(미야미즈)를 사용하여 깔끔하고 균형 잡힌 맛을 추구. 전통 기술 보존을 위한 자료관 운영.' },
+        { rank: 2, name: '아사히 주조 (야마구치)', brand: '<strong>닷사이 (獺祭):</strong> "23", "39", "45" 등 정미보합 숫자가 이름인 준마이 다이긴죠 단일 라인업.', note: '오직 최고급 주조호적미 야마다니시키만 사용. 원심분리기 도입 등 최신 기술을 활용하여 극도로 깨끗하고 화려한 향을 구현. 글로벌 프리미엄 시장을 개척한 혁신가.' },
+        { rank: 3, name: '겟케이칸 (교토)', brand: '<strong>겟케이칸 (月桂冠):</strong> "더 샷(The Shot)"과 같은 현대적 제품부터 전통적 제품까지 다양. "호린(鳳麟)"은 대표적인 준마이 다이긴죠.', note: '업계 최초 연구소 설립, 사계절 양조 기술 개발 등 과학적 접근을 중시. 후시미 지역의 부드러운 연수를 사용하여 섬세하고 우아한 맛을 냄. 미국에 양조장을 둔 글로벌 기업.' },
+        { rank: 4, name: '오제키 (효고)', brand: '<strong>오제키 (大関):</strong> "원컵 오제키(One Cup Ozeki)"라는 상징적 히트 상품 보유.', note: '사케의 소비 문화를 바꾼 편의성과 접근성의 대명사. 언제 어디서나 즐길 수 있는 일상적인 사케를 지향하며 대중적 브랜드 파워를 구축.' },
+        { rank: 5, name: '니혼사카리 (효고)', brand: '<strong>니혼사카리 (日本盛):</strong> "소하나(惣花)"는 대표적인 긴죠슈. "준마이 다이긴죠 나마겐슈" 등 프리미엄 라인도 강화.', note: '나다 지역의 전통을 따르면서도, 사케 효모와 쌀겨 추출물을 활용한 화장품 사업(코메누카 비진) 등 웰빙 분야로 성공적인 다각화를 이룸.' },
+        { rank: 6, name: '기쿠마사무네 주조 (효고)', brand: '<strong>기쿠마사무네 (菊正宗):</strong> "긴카라(ギンカラ)" 등 카라구치(드라이) 스타일이 주력.', note: '음식과의 조화를 극대화하는 식중주(食中酒) 컨셉에 집중. 전통적인 "키모토(生酛)" 방식으로 양조하여 깊고 복합적인 감칠맛과 깔끔한 목넘김을 구현.' },
+        { rank: 7, name: '다카라 주조 (교토)', brand: '<strong>쇼치쿠바이 (松竹梅):</strong> 대중 브랜드. 프리미엄 라인으로 "시라카베구라(白壁蔵)"를 별도 운영.', note: '종합 주류 기업의 강점을 활용한 유통망과 마케팅. 특히 "시라카베구라"는 나다의 미야미즈와 전통 수작업 방식으로 최고급 사케를 양조하는 이원화 전략 구사.' },
+        { rank: 8, name: '핫카이 주조 (니가타)', brand: '<strong>핫카이산 (八海山):</strong> "보통주"부터 "준마이 다이긴죠 콘고신(金剛心)"까지 다양한 라인업.', note: '니가타의 담려신구(淡麗辛口) 스타일 대표. "최고 품질의 보통주"를 철학으로, 모든 등급에 긴죠급 기술을 적용. 눈 녹은 물(라이덴사마노미즈)을 사용하여 극도로 부드럽고 깨끗한 맛을 냄.' },
+        { rank: 9, name: '아사히 주조 (니가타)', brand: '<strong>쿠보타 (久保田):</strong> "만쥬(万寿)", "센쥬(千寿)", "햐쿠쥬(百寿)" 등 등급별 라인업이 명확함.', note: '1980년대 긴죠슈 붐을 일으킨 주역. 니가타의 주조호적미 고햐쿠만고쿠를 주로 사용하여 정제되고 깔끔한 "탄레이 카라쿠치" 스타일의 기준을 제시.' },
+        { rank: 10, name: '기자쿠라 (교토)', brand: '<strong>기자쿠라 (黄桜):</strong> 친근한 갓파(河童) 캐릭터로 유명. "야마하이 지코미" 등 전통 방식 제품도 생산.', note: '대중에게 친숙한 브랜드 이미지 구축. 사케 양조 기술을 응용하여 일본 크래프트 맥주 시장을 초기에 개척한 선구자적 기업.' }
+    ];
+    
+    let marketTrendChartInstance, premiumSakeChartInstance;
+
+    function renderMarketTrendChart() {
+        const ctx = document.getElementById('marketTrendChart').getContext('2d');
+        if (marketTrendChartInstance) marketTrendChartInstance.destroy();
+        marketTrendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: marketTrendData,
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => value / 1000 + 'k' } } }, plugins: { title: { display: false }, tooltip: { mode: 'index', intersect: false } }, interaction: { mode: 'index', intersect: false } }
+        });
+    }
+
+    function renderPremiumSakeChart(year) {
+        const ctx = document.getElementById('premiumSakeChart').getContext('2d');
+        if (premiumSakeChartInstance) premiumSakeChartInstance.destroy();
+        premiumSakeChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: premiumSakeData[year].labels, datasets: [{ data: premiumSakeData[year].data, backgroundColor: ['#3B82F6', '#D1D5DB'], hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, title: { display: false } } }
+        });
+        document.getElementById('premium-desc').textContent = premiumSakeData[year].desc;
+        const btn2012 = document.getElementById('btn2012'), btn2022 = document.getElementById('btn2022');
+        if (year === '2012') {
+            btn2012.classList.replace('bg-gray-300', 'bg-blue-500'); btn2012.classList.replace('text-gray-700', 'text-white');
+            btn2022.classList.replace('bg-blue-500', 'bg-gray-300'); btn2022.classList.replace('text-white', 'text-gray-700');
+        } else {
+            btn2022.classList.replace('bg-gray-300', 'bg-blue-500'); btn2022.classList.replace('text-gray-700', 'text-white');
+            btn2012.classList.replace('bg-blue-500', 'bg-gray-300'); btn2012.classList.replace('text-white', 'text-gray-700');
+        }
+    }
+
+    document.getElementById('btn2012').addEventListener('click', () => renderPremiumSakeChart('2012'));
+    document.getElementById('btn2022').addEventListener('click', () => renderPremiumSakeChart('2022'));
+    
+    const flowSteps = document.querySelectorAll('.flow-step');
+    const modal = document.getElementById('modal'), modalTitle = document.getElementById('modal-title'), modalText = document.getElementById('modal-text'), modalClose = document.getElementById('modal-close');
+    flowSteps.forEach(step => {
+        step.addEventListener('click', () => {
+            const data = innovationData[step.dataset.step];
+            modalTitle.innerHTML = data.title;
+            modalText.textContent = data.text;
+            modal.classList.add('visible');
+        });
+    });
+    modalClose.addEventListener('click', () => modal.classList.remove('visible'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('visible'); });
+
+    function drawJapanMap() {
+        const container = document.getElementById('d3-map-container');
+        d3.select("#d3-map").selectAll("*").remove();
+
+        const width = container.clientWidth;
+        const height = width; 
+        
+        const svg = d3.select("#d3-map")
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("width", "100%")
+            .attr("height", "100%");
+
+        const projection = d3.geoMercator();
+        const path = d3.geoPath().projection(projection);
+
+        const prefectureToRegion = {
+            'Hokkaido': 'tohoku', 'Aomori': 'tohoku', 'Iwate': 'tohoku', 'Miyagi': 'tohoku', 'Akita': 'tohoku', 'Yamagata': 'tohoku', 'Fukushima': 'tohoku',
+            'Ibaraki': 'kanto', 'Tochigi': 'kanto', 'Gunma': 'kanto', 'Saitama': 'kanto', 'Chiba': 'kanto', 'Tokyo': 'kanto', 'Kanagawa': 'kanto',
+            'Niigata': 'chubu', 'Toyama': 'chubu', 'Ishikawa': 'chubu', 'Fukui': 'chubu', 'Yamanashi': 'chubu', 'Nagano': 'chubu', 'Gifu': 'chubu', 'Shizuoka': 'chubu', 'Aichi': 'chubu',
+            'Mie': 'kansai', 'Shiga': 'kansai', 'Kyoto': 'kansai', 'Osaka': 'kansai', 'Hyogo': 'kansai', 'Nara': 'kansai', 'Wakayama': 'kansai',
+            'Tottori': 'chugoku', 'Shimane': 'chugoku', 'Okayama': 'chugoku', 'Hiroshima': 'chugoku', 'Yamaguchi': 'chugoku', 'Tokushima': 'chugoku', 'Kagawa': 'chugoku', 'Ehime': 'chugoku', 'Kochi': 'chugoku',
+            'Fukuoka': 'kyushu', 'Saga': 'kyushu', 'Nagasaki': 'kyushu', 'Kumamoto': 'kyushu', 'Oita': 'kyushu', 'Miyazaki': 'kyushu', 'Kagoshima': 'kyushu', 'Okinawa': 'kyushu'
+        };
+
+        const regionNameEl = document.getElementById('region-name');
+        const regionContentEl = document.getElementById('region-content');
+
+        d3.json("https://raw.githubusercontent.com/dataofjapan/land/master/japan.topojson").then(japan => {
+            const prefectures = topojson.feature(japan, japan.objects.japan);
+            
+            projection.fitSize([width, height], prefectures);
+
+            svg.selectAll(".prefecture")
+                .data(prefectures.features)
+                .enter().append("path")
+                .attr("class", d => {
+                    const name = d.properties.nam ? d.properties.nam.split(' ')[0] : '';
+                    return `prefecture region-${prefectureToRegion[name] || 'default'}`;
+                })
+                .attr("d", path)
+                .on("click", function(event, d) {
+                    const name = d.properties.nam ? d.properties.nam.split(' ')[0] : '';
+                    const regionKey = prefectureToRegion[name];
+                    if (regionKey && regionData[regionKey]) {
+                        const data = regionData[regionKey];
+                        regionNameEl.textContent = data.name;
+                        regionContentEl.innerHTML = data.content;
+
+                        svg.selectAll('.prefecture').classed('active', false);
+                        svg.selectAll(`.region-${regionKey}`).classed('active', true);
+                    }
+                });
+        }).catch(error => {
+            console.error("Error loading or drawing the map:", error);
+            regionContentEl.innerHTML = "<p class='text-red-500'>지도 데이터를 불러오는 데 실패했습니다. 페이지를 새로고침하거나 나중에 다시 시도해주세요.</p>";
+        });
+    }
+
+    const topProducersTableBody = document.getElementById('top-producers-table');
+    topProducersData.forEach(p => {
+        const row = document.createElement('tr');
+        if (p.rank % 2 !== 0) row.classList.add('bg-white'); else row.classList.add('bg-gray-50');
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-top">${p.rank}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 align-top">${p.name}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 align-top">${p.brand}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 align-top">${p.note}</td>
+        `;
+        topProducersTableBody.appendChild(row);
+    });
+
+    const navLinks = document.querySelectorAll('a.nav-link');
+    const sections = document.querySelectorAll('section');
+    function changeNavOnScroll() {
+        let current = '';
+        sections.forEach(section => {
+            if (pageYOffset >= section.offsetTop - 80) current = section.getAttribute('id');
+        });
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes(current)) link.classList.add('active');
+        });
+    }
+    window.addEventListener('scroll', changeNavOnScroll);
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetElement = document.querySelector(link.getAttribute('href'));
+            window.scrollTo({ top: targetElement.offsetTop - 70, behavior: 'smooth' });
+        });
+    });
+    document.getElementById('mobile-nav').addEventListener('change', (e) => {
+        const targetElement = document.querySelector(e.target.value);
+        window.scrollTo({ top: targetElement.offsetTop - 70, behavior: 'smooth' });
+    });
+
+    renderMarketTrendChart();
+    renderPremiumSakeChart('2012');
+    drawJapanMap();
+    
+    window.addEventListener('resize', drawJapanMap);
+});
+</script>
+</body>
+</html>

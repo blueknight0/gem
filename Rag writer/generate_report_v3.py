@@ -36,7 +36,7 @@ for lib, package in required_packages.items():
             sys.exit(1)
 
 import tkinter as tk
-from tkinter import messagebox, simpledialog, scrolledtext
+from tkinter import messagebox, simpledialog, scrolledtext, filedialog
 import json
 import numpy as np
 import faiss
@@ -807,9 +807,7 @@ PRODUCTION_THINKING_BUDGETS = {
 #     PRODUCTION_THINKING_BUDGETS if USE_PRODUCTION_MODELS else TEST_THINKING_BUDGETS
 # )
 
-DB_INDEX_PATH = "vector_db.faiss"
-DB_DATA_PATH = "vector_db_data.json"
-EMBEDDING_MODEL = "models/text-embedding-004"
+EMBEDDING_MODEL = "models/gemini-embedding-001"  # 최신 모델로 변경
 MAX_REVIEW_ATTEMPTS = 3  # 편집장 검토 최대 시도 횟수 (2 -> 3으로 증가)
 # =============================================================================
 
@@ -822,7 +820,7 @@ class RAGReportGeneratorAppV3:
     def __init__(self, root_window):
         self.root = root_window
         self.root.title("RAG 리포트 생성기 v4 (지능형)")
-        self.root.geometry("500x350")  # 창 크기 확대
+        self.root.geometry("500x400")  # 창 크기 확대
 
         self.index = None
         self.db_data = None
@@ -848,18 +846,19 @@ class RAGReportGeneratorAppV3:
         self.viz_folder = None
 
         self._configure_api()
-        if self._load_vector_db():
-            self._setup_gui()
-            self._print_model_configuration()
-            self.graph = self._build_graph()  # 앱 시작 시 그래프 빌드
-            self.process_queue()  # 큐 처리 시작
+        self._setup_gui()
+        self._print_model_configuration()
+        self.graph = self._build_graph()  # 앱 시작 시 그래프 빌드
+        self.process_queue()  # 큐 처리 시작
 
     def _print_model_configuration(self):
         """현재 모델 설정을 콘솔에 출력합니다."""
         mode = self.mode_var.get()
         models_to_print = PRODUCTION_MODELS if mode == "Production" else TEST_MODELS
         budgets_to_print = (
-            PRODUCTION_THINKING_BUDGETS if mode == "Production" else TEST_THINKING_BUDGETS
+            PRODUCTION_THINKING_BUDGETS
+            if mode == "Production"
+            else TEST_THINKING_BUDGETS
         )
 
         print(f"\n=== 모델 설정 ({mode} 모드) ===")
@@ -870,6 +869,18 @@ class RAGReportGeneratorAppV3:
         print("=" * 40)
 
     def _setup_gui(self):
+        # DB 로딩 프레임
+        db_frame = tk.Frame(self.root)
+        db_frame.pack(pady=10, padx=10, fill=tk.X)
+        self.db_load_button = tk.Button(
+            db_frame, text="벡터 DB 선택", command=self._load_vector_db
+        )
+        self.db_load_button.pack(side=tk.LEFT, padx=(0, 5))
+        self.db_status_label = tk.Label(
+            db_frame, text="DB가 로드되지 않았습니다.", fg="red"
+        )
+        self.db_status_label.pack(side=tk.LEFT)
+
         self.label = tk.Label(
             self.root, text="생성할 보고서의 주제를 입력하세요:", wraplength=380
         )
@@ -899,7 +910,10 @@ class RAGReportGeneratorAppV3:
         test_radio.pack(side=tk.LEFT)
 
         self.generate_button = tk.Button(
-            self.root, text="리포트 생성 시작", command=self.run_generation_pipeline
+            self.root,
+            text="리포트 생성 시작",
+            command=self.run_generation_pipeline,
+            state="disabled",
         )
         self.generate_button.pack(pady=10)
 
@@ -945,16 +959,29 @@ class RAGReportGeneratorAppV3:
         # )  # 인스턴스 생성
 
     def _load_vector_db(self):
+        faiss_path = tk.filedialog.askopenfilename(
+            title="FAISS 인덱스 파일(.faiss) 선택",
+            filetypes=(("FAISS Index Files", "*.faiss"), ("All files", "*.*")),
+        )
+        if not faiss_path:
+            # 사용자가 파일 선택을 취소한 경우, 아무 작업도 하지 않음
+            return False
+
+        db_name = os.path.basename(faiss_path).replace(".faiss", "")
+        data_path = os.path.join(os.path.dirname(faiss_path), f"{db_name}_data.json")
+
+        if not os.path.exists(data_path):
+            messagebox.showerror(
+                "오류",
+                f"매칭되는 데이터 파일(.json)을 찾을 수 없습니다.\n경로: {data_path}",
+            )
+            self.generate_button.config(state="disabled")
+            self.db_status_label.config(text="DB 로드 실패.", fg="red")
+            return False
+
         try:
-            if not os.path.exists(DB_INDEX_PATH) or not os.path.exists(DB_DATA_PATH):
-                messagebox.showerror(
-                    "오류",
-                    f"'{DB_INDEX_PATH}' 또는 '{DB_DATA_PATH}' 파일을 찾을 수 없습니다.",
-                )
-                self.root.destroy()
-                return False
-            self.index = faiss.read_index(DB_INDEX_PATH)
-            with open(DB_DATA_PATH, "r", encoding="utf-8") as f:
+            self.index = faiss.read_index(faiss_path)
+            with open(data_path, "r", encoding="utf-8") as f:
                 self.db_data = json.load(f)
 
             # DB의 모든 벡터를 메모리에 로드
@@ -973,20 +1000,26 @@ class RAGReportGeneratorAppV3:
             total_chunks = len(self.db_data)
             with_references = len(self.chunk_id_map)
 
-            print(f"\n=== Vector DB 로드 완료 ===")
+            print(f"\n=== Vector DB 로드 완료: {os.path.basename(faiss_path)} ===")
             print(f"  - 전체 청크: {total_chunks}")
             print(f"  - 참고문헌 있는 청크: {with_references}")
             print(f"  - 참고문헌 비율: {with_references/total_chunks*100:.1f}%")
             print("=" * 40)
 
+            self.db_status_label.config(
+                text=f"로드됨: {os.path.basename(faiss_path)}", fg="green"
+            )
+            self.generate_button.config(state="normal")
+
             messagebox.showinfo(
                 "DB 로드 완료",
-                f"총 {self.index.ntotal}개의 벡터가 포함된 DB를 성공적으로 로드했습니다.\n참고문헌 있는 청크: {with_references}개 ({with_references/total_chunks*100:.1f}%)",
+                f"총 {self.index.ntotal}개의 벡터가 포함된 DB를 성공적으로 로드했습니다.",
             )
             return True
         except Exception as e:
             messagebox.showerror("DB 로드 실패", f"DB 파일 로드 중 오류 발생: {e}")
-            self.root.destroy()
+            self.db_status_label.config(text="DB 로드 실패.", fg="red")
+            self.generate_button.config(state="disabled")
             return False
 
     def _search_similar_documents(self, query, k=10):
@@ -1218,14 +1251,14 @@ class RAGReportGeneratorAppV3:
 
         # AI 응답에서 실제로 태그를 사용했는지 검증
         response_text = response.text
-        
+
         # 새로운 검증 로직
         returned_citation_ids = set(re.findall(r"\[CITATION:(.*?)\]", response_text))
         provided_citation_ids = set(valid_citations)
 
         correctly_used_ids = provided_citation_ids.intersection(returned_citation_ids)
         hallucinated_ids = returned_citation_ids.difference(provided_citation_ids)
-        
+
         num_correctly_used = len(correctly_used_ids)
         num_expected = len(provided_citation_ids)
         num_hallucinated = len(hallucinated_ids)
@@ -1236,12 +1269,11 @@ class RAGReportGeneratorAppV3:
             log_msg = f"    📊 태그 사용 검증: {num_correctly_used}/{num_expected}개 사용 ({usage_percent:.1f}%)"
         else:
             log_msg = "    📊 태그 사용 검증: 참고문헌 없음"
-        
+
         if num_hallucinated > 0:
             log_msg += f" | ⚠️ 생성된(hallucinated) 태그: {num_hallucinated}개"
-        
-        print(log_msg)
 
+        print(log_msg)
 
         # 태그 사용률이 낮으면 경고
         if num_expected > 0 and (num_correctly_used / num_expected) < 0.5:
@@ -1517,34 +1549,43 @@ class RAGReportGeneratorAppV3:
 
         review_result = state["review_result"]
         sections_to_improve = review_result.get("sections_to_improve", [])
-        self.logger.add_log("INFO", f"편집장 개선 요청: {len(sections_to_improve)}개 섹션 재작성 필요")
+        self.logger.add_log(
+            "INFO", f"편집장 개선 요청: {len(sections_to_improve)}개 섹션 재작성 필요"
+        )
 
         topic = state["topic"]
         report_content = state["report_content"].copy()
-        
+
         regenerated_count = 0
         for i, section_data in enumerate(sections_to_improve):
             header = section_data.get("section_header")
             instructions = section_data.get("how_to_improve")
-            
+
             # 여러 형식의 헤더(###, #### 등)를 모두 처리하기 위해 정규식으로 찾기
-            matching_headers = [h for h in report_content.keys() if header.strip().endswith(h.strip('# ').strip())]
-            
+            matching_headers = [
+                h
+                for h in report_content.keys()
+                if header.strip().endswith(h.strip("# ").strip())
+            ]
+
             if matching_headers:
                 actual_header = matching_headers[0]
-                progress_msg = f"재작성 중({i+1}/{len(sections_to_improve)}): {actual_header}"
+                progress_msg = (
+                    f"재작성 중({i+1}/{len(sections_to_improve)}): {actual_header}"
+                )
                 self.logger.add_log("INFO", progress_msg)
                 self.root.title(progress_msg)
                 self.root.update_idletasks()
-                
+
                 # _generate_single_section을 호출하여 실제로 재작성 수행
                 report_content[actual_header] = self._generate_single_section(
                     actual_header, topic, improvement_instructions=instructions
                 )
                 regenerated_count += 1
             else:
-                self.logger.add_log("WARNING", f"재작성 대상 섹션을 찾지 못했습니다: '{header}'")
-
+                self.logger.add_log(
+                    "WARNING", f"재작성 대상 섹션을 찾지 못했습니다: '{header}'"
+                )
 
         current_report_text = "\n\n".join(
             [f"{h}\n{t}" for h, t in report_content.items()]
