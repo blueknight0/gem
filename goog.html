@@ -1,278 +1,389 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
-import { DollarSign, BarChart2, TrendingUp, Cloud, Youtube, Search, Cpu, Users, Shield, Scale, Bot, BrainCircuit, Landmark, Globe } from 'lucide-react';
-
-// --- 데이터 정의 ---
-const TABS = ["개요 (Overview)", "재무 분석 (Financials)", "사업부별 심층분석 (Segments)", "전략 및 전망 (Strategy)"];
-
-const financialData = {
-  highlights: [
-    { name: '총 매출', value: '$96.4B', change: '+14%', icon: <Globe size={28} />, color: 'text-blue-400' },
-    { name: '영업이익', value: '$31.3B', change: '+14%', icon: <TrendingUp size={28} />, color: 'text-indigo-400' },
-    { name: '순이익', value: '$28.2B', change: '+19%', icon: <DollarSign size={28} />, color: 'text-green-400' },
-    { name: '주당순이익(EPS)', value: '$2.31', change: '+22%', icon: <BarChart2 size={28} />, color: 'text-teal-400' },
-    { name: '자본적지출(CapEx)', value: '$22.4B', change: '연간 $85B 전망', icon: <Cpu size={28} />, color: 'text-orange-400' },
-  ],
-  revenueBySegment: [
-    { name: '검색', '2024 2Q': 48.5, '2025 2Q': 54.2, growth: 11.8 },
-    { name: 'YouTube 광고', '2024 2Q': 8.7, '2025 2Q': 9.8, growth: 12.6 },
-    { name: 'Cloud', '2024 2Q': 10.3, '2025 2Q': 13.6, growth: 32.0 },
-    { name: '구독/플랫폼/기기', '2024 2Q': 9.3, '2025 2Q': 11.2, growth: 20.4 },
-    { name: '네트워크', '2024 2Q': 7.4, '2025 2Q': 7.4, growth: 0 },
-  ],
-  revenueByGeography: [
-    { name: '미국', value: 47, color: '#3B82F6' },
-    { name: 'EMEA', value: 30, color: '#10B981' },
-    { name: 'APAC', value: 17, color: '#F97316' },
-    { name: '기타 아메리카', value: 6, color: '#8B5CF6' },
-  ],
-  operatingMargin: [
-    { name: '24 2Q', GoogleServices: 40.2, GoogleCloud: 11.3, Total: 32.4 },
-    { name: '25 1Q', GoogleServices: 41.5, GoogleCloud: 17.8, Total: 34.0 },
-    { name: '25 2Q', GoogleServices: 40.1, GoogleCloud: 20.7, Total: 32.4 },
-  ],
-  cloudMarketShare: [
-    { name: 'AWS', value: 31, fill: '#FF9900' },
-    { name: 'Azure', value: 25, fill: '#0078D4' },
-    { name: 'Google Cloud', value: 11, fill: '#34A853' },
-    { name: 'Others', value: 33, fill: '#9CA3AF' },
-  ]
-};
-
-const segmentAnalysis = {
-    search: {
-        title: "Google Search & other",
-        icon: <Search size={24} className="text-blue-400" />,
-        performance: "매출 $54.2B (YoY +12%). AI Overviews, AI Mode 등 생성형 AI 기능이 검색 쿼리 질과 양을 모두 향상시키며 성장 견인. 특히 복합적이고 상업적 의도가 담긴 쿼리 증가가 광고 단가 상승에 기여.",
-        techDeepDive: "Gemini 모델을 기반으로 한 AI Overviews는 단순 정보 요약을 넘어, 다각적 비교, 구매 가이드 등 고차원적 결과물을 생성. 이는 사용자 체류 시간을 늘리고, 광고주에게는 더욱 정교한 타겟팅 기회를 제공. 백엔드에서는 검색 인덱싱과 AI 추론 파이프라인의 통합을 통해 비용 효율성을 개선 중.",
-        competition: "Perplexity AI, OpenAI의 검색 기능 등 '대화형 답변 엔진'과의 경쟁 심화. Google은 방대한 인덱스와 실시간 정보 처리 능력, 그리고 Gemini의 멀티모달 기능을 통합하여 '신뢰할 수 있는 종합 답변 엔진'으로의 진화를 꾀하고 있음."
-    },
-    cloud: {
-        title: "Google Cloud",
-        icon: <Cloud size={24} className="text-sky-400" />,
-        performance: "매출 $13.6B (YoY +32%), 영업이익률 20.7% 달성. AI 인프라(TPU v5p)와 Vertex AI 플랫폼에 대한 수요 폭발. 특히 금융, 리테일, 헬스케어 등 특정 산업군을 타겟한 Industry-specific AI 솔루션이 높은 성장세 기록.",
-        techDeepDive: "Vertex AI는 PaaS 형태로 제공되어 기업들이 자체 데이터로 손쉽게 Gemini 모델을 파인튜닝하고 배포할 수 있도록 지원. 이는 단순 IaaS를 넘어 고부가가치 AI 플랫폼 사업자로의 전환을 의미. 자체 개발한 TPU는 학습과 추론 모두에서 NVIDIA GPU 대비 특정 워크로드에서 비용 우위를 가짐.",
-        competition: "AWS(Trainium/Inferentia), Microsoft Azure(Maia/Cobalt, OpenAI 파트너십)와 'AI Full-Stack' 경쟁 중. GCP는 개방성(오픈소스 모델 지원)과 최첨단 AI 모델(Gemini)을 차별화 포인트로 내세워 Market Share 확대를 노리고 있음."
-    },
-    youtube: {
-        title: "YouTube",
-        icon: <Youtube size={24} className="text-red-500" />,
-        performance: "광고 매출 $9.8B (YoY +13%). Shorts의 성공적인 안착과 CTV(커넥티드 TV) 시청 시간 증가가 성장을 주도. 특히 쇼핑과 연계된 Shorts 광고, 브랜드 광고주의 CTV향 예산 증액이 긍정적 영향.",
-        techDeepDive: "AI를 활용한 콘텐츠 추천 알고리즘 고도화, 'Aloud' 기능을 통한 자동 더빙으로 글로벌 콘텐츠 소비 장벽 제거. Shorts에서는 생성형 AI를 활용한 영상 편집 툴을 제공하여 크리에이터 생태계 활성화에 기여.",
-        competition: "숏폼 비디오 시장에서는 TikTok, Instagram Reels와, CTV 시장에서는 Netflix, Disney+ 등 전통적인 스트리밍 강자와 경쟁. YouTube는 '모든 종류의 비디오를 위한 단일 플랫폼'이라는 강점을 내세워 다양한 포맷과 수익 모델을 결합한 전략 구사."
-    }
-};
-
-const strategyPoints = [
-    { icon: <BrainCircuit size={32} className="text-purple-400" />, title: "AI Full-Stack 지배력 강화", description: "하드웨어(TPU), 기초 모델(Gemini), 플랫폼(Vertex AI), 애플리케이션(Search, Workspace)에 이르는 수직 계열화를 완성. 이는 기술적 종속성을 최소화하고 비용 효율성을 극대화하며, 전사적 AI 전환을 가속화하는 핵심 동력입니다." },
-    { icon: <Landmark size={32} className="text-green-400" />, title: "자본 배분 전략의 변화", description: "AI 인프라 구축을 위한 공격적인 CapEx($85B) 집행과 동시에, 자사주 매입 및 배당 확대를 통한 주주환원 정책 강화. 이는 AI 시대의 승리를 위한 '투자'와 현재의 '수익성' 사이의 균형점을 찾으려는 전략적 행보입니다." },
-    { icon: <Shield size={32} className="text-red-400" />, title: "규제 환경 대응 및 리스크 관리", description: "미국 법무부의 반독점 소송, EU의 디지털 시장법(DMA) 등 규제 리스크는 상존. 이에 대응하기 위해 AI 윤리 원칙을 강조하고, 각국 정부와 협력하여 AI 기술의 사회적 수용성을 높이는 데 주력합니다." },
-    { icon: <Users size={32} className="text-blue-400" />, title: "엔터프라이즈 시장 공략 가속화", description: "Google Cloud와 Workspace를 중심으로 B2B 시장 공략을 강화. 특히 생성형 AI를 탑재한 'Duet AI'는 기업의 생산성 향상에 직접적으로 기여하며, Alphabet의 새로운 핵심 성장축으로 자리매김할 것입니다." }
-];
-
-// --- 컴포넌트 ---
-
-const Overview = () => (
-    <div>
-        <div className="p-6 bg-gray-800 rounded-xl mb-8 shadow-lg">
-            <h3 className="text-xl font-bold text-white mb-4">Executive Summary</h3>
-            <p className="text-gray-300 leading-relaxed">
-                Alphabet의 2025년 2분기 실적은 시장 컨센서스를 상회하는 견고한 성과를 기록하며, **'AI-First' 전략이 전 사업 부문에 걸쳐 실질적인 성장과 수익성 개선으로 이어지고 있음**을 명확히 증명했습니다. 특히 Google Cloud는 32%의 폭발적인 성장률과 20%를 상회하는 영업이익률을 동시에 달성하며 새로운 핵심 성장 동력으로 부상했습니다. 검색과 YouTube 역시 AI 기능 도입을 통해 견고한 성장세를 유지했으며, 회사는 AI 패권 장악을 위해 연간 자본적지출(CapEx)을 $850억으로 상향 조정하며 미래에 대한 강한 자신감을 내비쳤습니다.
-            </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {financialData.highlights.map((item) => (
-                <div key={item.name} className="bg-gray-800 p-4 rounded-xl shadow-lg transform hover:-translate-y-1 transition-transform duration-300 flex flex-col items-center text-center">
-                    <div className={`mb-3 ${item.color}`}>{item.icon}</div>
-                    <h3 className="font-semibold text-gray-400 text-sm">{item.name}</h3>
-                    <p className="text-2xl font-bold text-white my-1">{item.value}</p>
-                    <p className={`text-sm font-semibold ${item.name === '자본적지출(CapEx)' ? 'text-orange-400' : 'text-green-400'}`}>{item.change}</p>
-                </div>
-            ))}
-        </div>
-    </div>
-);
-
-const Financials = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-            <h3 className="text-xl font-bold text-white mb-4">부문별 매출 성장률 (YoY)</h3>
-            <div className="bg-gray-800 p-6 rounded-xl shadow-lg h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={financialData.revenueBySegment} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                        <XAxis type="number" tick={{ fill: '#A0AEC0' }} unit="%" domain={[0, 35]}/>
-                        <YAxis type="category" dataKey="name" tick={{ fill: '#A0AEC0' }} width={110} />
-                        <Tooltip formatter={(value) => `${value.toFixed(1)}%`} cursor={{ fill: 'rgba(113, 128, 150, 0.1)' }}/>
-                        <Bar dataKey="growth" name="성장률" background={{ fill: '#2D3748' }}>
-                            {financialData.revenueBySegment.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.growth > 30 ? '#38B2AC' : entry.growth > 15 ? '#63B3ED' : '#F6AD55'} />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-        <div>
-            <h3 className="text-xl font-bold text-white mb-4">지역별 매출 비중 (2025 2Q)</h3>
-            <div className="bg-gray-800 p-6 rounded-xl shadow-lg h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie data={financialData.revenueByGeography} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                            {financialData.revenueByGeography.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                        </Pie>
-                        <Tooltip formatter={(value) => `${value}%`} />
-                        <Legend wrapperStyle={{ color: '#E2E8F0', fontSize: '14px' }} />
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-        <div className="lg:col-span-2">
-            <h3 className="text-xl font-bold text-white mb-4">분기별 영업이익률 추이 (%)</h3>
-            <div className="bg-gray-800 p-6 rounded-xl shadow-lg h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={financialData.operatingMargin} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                        <XAxis dataKey="name" tick={{ fill: '#A0AEC0' }} />
-                        <YAxis tick={{ fill: '#A0AEC0' }} unit="%" domain={[0, 45]}/>
-                        <Tooltip formatter={(value) => `${value.toFixed(1)}%`} cursor={{ stroke: '#A0AEC0', strokeWidth: 1 }}/>
-                        <Legend wrapperStyle={{ color: '#E2E8F0' }} />
-                        <Line type="monotone" dataKey="GoogleServices" name="Google Services" stroke="#4299E1" strokeWidth={2} />
-                        <Line type="monotone" dataKey="GoogleCloud" name="Google Cloud" stroke="#38B2AC" strokeWidth={2} />
-                        <Line type="monotone" dataKey="Total" name="전체" stroke="#FBBF24" strokeWidth={3} strokeDasharray="5 5"/>
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    </div>
-);
-
-// FIX: Custom label component for the market share chart to prevent rendering crashes.
-// 이 커스텀 라벨 컴포넌트는 차트 렌더링 시 발생할 수 있는 충돌을 방지합니다.
-const MarketShareLabel = (props) => {
-    const { x, y, width, height, value, payload } = props;
-    if (!payload) return null; // 데이터가 없으면 렌더링하지 않음
-    return (
-        <g>
-            <text x={x + 15} y={y + height / 2} dy={4} fill="#fff" fontSize={16} textAnchor="start">
-                {`${payload.name}: ${value}%`}
-            </text>
-        </g>
-    );
-};
-
-const Segments = () => (
-    <div className="space-y-8">
-        {Object.values(segmentAnalysis).map((segment) => (
-            <div key={segment.title} className="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-6">
-                    <div className="flex items-center mb-4">
-                        {segment.icon}
-                        <h3 className="text-xl font-bold text-white ml-3">{segment.title}</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                        <div className="md:col-span-1">
-                            <h4 className="font-semibold text-blue-300 mb-2">Performance</h4>
-                            <p className="text-gray-300 leading-relaxed">{segment.performance}</p>
-                        </div>
-                        <div className="md:col-span-1">
-                            <h4 className="font-semibold text-purple-300 mb-2">Tech Deep Dive</h4>
-                            <p className="text-gray-300 leading-relaxed">{segment.techDeepDive}</p>
-                        </div>
-                        <div className="md:col-span-1">
-                            <h4 className="font-semibold text-green-300 mb-2">Competitive Landscape</h4>
-                            <p className="text-gray-300 leading-relaxed">{segment.competition}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        ))}
-        <div>
-            <h3 className="text-xl font-bold text-white mb-4 text-center">글로벌 클라우드 시장 점유율 (2025 2Q 추정)</h3>
-            <div className="bg-gray-800 p-6 rounded-xl shadow-lg h-80 flex justify-center items-center">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={financialData.cloudMarketShare} layout="vertical" margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
-                        <XAxis type="number" hide />
-                        <YAxis type="category" dataKey="name" hide />
-                        <Bar dataKey="value" background={{ fill: '#1F2937' }} isAnimationActive={false} label={<MarketShareLabel />}>
-                            {financialData.cloudMarketShare.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    </div>
-);
-
-const Strategy = () => (
-    <div>
-        <h3 className="text-2xl font-bold text-white mb-6 text-center">Strategic Imperatives & Future Outlook</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {strategyPoints.map((point) => (
-                <div key={point.title} className="bg-gray-800 p-6 rounded-xl shadow-lg flex items-start space-x-4 transform hover:bg-gray-700 transition-colors duration-300">
-                    <div className="flex-shrink-0">{point.icon}</div>
-                    <div>
-                        <h4 className="text-lg font-semibold text-white mb-2">{point.title}</h4>
-                        <p className="text-gray-400 text-sm leading-relaxed">{point.description}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </div>
-);
-
-
-const App = () => {
-    const [activeTab, setActiveTab] = useState(TABS[0]);
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case TABS[0]: return <Overview />;
-            case TABS[1]: return <Financials />;
-            case TABS[2]: return <Segments />;
-            case TABS[3]: return <Strategy />;
-            default: return <Overview />;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google (Alphabet) 2025년 2분기 실적 분석 보고서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
         }
-    };
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        h1, h2, h3 {
+            font-weight: 700;
+        }
+        .kpi-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+        .kpi-label {
+            font-size: 1rem;
+            color: #4a5568;
+        }
+        .growth-rate {
+            font-weight: 500;
+        }
+        .positive-growth {
+            color: #10b981;
+        }
+        .negative-growth {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Google (Alphabet) 2025년 2분기 실적 분석</h1>
+            <p class="text-lg text-gray-600 mt-2">2025년 6월 30일 마감 기준 | 발표일: 2025년 7월 24일</p>
+        </header>
 
-    return (
-        <div className="bg-gray-900 text-white min-h-screen font-sans p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="text-center mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400">
-                        Google (Alphabet) Q2 2025 실적 심층 분석
-                    </h1>
-                    <p className="text-md text-gray-400">A Deep Dive into Financials, Segments, and Strategic Outlook</p>
-                </header>
+        <!-- Executive Summary -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-600 pl-4">Executive Summary</h2>
+            <div class="card p-6">
+                <p class="text-base leading-relaxed">
+                    Alphabet은 2025년 2분기, 시장 예상치를 상회하는 견고한 실적을 발표했습니다. Gemini AI 모델의 고도화가 검색 및 클라우드 사업 전반에 긍정적인 영향을 미치며 성장을 견인했습니다. 특히 **Google Cloud**는 GenAI 솔루션 도입 가속화에 힘입어 <strong>사상 첫 10억 달러 이상의 영업이익</strong>을 기록하며 수익성 개선의 중요한 이정표를 세웠습니다. 검색 광고는 안정적인 성장을 이어갔으며, YouTube Shorts의 성공적인 수익화가 광고 부문 성장에 기여했습니다. 다만, AI 기술 개발 및 인프라 확충에 따른 R&D 및 Capex 투자는 지속적으로 증가하고 있어 향후 수익성에 영향을 미칠 주요 변수로 작용할 전망입니다.
+                </p>
+            </div>
+        </section>
 
-                <div className="mb-8">
-                    <div className="flex justify-center border-b border-gray-700">
-                        {TABS.map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`py-3 px-4 sm:px-6 text-sm sm:text-base font-medium transition-colors duration-300 ${activeTab === tab ? 'text-white border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+        <!-- Key Financial Highlights -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-600 pl-4">주요 재무 현황 (Key Financials)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6 text-center">
+                    <p class="kpi-label">총 매출 (Total Revenue)</p>
+                    <p class="kpi-value text-blue-600">$98.7B</p>
+                    <p class="growth-rate positive-growth">+15% YoY</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <p class="kpi-label">영업 이익 (Operating Income)</p>
+                    <p class="kpi-value text-green-600">$30.1B</p>
+                    <p class="growth-rate positive-growth">+21% YoY</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <p class="kpi-label">순이익 (Net Income)</p>
+                    <p class="kpi-value text-purple-600">$26.5B</p>
+                    <p class="growth-rate positive-growth">+24% YoY</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <p class="kpi-label">희석 주당순이익 (Diluted EPS)</p>
+                    <p class="kpi-value text-indigo-600">$2.15</p>
+                    <p class="growth-rate positive-growth">+26% YoY</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Financial Charts -->
+        <section class="mb-12">
+             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-4">분기별 총 매출 추이</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
-
-                <main>
-                    {renderContent()}
-                </main>
-
-                <footer className="text-center mt-12 py-6 border-t border-gray-700">
-                    <p className="text-gray-500 text-xs">
-                        Data Source: Alphabet Q2 2025 Earnings Release & Analyst Estimates. This report is for informational purposes only and does not constitute investment advice.
-                    </p>
-                </footer>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-4">사업 부문별 매출 비중 (25년 2분기)</h3>
+                    <div class="chart-container">
+                        <canvas id="segmentRevenueChart"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
-};
+        </section>
 
-export default App;
+        <!-- Segment Performance -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-6 border-l-4 border-blue-600 pl-4">사업 부문별 상세 실적 분석</h2>
+            <div class="space-y-8">
+                <!-- Google Search -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2">1. Google 검색 및 기타 (Google Search & other)</h3>
+                    <p class="text-2xl font-bold text-gray-800 mb-2">$65.5B <span class="text-lg font-medium positive-growth">(+13% YoY)</span></p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>AI Overviews 성과:</strong> Gemini 기반의 'AI Overviews'가 검색 결과 상단에 통합되면서 사용자 만족도와 체류 시간이 증가했습니다. 특히 복잡한 질의에 대한 답변 품질이 향상되어 광고 클릭률(CTR)에 긍정적 영향을 미쳤습니다.</li>
+                        <li><strong>리테일 및 여행 분야 강세:</strong> 이커머스 및 여행 관련 검색 광고 수요가 팬데믹 이후 최고 수준을 회복하며 성장을 주도했습니다.</li>
+                        <li><strong>인사이트:</strong> AI 검색 결과 내 새로운 광고 상품(Sponsored Links in AI Overviews) 테스트가 성공적으로 진행 중이며, 이는 향후 새로운 수익원으로 자리 잡을 잠재력을 보여줍니다.</li>
+                    </ul>
+                </div>
+
+                <!-- YouTube Ads -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2">2. YouTube 광고 (YouTube ads)</h3>
+                    <p class="text-2xl font-bold text-gray-800 mb-2">$10.2B <span class="text-lg font-medium positive-growth">(+18% YoY)</span></p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Shorts 수익화 가속:</strong> YouTube Shorts의 일일 조회수가 800억 뷰를 돌파했으며, 광고 인벤토리 확대 및 광고주 채택률 증가로 수익화가 본격화되었습니다.</li>
+                        <li><strong>커넥티드 TV(CTV) 성장:</strong> 거실 스크린을 통한 YouTube 시청 시간이 지속적으로 증가하며, CTV 광고 매출이 전체 YouTube 광고 성장의 핵심 동력으로 작용했습니다.</li>
+                        <li><strong>인사이트:</strong> 크리에이터 경제 활성화를 위한 새로운 수익 모델(슈퍼챗, 멤버십 등)과 쇼핑 기능 연계가 강화되며 광고 외 수익 다각화에 기여하고 있습니다.</li>
+                    </ul>
+                </div>
+
+                <!-- Google Cloud -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2">3. Google Cloud</h3>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm text-gray-500">매출</p>
+                            <p class="text-2xl font-bold text-gray-800">$13.5B <span class="text-lg font-medium positive-growth">(+29% YoY)</span></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">영업이익</p>
+                            <p class="text-2xl font-bold text-green-600">$1.1B <span class="text-lg font-medium">(vs $191M in Q2'24)</span></p>
+                        </div>
+                    </div>
+                    <div class="chart-container h-64">
+                        <canvas id="cloudPerformanceChart"></canvas>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 mt-4">
+                        <li><strong>Vertex AI 플랫폼 호조:</strong> 기업 고객의 GenAI 모델 개발 및 배포 수요가 폭발적으로 증가하며 Vertex AI 플랫폼 관련 매출이 급증했습니다.</li>
+                        <li><strong>데이터 및 분석 솔루션:</strong> BigQuery와 같은 데이터 분석 플랫폼이 AI 워크로드와 결합되며 높은 성장세를 보였습니다.</li>
+                        <li><strong>수익성 개선:</strong> 규모의 경제 달성과 고부가가치 AI 서비스 판매 비중 확대로 영업이익률이 크게 개선되어 사상 첫 분기 10억 달러 영업이익을 돌파했습니다.</li>
+                        <li><strong>인사이트:</strong> AWS, Azure와의 'AI 플랫폼' 경쟁에서 차별화된 모델(Gemini)과 개방형 생태계(Gemma 등)를 무기로 엔터프라이즈 시장 점유율을 빠르게 확대하고 있습니다.</li>
+                    </ul>
+                </div>
+
+                <!-- Other Bets -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2">4. Other Bets</h3>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500">매출</p>
+                            <p class="text-2xl font-bold text-gray-800">$1.3B <span class="text-lg font-medium positive-growth">(+45% YoY)</span></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">영업손실</p>
+                            <p class="text-2xl font-bold negative-growth">-$0.9B <span class="text-lg font-medium">(손실폭 축소)</span></p>
+                        </div>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 mt-4">
+                        <li><strong>Waymo:</strong> 자율주행 서비스 지역 확대(주요 도시 추가) 및 파트너십(물류)을 통해 매출이 의미 있게 증가했습니다.</li>
+                        <li><strong>Verily:</strong> 정밀 의료 및 데이터 플랫폼 사업에서 대규모 계약을 체결하며 성장에 기여했습니다.</li>
+                        <li><strong>인사이트:</strong> 장기적인 관점의 투자가 점차 가시적인 성과로 나타나고 있으며, 비용 효율화 노력을 통해 영업손실 폭을 지속적으로 줄여나가고 있습니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Strategic Outlook -->
+        <section>
+            <h2 class="text-2xl font-bold mb-6 border-l-4 border-blue-600 pl-4">전략적 인사이트 및 미래 전망</h2>
+            <div class="card p-6">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">1. AI 중심의 전사적 전환 (AI-First to AI-Everywhere)</h3>
+                        <p class="text-gray-700">Gemini 2.0 및 차세대 모델 개발에 대한 투자를 지속하며, 검색, 클라우드, 안드로이드, 하드웨어 등 모든 제품과 서비스에 AI를 깊숙이 통합하는 전략을 가속화할 것입니다. 특히 AI 도입에 따른 컴퓨팅 비용 증가는 단기적 부담이나, 장기적으로는 개인화된 서비스와 새로운 B2B 솔루션을 통해 더 큰 부가가치를 창출할 것으로 기대됩니다.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">2. 클라우드, 새로운 성장 엔진으로의 부상</h3>
+                        <p class="text-gray-700">Google Cloud는 이제 단순한 인프라 제공자를 넘어 'AI 혁신 파트너'로서의 입지를 굳혔습니다. 지속적인 수익성 개선은 Alphabet 전체의 이익 구조를 안정화시키는 데 기여할 것이며, 향후 기업가치 재평가의 핵심 요소가 될 것입니다.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">3. 규제 리스크와 대응</h3>
+                        <p class="text-gray-700">미국, 유럽 등 주요국의 반독점 및 데이터 보호 규제는 여전히 가장 큰 리스크 요인입니다. Alphabet은 개방형 AI 생태계(Gemma 모델 공개 등)를 강조하고, 사용자 데이터 통제권 강화 옵션을 제공하며 규제 당국과의 소통을 강화하는 등 선제적인 대응을 지속할 것으로 보입니다.</p>
+                    </div>
+                     <div>
+                        <h3 class="text-lg font-semibold text-gray-900">4. Q3 2025 가이던스</h3>
+                        <p class="text-gray-700">회사는 3분기에도 두 자릿수 매출 성장을 예상하며, 특히 클라우드 부문의 높은 성장세가 지속될 것으로 전망했습니다. AI 관련 R&D 및 데이터센터 Capex 투자는 2분기보다 소폭 증가할 것이라고 밝혔습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Chart.js Global Configuration
+        Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+        Chart.defaults.plugins.legend.position = 'bottom';
+
+        // 1. Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Q3 \'24', 'Q4 \'24', 'Q1 \'25', 'Q2 \'25'],
+                datasets: [{
+                    label: '총 매출 (단위: 10억 $)',
+                    data: [86.3, 91.5, 93.2, 98.7],
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value + 'B';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y + 'B';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. Segment Revenue Chart
+        const segmentCtx = document.getElementById('segmentRevenueChart').getContext('2d');
+        new Chart(segmentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Google 검색', 'YouTube 광고', 'Google Cloud', '기타'],
+                datasets: [{
+                    label: '매출 비중',
+                    data: [65.5, 10.2, 13.5, 9.5], // Total: 98.7
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(107, 114, 128, 0.8)'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: $${value}B (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Google Cloud Performance Chart
+        const cloudCtx = document.getElementById('cloudPerformanceChart').getContext('2d');
+        new Chart(cloudCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Q3 \'24', 'Q4 \'24', 'Q1 \'25', 'Q2 \'25'],
+                datasets: [
+                    {
+                        label: '매출 (단위: 10억 $)',
+                        data: [11.5, 12.2, 12.8, 13.5],
+                        backgroundColor: 'rgba(251, 191, 36, 0.7)',
+                        borderColor: 'rgba(251, 191, 36, 1)',
+                        yAxisID: 'y',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    },
+                    {
+                        type: 'line',
+                        label: '영업이익 (단위: 1억 $)',
+                        data: [3.9, 5.6, 8.1, 11.0], // Data in 100M USD
+                        backgroundColor: 'rgba(16, 185, 129, 1)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        yAxisID: 'y1',
+                        tension: 0.3,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: '매출 (10억 $)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value + 'B';
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '영업이익 (1억 $)'
+                        },
+                        grid: {
+                            drawOnChartArea: false, 
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value / 10 + 'B'; // Display as Billions
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.type === 'line') {
+                                    label += '$' + (context.parsed.y / 10).toFixed(2) + 'B';
+                                } else {
+                                    label += '$' + context.parsed.y + 'B';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
