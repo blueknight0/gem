@@ -1,0 +1,120 @@
+.character-sprite {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.character-sprite:hover {
+  transform: scale(1.05);
+}
+
+.character-sprite.animated {
+  animation: characterBounce 2s ease-in-out infinite;
+}
+
+@keyframes characterBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 크기별 스타일 */
+.character-sprite-small {
+  width: 80px;
+  height: 100px;
+}
+
+.character-sprite-normal {
+  width: 120px;
+  height: 150px;
+}
+
+.character-sprite-large {
+  width: 280px;
+  height: 350px;
+}
+
+.character-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated; /* 픽셀 아트용 */
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.character-level {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #f1c40f;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* 폴백 픽셀 캐릭터 스타일 */
+.pixel-character-fallback {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.pixel-head {
+  position: absolute;
+  width: 20%;
+  height: 15%;
+  top: 5%;
+  left: 40%;
+  border-radius: 2px;
+}
+
+.pixel-torso {
+  position: absolute;
+  width: 30%;
+  height: 35%;
+  top: 25%;
+  left: 35%;
+  border-radius: 2px;
+}
+
+.pixel-left-arm {
+  position: absolute;
+  width: 15%;
+  height: 25%;
+  top: 30%;
+  left: 20%;
+  border-radius: 2px;
+}
+
+.pixel-right-arm {
+  position: absolute;
+  width: 15%;
+  height: 25%;
+  top: 30%;
+  right: 20%;
+  border-radius: 2px;
+}
+
+.pixel-left-leg {
+  position: absolute;
+  width: 12%;
+  height: 30%;
+  bottom: 5%;
+  left: 38%;
+  border-radius: 2px;
+}
+
+.pixel-right-leg {
+  position: absolute;
+  width: 12%;
+  height: 30%;
+  bottom: 5%;
+  right: 38%;
+  border-radius: 2px;
+}

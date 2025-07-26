@@ -1,0 +1,165 @@
+.wod-selector {
+  height: 100vh;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.wod-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
+.wod-title {
+  color: #ecf0f1;
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.back-button {
+  font-size: 1rem;
+}
+
+.wod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.wod-card {
+  background: rgba(52, 73, 94, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.wod-card:hover {
+  transform: translateY(-5px);
+  border-color: #3498db;
+  box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3);
+}
+
+.wod-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.wod-emoji {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.wod-info {
+  flex: 1;
+}
+
+.wod-name {
+  color: #ecf0f1;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.wod-description {
+  color: #bdc3c7;
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wod-duration {
+  color: #f1c40f;
+  font-size: 1.1rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.wod-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.difficulty-badge, .type-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wod-hover-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(52, 152, 219, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.wod-card:hover .wod-hover-effect {
+  opacity: 1;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .wod-selector {
+    padding: 15px;
+  }
+  
+  .wod-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .wod-title {
+    font-size: 1.5rem;
+  }
+  
+  .wod-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .wod-card {
+    padding: 15px;
+  }
+  
+  .wod-card-header {
+    gap: 10px;
+  }
+  
+  .wod-emoji {
+    font-size: 2rem;
+  }
+  
+  .wod-name {
+    font-size: 1.3rem;
+  }
+  
+  .wod-description {
+    font-size: 0.9rem;
+  }
+}

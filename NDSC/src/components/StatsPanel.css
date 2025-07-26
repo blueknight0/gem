@@ -1,0 +1,138 @@
+.stats-panel h3 {
+  margin-top: 0;
+  color: #3498db;
+  text-align: center;
+}
+
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.stat-label {
+  color: #ecf0f1;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: left;
+}
+
+.stat-bar-container {
+  flex: 1;
+  height: 24px;
+  background: rgba(44, 62, 80, 0.8);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.stat-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.2) 50%, 
+    transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.stat-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ecf0f1;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  z-index: 1;
+}
+
+.total-stats {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  color: #ecf0f1;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.total-value {
+  color: #f1c40f;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.progress-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.progress-item {
+  display: flex;
+  justify-content: space-between;
+  color: #bdc3c7;
+  font-size: 0.9rem;
+}
+
+.progress-value {
+  color: #e67e22;
+  font-weight: bold;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .stat-label {
+    min-width: 70px;
+    font-size: 0.9rem;
+  }
+  
+  .stat-bar-container {
+    height: 20px;
+  }
+  
+  .stat-value {
+    font-size: 0.8rem;
+  }
+  
+  .total-label {
+    font-size: 1.1rem;
+  }
+  
+  .total-value {
+    font-size: 1.3rem;
+  }
+}

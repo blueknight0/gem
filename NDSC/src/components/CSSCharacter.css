@@ -1,0 +1,233 @@
+.css-character {
+  position: relative;
+  width: 160px;
+  height: 200px;
+  margin: 20px auto;
+  transform-origin: center bottom;
+}
+
+.css-character.animated {
+  animation: characterWorkout 3s ease-in-out infinite;
+}
+
+@keyframes characterWorkout {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.05) rotate(-2deg); }
+  50% { transform: scale(1.1) rotate(0deg); }
+  75% { transform: scale(1.05) rotate(2deg); }
+}
+
+/* 머리 */
+.char-head {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+}
+
+.hair {
+  width: 30px;
+  height: 15px;
+  background: #8b4513;
+  border-radius: 15px 15px 0 0;
+  position: absolute;
+  top: 0;
+}
+
+.face {
+  width: 25px;
+  height: 20px;
+  background: #fdbcb4;
+  border-radius: 50%;
+  position: absolute;
+  top: 8px;
+  left: 2.5px;
+}
+
+.eye {
+  width: 3px;
+  height: 3px;
+  background: #333;
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+}
+
+.left-eye { left: 6px; }
+.right-eye { right: 6px; }
+
+.mouth {
+  width: 6px;
+  height: 2px;
+  background: #d4a574;
+  border-radius: 0 0 3px 3px;
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 몸통 */
+.char-body {
+  position: absolute;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 50px;
+}
+
+.chest {
+  width: 100%;
+  height: 25px;
+  border-radius: 8px 8px 0 0;
+  position: absolute;
+  top: 0;
+}
+
+.abs {
+  width: 100%;
+  height: 25px;
+  border-radius: 0 0 8px 8px;
+  position: absolute;
+  bottom: 0;
+}
+
+/* 팔 */
+.char-arms {
+  position: absolute;
+  top: 40px;
+  width: 100%;
+  height: 40px;
+}
+
+.arm {
+  position: absolute;
+  width: 15px;
+  height: 40px;
+}
+
+.left-arm { left: 20px; }
+.right-arm { right: 20px; }
+
+.bicep {
+  width: 100%;
+  height: 20px;
+  border-radius: 8px;
+  position: absolute;
+  top: 0;
+}
+
+.forearm {
+  width: 12px;
+  height: 20px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 다리 */
+.char-legs {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 60px;
+}
+
+.leg {
+  position: absolute;
+  width: 12px;
+  height: 60px;
+}
+
+.left-leg { left: 3px; }
+.right-leg { right: 3px; }
+
+.thigh {
+  width: 100%;
+  height: 30px;
+  background: #34495e;
+  border-radius: 6px;
+  position: absolute;
+  top: 0;
+}
+
+.calf {
+  width: 10px;
+  height: 30px;
+  background: #2c3e50;
+  border-radius: 5px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 레벨 및 타입 표시 */
+.char-level {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #f1c40f;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.char-type {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ecf0f1;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* 체형별 색상 */
+.css-character-beginner .chest,
+.css-character-beginner .abs,
+.css-character-beginner .bicep,
+.css-character-beginner .forearm {
+  background: #95a5a6;
+}
+
+.css-character-intermediate .chest,
+.css-character-intermediate .abs,
+.css-character-intermediate .bicep,
+.css-character-intermediate .forearm {
+  background: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.css-character-advanced .chest,
+.css-character-advanced .abs,
+.css-character-advanced .bicep,
+.css-character-advanced .forearm {
+  background: #e67e22;
+  box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
+}
+
+.css-character-elite .chest,
+.css-character-elite .abs,
+.css-character-elite .bicep,
+.css-character-elite .forearm {
+  background: linear-gradient(45deg, #f1c40f, #f39c12);
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+  animation: eliteGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes eliteGlow {
+  0% { box-shadow: 0 0 15px rgba(241, 196, 15, 0.6); }
+  100% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); }
+}

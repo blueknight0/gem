@@ -1,0 +1,282 @@
+.competition-screen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
+.competition-intro, .competition-competing, .competition-results {
+  max-width: 600px;
+  padding: 40px;
+  text-align: center;
+  background: rgba(0,0,0,0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* Intro Screen */
+.competition-title {
+  font-size: 2.5rem;
+  color: #ecf0f1;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.competition-description {
+  margin-bottom: 30px;
+}
+
+.competition-description p {
+  font-size: 1.2rem;
+  color: #ecf0f1;
+  margin: 10px 0;
+}
+
+.highlight {
+  color: #f1c40f;
+  font-weight: bold;
+  font-size: 1.3em;
+}
+
+.player-preview {
+  margin-bottom: 30px;
+}
+
+.player-preview h3 {
+  color: #3498db;
+  margin-bottom: 15px;
+}
+
+.player-card {
+  background: rgba(52, 73, 94, 0.8);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+.player-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ecf0f1;
+  margin-bottom: 10px;
+}
+
+.player-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.player-stats span {
+  font-size: 1.1rem;
+  color: #bdc3c7;
+}
+
+.player-body-type {
+  color: #f39c12;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.start-competition-button {
+  font-size: 1.3rem;
+  padding: 15px 30px;
+}
+
+/* Competing Screen */
+.competing-title {
+  font-size: 2rem;
+  color: #ecf0f1;
+  margin-bottom: 40px;
+}
+
+.competing-animation {
+  height: 100px;
+  position: relative;
+  margin-bottom: 30px;
+  overflow: hidden;
+}
+
+.runner {
+  position: absolute;
+  font-size: 3rem;
+  animation: run 3s linear infinite;
+}
+
+.runner-1 {
+  top: 10px;
+  animation-delay: 0s;
+}
+
+.runner-2 {
+  top: 30px;
+  animation-delay: 0.5s;
+}
+
+.runner-3 {
+  top: 50px;
+  animation-delay: 1s;
+}
+
+@keyframes run {
+  0% { left: -60px; }
+  100% { left: 100%; }
+}
+
+.competing-text {
+  font-size: 1.2rem;
+  color: #ecf0f1;
+  animation: pulse 1.5s infinite;
+}
+
+/* Results Screen */
+.results-title {
+  font-size: 2.5rem;
+  color: #f1c40f;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.final-ranking {
+  margin-bottom: 30px;
+}
+
+.final-ranking h3 {
+  color: #3498db;
+  margin-bottom: 20px;
+}
+
+.ranking-list {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: rgba(52, 73, 94, 0.6);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.ranking-item.player-rank {
+  background: rgba(241, 196, 15, 0.3);
+  border: 2px solid #f1c40f;
+  transform: scale(1.02);
+}
+
+.rank-number {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ecf0f1;
+  min-width: 60px;
+  text-align: center;
+}
+
+.competitor-info {
+  flex: 1;
+  text-align: left;
+}
+
+.competitor-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ecf0f1;
+}
+
+.competitor-stats {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+}
+
+.competitor-type {
+  font-size: 0.9rem;
+  color: #e67e22;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.player-result {
+  margin-bottom: 30px;
+}
+
+.player-result h3 {
+  color: #2ecc71;
+  margin-bottom: 15px;
+}
+
+.result-card {
+  background: rgba(46, 204, 113, 0.2);
+  border: 2px solid #2ecc71;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.result-rank {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ecf0f1;
+  margin-bottom: 10px;
+}
+
+.result-prize {
+  font-size: 1.3rem;
+  color: #f1c40f;
+  font-weight: bold;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.result-buttons button {
+  font-size: 1.1rem;
+  padding: 12px 25px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .competition-intro, .competition-competing, .competition-results {
+    max-width: 90%;
+    padding: 20px;
+  }
+  
+  .competition-title, .results-title {
+    font-size: 2rem;
+  }
+  
+  .competing-title {
+    font-size: 1.5rem;
+  }
+  
+  .player-stats {
+    gap: 15px;
+  }
+  
+  .ranking-item {
+    padding: 8px;
+  }
+  
+  .result-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}

@@ -1,0 +1,31 @@
+<svg width="120" height="150" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- 그림자 -->
+  <ellipse cx="60" cy="145" rx="25" ry="4" fill="rgba(0,0,0,0.2)" />
+  
+  <!-- 머리 -->
+  <rect x="45" y="10" width="30" height="30" rx="15" fill="#fdbcb4" stroke="#d4a574" stroke-width="2"/>
+  
+  <!-- 얼굴 -->
+  <circle cx="52" cy="20" r="2" fill="#333" />
+  <circle cx="68" cy="20" r="2" fill="#333" />
+  <path d="M 52 28 Q 60 32 68 28" stroke="#333" stroke-width="2" fill="none" />
+  
+  <!-- 몸통 -->
+  <rect x="40" y="45" width="40" height="50" rx="8" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+  
+  <!-- 왼쪽 팔 -->
+  <rect x="25" y="50" width="20" height="35" rx="10" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+  
+  <!-- 오른쪽 팔 -->
+  <rect x="75" y="50" width="20" height="35" rx="10" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+  
+  <!-- 왼쪽 다리 -->
+  <rect x="45" y="100" width="12" height="40" rx="6" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+  
+  <!-- 오른쪽 다리 -->
+  <rect x="63" y="100" width="12" height="40" rx="6" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+  
+  <!-- 레벨 표시 배경 -->
+  <rect x="35" y="2" width="50" height="16" rx="8" fill="rgba(0,0,0,0.8)"/>
+  <text x="60" y="12" text-anchor="middle" fill="#f1c40f" font-size="12" font-weight="bold">BEGINNER</text>
+</svg>

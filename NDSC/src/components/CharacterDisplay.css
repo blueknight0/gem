@@ -1,0 +1,160 @@
+.character-display {
+  text-align: center;
+}
+
+.character-display h3 {
+  margin-top: 0;
+  color: #3498db;
+}
+
+.character-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pixel-character {
+  width: 100px;
+  height: 120px;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.pixel-character:hover {
+  transform: scale(1.1) !important;
+}
+
+.pixel-block {
+  position: absolute;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.head {
+  width: 20px;
+  height: 20px;
+  top: 0;
+  left: 40px;
+}
+
+.torso {
+  width: 30px;
+  height: 40px;
+  top: 25px;
+  left: 35px;
+}
+
+.left-arm {
+  width: 15px;
+  height: 30px;
+  top: 30px;
+  left: 20px;
+}
+
+.right-arm {
+  width: 15px;
+  height: 30px;
+  top: 30px;
+  right: 20px;
+}
+
+.left-leg {
+  width: 12px;
+  height: 35px;
+  bottom: 0;
+  left: 38px;
+}
+
+.right-leg {
+  width: 12px;
+  height: 35px;
+  bottom: 0;
+  right: 38px;
+}
+
+.level-text {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #f1c40f;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.character-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.body-type {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ecf0f1;
+}
+
+.character-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.stat-value.exp {
+  color: #3498db;
+}
+
+.stat-value.coins {
+  color: #f1c40f;
+}
+
+/* 캐릭터 아트워크 컨테이너 */
+.character-artwork {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .pixel-character {
+    width: 80px;
+    height: 96px;
+  }
+  
+  .pixel-character .pixel-block {
+    transform: scale(0.8);
+  }
+  
+  .character-stats {
+    gap: 15px;
+  }
+  
+  .art-style-selector {
+    gap: 3px;
+  }
+  
+  .style-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+}

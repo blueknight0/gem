@@ -1,0 +1,37 @@
+<svg width="120" height="150" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- 그림자 -->
+  <ellipse cx="60" cy="145" rx="25" ry="4" fill="rgba(0,0,0,0.2)" />
+  
+  <!-- 머리 -->
+  <rect x="45" y="10" width="30" height="30" rx="15" fill="#fdbcb4" stroke="#d4a574" stroke-width="2"/>
+  
+  <!-- 얼굴 -->
+  <circle cx="52" cy="20" r="2" fill="#333" />
+  <circle cx="68" cy="20" r="2" fill="#333" />
+  <path d="M 52 28 Q 60 32 68 28" stroke="#333" stroke-width="2" fill="none" />
+  
+  <!-- 몸통 (더 근육질) -->
+  <rect x="38" y="45" width="44" height="52" rx="8" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+  
+  <!-- 가슴 근육 표시 -->
+  <rect x="42" y="50" width="36" height="20" rx="4" fill="#2980b9" opacity="0.5"/>
+  
+  <!-- 왼쪽 팔 (더 굵음) -->
+  <rect x="22" y="50" width="22" height="38" rx="11" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+  
+  <!-- 오른쪽 팔 (더 굵음) -->
+  <rect x="76" y="50" width="22" height="38" rx="11" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+  
+  <!-- 왼쪽 다리 -->
+  <rect x="44" y="102" width="14" height="40" rx="7" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+  
+  <!-- 오른쪽 다리 -->
+  <rect x="62" y="102" width="14" height="40" rx="7" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+  
+  <!-- 글로우 효과 -->
+  <circle cx="60" cy="70" r="35" fill="none" stroke="#3498db" stroke-width="2" opacity="0.3"/>
+  
+  <!-- 레벨 표시 배경 -->
+  <rect x="25" y="2" width="70" height="16" rx="8" fill="rgba(0,0,0,0.8)"/>
+  <text x="60" y="12" text-anchor="middle" fill="#3498db" font-size="12" font-weight="bold">INTERMEDIATE</text>
+</svg>
