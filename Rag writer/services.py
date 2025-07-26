@@ -4,14 +4,14 @@ import re
 import uuid
 import numpy as np
 import faiss
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 import warnings
 import kss
 from typing import TypedDict, List, Dict
 from langgraph.graph import StateGraph, END
 from sklearn.cluster import KMeans
-from google.genai import types
 from datetime import datetime
 
 import config
@@ -30,14 +30,24 @@ class PreprocessorService:
         status_callback: GUI의 상태를 업데이트하기 위한 콜백 함수.
         """
         self.status_callback = status_callback
+        self.client = None
         self._configure_api()
 
     def _configure_api(self):
         load_dotenv()
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY를 .env 파일에서 찾을 수 없습니다.")
-        genai.configure(api_key=api_key)
+        if config.GOOGLE_PROJECT_ID:
+            # Vertex AI 사용 (공식 문서 방식)
+            self.client = genai.Client(
+                vertexai=True, project=config.GOOGLE_PROJECT_ID, location="us-central1"
+            )
+        else:
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError(
+                    "GEMINI_API_KEY 또는 GOOGLE_PROJECT_ID를 .env 파일에서 찾을 수 없습니다."
+                )
+            # Gemini Developer API 사용 (공식 문서 방식)
+            self.client = genai.Client(api_key=api_key)
 
     def _update_status(self, message):
         """상태 업데이트 콜백을 호출합니다."""
@@ -217,12 +227,14 @@ class PreprocessorService:
 
             self._update_status(f"임베딩 중... ({i+len(batch_contents)}/{total_count})")
 
-            result = genai.embed_content(
+            result = self.client.models.embed_content(
                 model=config.EMBEDDING_MODEL,
-                content=batch_contents,
-                task_type="RETRIEVAL_DOCUMENT",
+                contents=batch_contents,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
             )
-            all_embeddings.extend(result["embedding"])
+            # ContentEmbedding 객체의 values 속성으로 접근
+            embeddings_values = [embedding.values for embedding in result.embeddings]
+            all_embeddings.extend(embeddings_values)
 
         return np.array(all_embeddings, dtype="float32")
 
@@ -261,8 +273,7 @@ class ReportGeneratorService:
         self.index = None
         self.db_data = None
         self.all_vectors = None
-        # self.client는 더 이상 사용하지 않음
-        self.generative_model = None
+        self.client = None
         self.embedding_model = None
         self.chunk_id_map = {}
         self.logger = ConsoleLogger()
@@ -277,12 +288,19 @@ class ReportGeneratorService:
 
     def _configure_api(self):
         load_dotenv()
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY를 .env 파일에서 찾을 수 없습니다.")
-        genai.configure(api_key=api_key)
-        # 모델 인스턴스 생성
-        self.embedding_model = genai.GenerativeModel(config.EMBEDDING_MODEL)
+        if config.GOOGLE_PROJECT_ID:
+            # Vertex AI 사용 (공식 문서 방식)
+            self.client = genai.Client(
+                vertexai=True, project=config.GOOGLE_PROJECT_ID, location="us-central1"
+            )
+        else:
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError(
+                    "GEMINI_API_KEY 또는 GOOGLE_PROJECT_ID를 .env 파일에서 찾을 수 없습니다."
+                )
+            # Gemini Developer API 사용 (공식 문서 방식)
+            self.client = genai.Client(api_key=api_key)
 
     def _update_progress(self, message):
         if self.progress_queue:
@@ -325,13 +343,6 @@ class ReportGeneratorService:
 
     def run_generation_pipeline(self, topic, mode):
         try:
-            if mode == "Production":
-                self.models = config.PRODUCTION_MODELS
-                self.thinking_budgets = config.PRODUCTION_THINKING_BUDGETS
-            else:
-                self.models = config.TEST_MODELS
-                self.thinking_budgets = config.TEST_THINKING_BUDGETS
-
             session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.results_folder = f"results_{mode.lower()}_{session_id}"
             self.logs_folder = os.path.join(self.results_folder, "logs")
@@ -343,24 +354,49 @@ class ReportGeneratorService:
 
             self.logger.start_logging(session_id)
             self.logger.add_log(
-                "SYSTEM", "=" * 20 + " 보고서 생성 파이프라인 시작 " + "=" * 20
+                "SYSTEM",
+                f"========== {'Extreme' if mode == 'Bypass' else 'Standard'} Report Generation Pipeline Start ==========",
             )
 
-            initial_state = ReportState(
-                topic=topic,
-                outline="",
-                report_content={},
-                current_report_text="",
-                review_result={},
-                review_history=[],
-                review_attempts=0,
-                formatted_report="",
-                final_report_with_refs="",
-                progress_message="0/6: 파이프라인 시작...",
-            )
+            if mode == "Bypass":
+                self.models = {"bypass_generation": config.BYPASS_MODEL}
+                graph = self._build_bypass_graph()
+                initial_state = ReportState(
+                    topic=topic,
+                    outline="",
+                    report_content={},
+                    current_report_text="",
+                    review_result={},
+                    review_history=[],
+                    review_attempts=0,
+                    formatted_report="",
+                    final_report_with_refs="",
+                    progress_message="0/2: 익스트림 파이프라인 시작...",
+                )
+            else:
+                if mode == "Production":
+                    self.models = config.PRODUCTION_MODELS
+                    self.thinking_budgets = config.PRODUCTION_THINKING_BUDGETS
+                else:
+                    self.models = config.TEST_MODELS
+                    self.thinking_budgets = config.TEST_THINKING_BUDGETS
+
+                graph = self.graph
+                initial_state = ReportState(
+                    topic=topic,
+                    outline="",
+                    report_content={},
+                    current_report_text="",
+                    review_result={},
+                    review_history=[],
+                    review_attempts=0,
+                    formatted_report="",
+                    final_report_with_refs="",
+                    progress_message="0/6: 파이프라인 시작...",
+                )
 
             final_state = None
-            for event in self.graph.stream(initial_state, {"recursion_limit": 15}):
+            for event in graph.stream(initial_state, {"recursion_limit": 15}):
                 node_name = list(event.keys())[0]
                 node_output = event[node_name]
 
@@ -379,7 +415,8 @@ class ReportGeneratorService:
                 final_state = node_output
 
             self.logger.add_log(
-                "SYSTEM", "=" * 20 + " 보고서 생성 파이프라인 종료 " + "=" * 20
+                "SYSTEM",
+                f"========== {'Extreme' if mode == 'Bypass' else 'Standard'} Report Generation Pipeline End ==========",
             )
 
             if not final_state:
@@ -395,17 +432,22 @@ class ReportGeneratorService:
                 self.results_folder, f"final_report_{date_str}.md"
             )
             self.logger.add_log(
-                "INFO", f"[6/6] 보고서 파일 저장 중... -> '{report_filename}'"
+                "INFO",
+                f"[{'2/2' if mode == 'Bypass' else '6/6'}] 보고서 파일 저장 중... -> '{report_filename}'",
             )
 
             with open(report_filename, "w", encoding="utf-8") as f:
                 f.write(final_report_with_refs)
 
-            full_log_path, node_log_paths = self.logger.save_logs(self.logs_folder)
+            if mode != "Bypass":
+                full_log_path, node_log_paths = self.logger.save_logs(self.logs_folder)
 
-            dashboard_path = self.analyzer.create_visualization_dashboard(
-                self.logger, final_state, self.viz_folder
-            )
+                dashboard_path = self.analyzer.create_visualization_dashboard(
+                    self.logger, final_state, self.viz_folder
+                )
+            else:
+                full_log_path = self.logger.save_logs(self.logs_folder, is_bypass=True)
+                dashboard_path = None
 
             self.logger.add_log(
                 "SUCCESS",
@@ -433,21 +475,25 @@ class ReportGeneratorService:
                 self.progress_queue.put({"generation_done": True})
 
     def _get_model_for_task(self, task_name):
-        model_name = self.models.get(task_name, "gemini-1.5-flash-latest")
-        return genai.GenerativeModel(model_name)
+        return self.models.get(task_name, "gemini-1.5-flash-latest")
 
-    def _get_generation_config(self, task_name):
+    def _get_generation_config(self, task_name, tools=None):
         budget = self.thinking_budgets.get(task_name)
-        if budget is not None:
-            return {"thinking_config": {"thinking_budget": budget}}
-        return None
+        thinking_config = (
+            types.ThinkingConfig(thinking_budget=budget) if budget is not None else None
+        )
+        return types.GenerateContentConfig(thinking_config=thinking_config, tools=tools)
 
     def _search_similar_documents(self, query, k=10):
-        query_embedding = genai.embed_content(
-            model=config.EMBEDDING_MODEL,  # embed_content는 모델 이름을 직접 받음
-            content=query,
-            task_type="RETRIEVAL_QUERY",
-        )["embedding"]
+        query_embedding = (
+            self.client.models.embed_content(
+                model=config.EMBEDDING_MODEL,
+                contents=[query],
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+            )
+            .embeddings[0]
+            .values
+        )  # ContentEmbedding의 values 속성으로 접근
         candidate_k = min(k * 3, len(self.db_data))
         distances, indices = self.index.search(
             np.array([query_embedding], dtype="float32"), candidate_k
@@ -495,7 +541,7 @@ class ReportGeneratorService:
         3. **출력 형식:** 각 검색어를 줄바꿈으로 구분하여, 오직 검색어 목록만 출력해주세요. 다른 설명은 포함하지 마세요.
         """
         model = self._get_model_for_task("query_generation")
-        response = model.generate_content(prompt)
+        response = self.client.models.generate_content(model=model, contents=prompt)
         queries = [q.strip() for q in response.text.split("\n") if q.strip()]
 
         self.logger.add_log("DEBUG", f"생성된 검색어: {queries}")
@@ -524,8 +570,8 @@ class ReportGeneratorService:
         )
         model = self._get_model_for_task("outline_generation")
         generation_config = self._get_generation_config("outline_generation")
-        response = model.generate_content(
-            contents=prompt, generation_config=generation_config
+        response = self.client.models.generate_content(
+            model=model, contents=prompt, config=generation_config
         )
         return response.text
 
@@ -579,8 +625,8 @@ class ReportGeneratorService:
         )
         model = self._get_model_for_task("draft_generation")
         generation_config = self._get_generation_config("draft_generation")
-        response = model.generate_content(
-            contents=prompt, generation_config=generation_config
+        response = self.client.models.generate_content(
+            model=model, contents=prompt, config=generation_config
         )
         self.logger.add_log(
             "DEBUG", f"'{header}' 섹션 생성 완료 (길이: {len(response.text)}자)"
@@ -597,8 +643,8 @@ class ReportGeneratorService:
         )
         model = self._get_model_for_task("editorial_review")
         generation_config = self._get_generation_config("editorial_review")
-        response = model.generate_content(
-            contents=prompt, generation_config=generation_config
+        response = self.client.models.generate_content(
+            model=model, contents=prompt, config=generation_config
         )
 
         try:
@@ -628,8 +674,8 @@ class ReportGeneratorService:
         )
         model = self._get_model_for_task("final_formatting")
         generation_config = self._get_generation_config("final_formatting")
-        response = model.generate_content(
-            contents=prompt, generation_config=generation_config
+        response = self.client.models.generate_content(
+            model=model, contents=prompt, config=generation_config
         )
         self.logger.add_log("SUCCESS", "최종 서식 정리 완료.")
         return response.text
@@ -691,15 +737,399 @@ class ReportGeneratorService:
         )
         return final_text_with_numbered_refs + references_section
 
+    def node_generate_bypassed_report(self, state: ReportState):
+        """
+        Extreme 모드: 개요를 바탕으로 Search Grounding과 참고 자료를 최대한 활용하여 한번에 보고서를 생성합니다.
+        """
+        self.logger.set_current_node("generate_bypassed_report")
+        self.logger.add_log("INFO", "[1/2] 익스트림 모드로 전체 보고서 생성 시작")
+        self._update_progress("[1/2] 익스트림 모드로 전체 보고서 생성 시작...")
+
+        topic = state["topic"]
+        outline = state["outline"]
+
+        # 1. DB에서 주제 관련 문서들을 광범위하게 수집
+        self.logger.add_log("INFO", "DB에서 주제 관련 문서 수집 시작...")
+
+        # 주제 기반 검색으로 기본 문서들 수집
+        topic_documents = self._search_similar_documents(topic, k=50)
+
+        # 개요의 각 섹션별로도 추가 검색 수행
+        outline_sections = re.findall(r"^#+\s+(.+)", outline, re.MULTILINE)
+        section_documents = []
+        for section in outline_sections[:10]:  # 상위 10개 섹션만
+            section_docs = self._search_similar_documents(section, k=20)
+            section_documents.extend(section_docs)
+
+        # 중복 제거 및 통합
+        all_documents = {}
+        for doc in topic_documents + section_documents:
+            doc_key = doc.get(
+                "chunk_id", f"{doc.get('file_path', '')}_{doc.get('sentence', '')[:50]}"
+            )
+            all_documents[doc_key] = doc
+
+        final_documents = list(all_documents.values())
+
+        # 참고문헌이 있는 문서 우선 정렬
+        final_documents.sort(
+            key=lambda x: (
+                1 if x.get("reference_text") else 0,  # 참고문헌 있는 것 우선
+                -len(x.get("sentence", "")),  # 긴 문장 우선
+            ),
+            reverse=True,
+        )
+
+        self.logger.add_log(
+            "INFO", f"총 {len(final_documents)}개의 관련 문서를 수집했습니다."
+        )
+
+        # 2. 문서 내용을 구조적으로 정리하여 프롬프트에 포함
+        data_context = self._prepare_extensive_db_context(
+            final_documents[:100]
+        )  # 상위 100개 문서 사용
+
+        # System Instruction으로 모델의 기본 동작 정의
+        system_instruction = """
+        당신은 법률 분야의 최고 전문가로서, 매우 상세하고 포괄적인 연구 보고서를 작성하는 전문 연구원입니다. 
+        
+        핵심 원칙:
+        1. 제공된 참고 자료를 최대한 활용하여 구체적이고 정확한 내용을 작성하세요
+        2. 웹 검색으로 최신 정보를 보완하여 종합적인 분석을 제공하세요
+        3. 각 주장마다 신뢰할 수 있는 구체적 근거와 출처를 제시하세요
+        4. 절대로 간략하게 작성하지 말고, 가능한 한 가장 상세하고 긴 내용을 제공하세요
+        5. 모든 관련 정보를 빠짐없이 활용하여 완전한 분석을 수행하세요
+        """
+
+        prompt = f"""
+        다음 주제와 개요에 따라 **극도로 상세하고 포괄적인** 법률 연구 보고서를 작성해주세요.
+
+        ## 보고서 주제
+        {topic}
+
+        ## 보고서 개요  
+        {outline}
+
+        ## 📚 **제공된 참고 자료** 
+        
+        **중요: 아래 자료들은 매우 귀중한 1차 자료입니다. 이 내용들을 최대한 활용하여 보고서를 작성하세요.**
+        
+        {data_context}
+        
+        ---
+
+        ## 🎯 **극한 상세도 요구사항**
+
+        **목표 길이: 최소 30,000자 이상 (약 50-60페이지 분량)**
+
+        ### 📋 **작성 방법론**
+        
+        **A. 참고 자료 활용 우선 원칙**:
+        - 위에 제공된 참고 자료를 반드시 최우선으로 활용
+        - 각 섹션마다 관련된 내용을 구체적으로 인용하고 분석
+        - 구체적인 사례, 판례, 법조문을 적극 활용
+        - 신뢰할 수 있는 출처가 있는 자료는 그 출처까지 명시하여 활용
+
+        **B. 웹 검색 보완 활용**:
+        - 제공된 자료로 기본 틀을 구성한 후, 웹 검색으로 최신 정보 보완
+        - 최근 동향이나 해외 사례는 웹 검색으로 보강
+        - 모든 자료와 웹 검색 결과를 유기적으로 연결하여 종합적 분석
+
+        ### 📋 **섹션별 세부 요구사항**
+        1. **서론 (최소 4,000자)**:
+           - 제공된 배경 정보를 바탕으로 문제 상황 분석
+           - 제도의 역사적 발전 과정을 상세 설명
+           - 연구의 필요성을 구체적 사례로 입증
+           - 방법론과 접근 방식을 명확히 기술
+
+        2. **각 본론 섹션 (각각 최소 5,000-6,000자)**:
+           - 법조문, 판례, 사례를 중심으로 설명
+           - 각국 비교 자료를 원문을 인용하여 상세 분석
+           - 전문가 의견이나 연구 결과를 적극 활용
+           - 실무 사례와 절차를 구체적으로 설명
+           - 웹 검색으로 최신 동향과 변화 사항 보완
+
+        3. **결론 (최소 3,000자)**:
+           - 분석 결과를 종합하여 핵심 발견사항 정리
+           - 정책적 함의를 구체적 근거와 함께 제시
+           - 향후 연구 과제와 개선 방안을 상세히 논의
+
+        ### 🔍 **자료 활용 극대화 지침**
+
+        **1. 인용 및 출처 표기**:
+        - 신뢰할 수 있는 자료를 인용할 때는 자연스럽게 출처를 명시
+        - 참고문헌이 있는 자료는 그 원출처도 함께 표기
+        - 각 문단마다 관련 자료를 적극적으로 활용
+
+        **2. 구체성과 정확성**:
+        - 추상적 설명 대신 구체적 사례와 수치 데이터 활용
+        - 법조문 번호, 판례 번호 등을 정확히 인용
+        - 전문 용어나 개념은 정확한 정의와 설명을 활용
+
+        **3. 완전성 추구**:
+        - 모든 관련 정보를 빠짐없이 검토하고 활용
+        - 여러 국가의 자료가 있다면 모두 비교 분석에 포함
+        - 시계열 데이터가 있다면 변화 추이까지 분석
+
+        ### ✅ **품질 보증 요구사항**
+        1. 제공된 자료 활용률 최소 70% 이상 (전체 내용 중 자료 기반 내용 비율)
+        2. 각 문단마다 최소 300-500자 이상의 실질적 내용 포함
+        3. 모든 주장에 대해 신뢰할 수 있는 자료 또는 웹 검색 근거 제시
+        4. 구체적 사례, 수치, 인용문을 풍부하게 활용
+        5. 논리적 연결고리와 체계적 구성으로 가독성 확보
+
+        **🔥 최종 목표: 방대한 자료를 완전히 활용하여, 해당 분야의 결정적 참고문헌이 될 수 있을 만큼 완벽하고 포괄적인 보고서를 생성하세요.**
+        """
+
+        model_name = self.models.get("bypass_generation", "gemini-2.5-pro")
+
+        # Search Grounding 및 극한 성능 설정
+        tools = [types.Tool(google_search=types.GoogleSearch())]
+
+        config = types.GenerateContentConfig(
+            # 기본 생성 설정
+            system_instruction=system_instruction,
+            tools=tools,
+            # 토큰 및 길이 설정 (극한 최적화)
+            max_output_tokens=65536,  # 최대 가능 토큰 수 (약 50,000자)
+            # 창의성 및 다양성 조절
+            temperature=0.8,  # 더 창의적이고 다양한 표현
+            top_p=0.95,  # 다양한 단어 선택 허용
+            top_k=40,  # 적절한 어휘 다양성
+            # 다중 후보 생성으로 최고 품질 확보
+            candidate_count=1,  # 안정성을 위해 1개로 설정
+            # 깊이 있는 사고를 위한 설정
+            thinking_config=types.ThinkingConfig(
+                thinking_budget=32768,  # 최대 사고 예산
+                include_thoughts=False,  # 사고 과정은 포함하지 않음
+            ),
+            # 안전 및 응답 형식 설정
+            response_mime_type="text/plain",
+            # 정지 조건 (더 긴 생성을 위해 제거)
+            stop_sequences=[],
+        )
+
+        # 프롬프트 길이 확인 및 로깅
+        prompt_length = len(prompt)
+        estimated_tokens = prompt_length // 4  # 대략적인 토큰 수 계산
+
+        self.logger.add_log(
+            "INFO", f"프롬프트 길이: {prompt_length:,}자 (약 {estimated_tokens:,} 토큰)"
+        )
+        self.logger.add_log(
+            "INFO",
+            f"참고문서 {len(final_documents)}개를 포함하여 Gemini 2.5 Pro 극한 설정으로 보고서 생성 시작",
+        )
+
+        response = self.client.models.generate_content(
+            model=model_name, contents=prompt, config=config
+        )
+
+        # 참고문헌 추출 및 포매팅
+        try:
+            grounding_metadata = getattr(
+                response.candidates[0], "grounding_metadata", None
+            )
+            if grounding_metadata:
+                web_search_queries = grounding_metadata.web_search_queries or []
+                grounding_chunks = grounding_metadata.grounding_chunks or []
+            else:
+                web_search_queries = []
+                grounding_chunks = []
+
+            self.logger.add_log(
+                "INFO", f"Grounding 검색어 수: {len(web_search_queries)}"
+            )
+            self.logger.add_log("DEBUG", f"검색어 목록: {web_search_queries}")
+
+            references_section = "\n\n---\n\n## 📚 참고문헌\n\n"
+
+            # DB 참고문헌 추가
+            db_references = set()
+            for doc in final_documents:
+                if doc.get("reference_text"):
+                    db_references.add(doc["reference_text"])
+
+            if db_references:
+                references_section += "### 📖 DB 원문 참고자료\n\n"
+                for i, ref in enumerate(sorted(db_references), 1):
+                    references_section += f"{i}. {ref}\n\n"
+
+            # 웹 검색 참고문헌 추가 (개선된 URL 추출)
+            unique_refs = {}
+            for chunk in grounding_chunks:
+                if chunk.web:
+                    # 원본 URL 추출 시도
+                    uri = chunk.web.uri
+                    title = chunk.web.title or "제목 없음"
+
+                    # 리디렉션 URL인 경우 원본 URL 추출 시도
+                    if "grounding-api-redirect" in uri:
+                        # grounding chunk에서 추가 정보 확인
+                        if (
+                            hasattr(chunk, "retrieved_context")
+                            and chunk.retrieved_context
+                        ):
+                            if hasattr(chunk.retrieved_context, "uri"):
+                                original_uri = chunk.retrieved_context.uri
+                                if (
+                                    original_uri
+                                    and not "grounding-api-redirect" in original_uri
+                                ):
+                                    uri = original_uri
+
+                        # title에서 도메인 정보 추출하여 표시
+                        if title != "제목 없음":
+                            display_text = f"{title} (검색 결과)"
+                        else:
+                            display_text = "웹 검색 결과"
+                    else:
+                        display_text = title
+
+                    if uri not in unique_refs:
+                        unique_refs[uri] = display_text
+
+            if unique_refs:
+                start_num = len(db_references) + 1
+                references_section += "### 🌐 웹 기반 참고자료\n\n"
+                for i, (uri, display_text) in enumerate(unique_refs.items(), start_num):
+                    if "grounding-api-redirect" in uri:
+                        # 리디렉션 링크인 경우 링크와 함께 설명 추가
+                        references_section += f"{i}. **{display_text}**  \n   {uri}  \n   *(Google Search Grounding을 통해 수집된 자료)*\n\n"
+                    else:
+                        # 직접 링크인 경우 URL 표시
+                        references_section += f"{i}. **{display_text}**  \n   {uri}\n\n"
+
+            final_report_text = response.text + references_section
+
+            total_refs = len(db_references) + len(unique_refs)
+            self.logger.add_log(
+                "SUCCESS",
+                f"총 {total_refs}개 참고문헌 추가 (DB: {len(db_references)}개, 웹: {len(unique_refs)}개)",
+            )
+
+        except (AttributeError, IndexError) as e:
+            self.logger.add_log(
+                "WARN",
+                f"참고문헌 메타데이터를 추출하지 못했습니다: {e}. 모델 응답만 사용합니다.",
+            )
+            final_report_text = response.text
+
+        # 생성 결과 통계
+        char_count = len(final_report_text)
+        word_count = len(final_report_text.split())
+        data_utilization = (len(final_documents) / max(len(self.db_data), 1)) * 100
+
+        self.logger.add_log(
+            "SUCCESS",
+            f"🎉 자료 완전 활용 익스트림 모드 보고서 생성 완료!\n"
+            f"   📊 통계: {char_count:,}자 ({word_count:,}단어)\n"
+            f"   🎯 목표 달성률: {(char_count/30000)*100:.1f}% (목표: 30,000자)\n"
+            f"   💾 자료 활용률: {data_utilization:.1f}% ({len(final_documents)}/{len(self.db_data)}개 문서)",
+        )
+
+        return {
+            "final_report_with_refs": final_report_text,
+            "progress_message": "1/2: 자료 완전 활용 익스트림 보고서 생성 완료. 파일 저장 시작...",
+        }
+
+    def _prepare_extensive_db_context(self, documents):
+        """
+        참고 문서들을 구조적으로 정리하여 프롬프트에 포함할 컨텍스트를 생성합니다.
+        """
+        context_parts = []
+
+        # 파일별로 그룹화
+        file_groups = {}
+        for doc in documents:
+            file_path = doc.get("file_path", "미상")
+            if file_path not in file_groups:
+                file_groups[file_path] = []
+            file_groups[file_path].append(doc)
+
+        context_parts.append("### 📋 문서별 정리된 원문 자료\n")
+
+        for file_path, file_docs in file_groups.items():
+            context_parts.append(f"\n#### 📄 {file_path}\n")
+
+            # 헤더별로 그룹화
+            header_groups = {}
+            for doc in file_docs:
+                headers_key = " > ".join(doc.get("headers", ["기타"]))
+                if headers_key not in header_groups:
+                    header_groups[headers_key] = []
+                header_groups[headers_key].append(doc)
+
+            for headers_key, header_docs in header_groups.items():
+                if headers_key and headers_key != "기타":
+                    context_parts.append(f"\n**섹션**: {headers_key}\n")
+
+                for i, doc in enumerate(header_docs, 1):
+                    sentence = doc.get("sentence", "")
+                    reference = doc.get("reference_text", "")
+
+                    context_parts.append(f"{i}. {sentence}")
+                    if reference:
+                        context_parts.append(f"   📚 출처: {reference}")
+                    context_parts.append("")
+
+        # 참고문헌이 있는 중요 문서들 별도 정리
+        ref_docs = [doc for doc in documents if doc.get("reference_text")]
+        if ref_docs:
+            context_parts.append("\n### 🎯 중요 참고문헌 포함 자료\n")
+            for i, doc in enumerate(ref_docs[:20], 1):  # 상위 20개만
+                context_parts.append(f"{i}. **내용**: {doc.get('sentence', '')}")
+                context_parts.append(f"   **출처**: {doc.get('reference_text', '')}")
+                context_parts.append(f"   **파일**: {doc.get('file_path', '')}")
+                if doc.get("headers"):
+                    context_parts.append(f"   **섹션**: {' > '.join(doc['headers'])}")
+                context_parts.append("")
+
+        return "\n".join(context_parts)
+
+    def node_save_bypassed_report(self, state: ReportState):
+        """
+        Extreme 모드: 생성된 보고서를 저장하고 주요 로그를 기록합니다.
+        """
+        self.logger.set_current_node("save_bypassed_report")
+        self.logger.add_log("INFO", "[2/2] 익스트림 보고서 저장 및 로그 기록 시작")
+        self._update_progress("[2/2] 익스트림 보고서 저장 및 로그 기록 시작...")
+
+        # Save node-specific logs
+        for node_name, history in self.logger.node_logs.items():
+            log_path = os.path.join(
+                self.logs_folder, f"node_{node_name}_log_{self.logger.session_id}.md"
+            )
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(f"# Log for node: {node_name}\n\n")
+                f.write("\n".join(map(str, history)))
+
+        self.logger.add_log("SUCCESS", "익스트림 모드 로그 저장 완료.")
+
+        return {
+            "final_report_with_refs": state[
+                "final_report_with_refs"
+            ],  # 이전 상태에서 전달
+            "progress_message": "2/2: 익스트림 보고서 저장 완료.",
+        }
+
     def node_generate_outline(self, state: ReportState):
         self.logger.set_current_node("generate_outline")
-        self.logger.add_log("INFO", "[1/6] 보고서 개요 생성 시작")
-        self._update_progress("[1/6] 보고서 개요 생성 시작...")
+
+        # Determine current step based on the graph being run
+        total_steps = 2 if "bypass" in self.logger.session_id else 6
+        progress_message_start = f"[1/{total_steps}] 보고서 개요 생성 시작..."
+        progress_message_end = f"1/{total_steps}: 개요 생성 완료. {'익스트림 보고서 생성' if total_steps == 2 else '초안 작성'} 시작..."
+
+        self.logger.add_log("INFO", progress_message_start)
+        self._update_progress(progress_message_start)
+
         outline = self._generate_outline_logic(state["topic"])
         self.logger.add_log("SUCCESS", f"개요 생성 완료 (길이: {len(outline)}자)")
+
         return {
             "outline": outline,
-            "progress_message": "1/6: 개요 생성 완료. 초안 작성 시작...",
+            "progress_message": progress_message_end,
         }
 
     def node_generate_draft(self, state: ReportState):
@@ -1024,4 +1454,19 @@ class ReportGeneratorService:
         workflow.add_edge("regenerate_sections", "editorial_review")
         workflow.add_edge("final_formatting", "finalize_and_save")
         workflow.add_edge("finalize_and_save", END)
+        return workflow.compile()
+
+    def _build_bypass_graph(self):
+        workflow = StateGraph(ReportState)
+        workflow.add_node("generate_outline", self.node_generate_outline)
+        workflow.add_node(
+            "generate_bypassed_report", self.node_generate_bypassed_report
+        )
+        workflow.add_node("save_bypassed_report", self.node_save_bypassed_report)
+
+        workflow.set_entry_point("generate_outline")
+        workflow.add_edge("generate_outline", "generate_bypassed_report")
+        workflow.add_edge("generate_bypassed_report", "save_bypassed_report")
+        workflow.add_edge("save_bypassed_report", END)
+
         return workflow.compile()

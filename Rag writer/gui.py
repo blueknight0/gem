@@ -98,6 +98,14 @@ class MainApp(tk.Frame):
         )
         test_radio.pack(side=tk.LEFT, padx=5)
 
+        bypass_radio = ttk.Radiobutton(
+            mode_frame,
+            text="Extreme (익스트림)",
+            variable=self.mode_var,
+            value="Bypass",
+        )
+        bypass_radio.pack(side=tk.LEFT, padx=5)
+
         # 생성 버튼
         self.generate_button = ttk.Button(
             frame,

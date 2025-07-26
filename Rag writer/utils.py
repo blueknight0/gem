@@ -60,10 +60,10 @@ class ConsoleLogger:
         # 콘솔에도 출력
         print(f"[{timestamp}] {level}: {message}")
 
-    def save_logs(self, output_dir="."):
+    def save_logs(self, output_dir=".", is_bypass=False):
         """로그를 파일로 저장"""
         if not self.logs:
-            return
+            return None, [] if not is_bypass else None
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -85,7 +85,12 @@ class ConsoleLogger:
                     f"`{log['timestamp']}` **{log['level']}**: {node_info}{log['message']}\n\n"
                 )
 
+        if is_bypass:
+            self.add_log("SYSTEM", f"Extreme 모드 로그 파일 저장 완료: {full_log_path}")
+            return full_log_path
+
         # 노드별 로그 저장
+        node_log_paths = []
         for node_name, node_logs in self.node_logs.items():
             node_log_path = os.path.join(
                 output_dir, f"node_{node_name}_log_{timestamp}.md"
@@ -104,12 +109,10 @@ class ConsoleLogger:
                     f.write(
                         f"`{log['timestamp']}` **{log['level']}**: {log['message']}\n\n"
                     )
+            node_log_paths.append(node_log_path)
 
         self.add_log("SYSTEM", f"로그 파일 저장 완료: {full_log_path}")
-        return full_log_path, [
-            os.path.join(output_dir, f"node_{node}_log_{timestamp}.md")
-            for node in self.node_logs.keys()
-        ]
+        return full_log_path, node_log_paths
 
 
 # 결과 시각화 클래스

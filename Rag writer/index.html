@@ -322,7 +322,8 @@
             <h2>프로젝트 소개</h2>
             <p>
                 RAG Writer v4는 복잡하고 전문적인 법률 연구 보고서 생성 과정을 완전히 자동화하는 지능형 시스템입니다.
-                RAG(Retrieval-Augmented Generation) 기법과 LangGraph의 에이전트 워크플로우를 결합하여, 사용자는 간단한 GUI를 통해 주제와 실행 모드만 선택하면 됩니다.
+                RAG(Retrieval-Augmented Generation) 기법과 LangGraph의 에이전트 워크플로우를 결합하여, 사용자는 간단한 GUI를 통해 주제와 실행 모드(Production/Test/<strong>Extreme</strong>)만 선택하면 됩니다.
+                특히 새로 추가된 <strong>Extreme 모드</strong>는 Google Search Grounding과 FAISS 벡터 DB를 최대한 활용하여 30,000자 이상의 극한 품질 보고서를 한 번에 생성합니다.
                 시스템은 스스로 초안 작성부터 편집장 수준의 검토, 자동 수정, 최종 서식 정리, 그리고 시각적 분석 대시보드 생성까지의 모든 과정을 자율적으로 수행하여, 전문가 수준의 보고서를 신속하게 완성합니다.
             </p>
         </section>
@@ -332,7 +333,7 @@
             <div class="features">
                 <div class="feature-card">
                     <h3>🖥️ 사용자 친화적 GUI</h3>
-                    <p>Tkinter로 제작된 간단한 인터페이스를 통해 보고서 주제 입력 및 생성 모드(Production/Test)를 쉽게 선택할 수 있습니다.</p>
+                    <p>Tkinter로 제작된 간단한 인터페이스를 통해 보고서 주제 입력 및 생성 모드(Production/Test/Extreme)를 쉽게 선택할 수 있습니다.</p>
                 </div>
                 <div class="feature-card">
                     <h3>🧠 지능형 워크플로우</h3>
@@ -347,8 +348,12 @@
                     <p>모든 생성물(보고서, 로그, 시각화 자료)을 타임스탬프 기반 폴더에 체계적으로 저장하여 이력 관리가 용이합니다.</p>
                 </div>
                 <div class="feature-card">
+                    <h3>🚀 익스트림 모드</h3>
+                    <p>Google Search Grounding 기능과 FAISS 벡터 DB의 방대한 자료를 최대한 활용하여, 한 번에 30,000자 이상의 고품질 보고서를 생성하는 극한 성능 모드입니다.</p>
+                </div>
+                <div class="feature-card">
                     <h3>⚙️ 동적 모델 선택</h3>
-                    <p>GUI에서 고품질(Pro) 모드와 비용 효율적(Flash) 모드를 선택하여 목적에 맞는 AI 모델을 유연하게 활용할 수 있습니다.</p>
+                    <p>GUI에서 Production(고품질), Test(비용 효율), Extreme(극한 성능) 모드를 선택하여 목적에 맞는 AI 모델을 유연하게 활용할 수 있습니다.</p>
                 </div>
                 <div class="feature-card">
                     <h3>📚 FAISS 기반 벡터 DB</h3>
@@ -373,7 +378,7 @@
             
             <div class="pipeline-stage">
                 <h3>2단계: 지능형 보고서 생성 (LangGraph 워크플로우)</h3>
-                <p>강력한 벡터 DB가 준비되면, LangGraph로 설계된 에이전트 워크플로우가 보고서 생성을 시작합니다.</p>
+                <p>강력한 벡터 DB가 준비되면, 선택한 모드에 따라 다른 워크플로우가 실행됩니다. Production/Test 모드는 6단계 LangGraph 워크플로우를, Extreme 모드는 2단계 간소화 워크플로우를 사용합니다.</p>
                 <div class="workflow">
                     <div class="workflow-step" data-step="1">
                         <h4>개요 생성</h4>
@@ -394,6 +399,21 @@
                     <div class="workflow-step" data-step="5">
                         <h4>최종화 및 저장</h4>
                         <p>모든 검토를 통과한 보고서의 서식을 정리하고, 참고문헌을 처리한 후, 보고서, 로그, 시각화 자료를 폴더에 저장합니다.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pipeline-stage">
+                <h3>Extreme 모드 워크플로우 (2단계 간소화)</h3>
+                <p>Extreme 모드는 편집장 검토 과정을 생략하고, Google Search Grounding과 벡터 DB를 최대한 활용하여 한 번에 고품질 보고서를 생성합니다.</p>
+                <div class="workflow">
+                    <div class="workflow-step" data-step="1">
+                        <h4>개요 생성</h4>
+                        <p>사용자 주제와 벡터 DB의 핵심 정보를 분석하여 논리적인 보고서 목차를 생성합니다.</p>
+                    </div>
+                    <div class="workflow-step" data-step="2">
+                        <h4>극한 품질 보고서 생성</h4>
+                        <p>Gemini 2.5 Pro + Search Grounding으로 벡터 DB의 방대한 자료와 웹 검색 결과를 활용하여 30,000자+ 보고서를 한 번에 생성합니다. 모든 참고문헌이 자동으로 정리되어 포함됩니다.</p>
                     </div>
                 </div>
             </div>
@@ -429,7 +449,8 @@
             <h2>기술 스택</h2>
             <div class="tech-stack">
                 <span class="tech-item">Python</span>
-                <span class="tech-item">Google Gemini</span>
+                <span class="tech-item">Google Gemini 2.5 Pro</span>
+                <span class="tech-item">Search Grounding</span>
                 <span class="tech-item">LangGraph</span>
                 <span class="tech-item">FAISS</span>
                 <span class="tech-item">Tkinter</span>
