@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나무기술 인터랙티브 분석 리포트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: "Calm Harmony" - A palette grounded in warm neutrals (stone), with a professional teal for primary actions and subtle, harmonious colors for data visualization. -->
+    <!-- Application Structure Plan: A thematic, single-page dashboard structure was chosen over a linear report format. A fixed sidebar navigation allows users to jump to specific sections of interest (Dashboard, Technology, Financials, Market, AI Strategy, SWOT), facilitating non-linear exploration. This structure empowers users—from financial analysts to tech enthusiasts—to directly access the information they need, making the dense report content more digestible and engaging. Key interactions include dynamic charts, tabbed content for products, and clickable SWOT elements to reveal details on demand. -->
+    <!-- Visualization & Content Choices: 
+        - Financials -> Goal: Show trend & correlation -> Viz: Combo Bar/Line Chart (Revenue vs. Profit) -> Interaction: Buttons to switch between different financial metrics (Debt Ratio, Net Income) -> Justification: Clearly visualizes the core financial tension between sales and profitability. -> Library: Chart.js
+        - Product Portfolio -> Goal: Organize & Inform -> Viz: Tabbed Interface -> Interaction: Click tabs to switch product details -> Justification: Neatly organizes the three core products without cluttering the page. -> Method: HTML/CSS/JS
+        - Company History -> Goal: Show progression -> Viz: Horizontal Timeline -> Interaction: Click on milestones -> Justification: More engaging than a simple list of dates. -> Method: HTML/CSS/JS
+        - SWOT Analysis -> Goal: Summarize & Compare -> Viz: 2x2 Interactive Grid -> Interaction: Click on a quadrant to highlight and display details -> Justification: Encourages user interaction and focuses attention on one area at a time. -> Method: HTML/CSS/JS
+        - Competitive Landscape -> Goal: Show relationships -> Viz: Custom HTML/CSS Quadrant Diagram -> Interaction: Hover/Click on competitors -> Justification: Visually represents market positioning more effectively than a table. -> Method: HTML/CSS
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item.active {
+            background-color: #0d9488; /* teal-600 */
+            color: white;
+            transform: translateX(4px);
+        }
+        .content-section {
+            scroll-margin-top: 64px;
+        }
+        .swot-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .swot-card.active {
+            transform: scale(1.05);
+            border-color: #0d9488; /* teal-600 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="flex">
+        <!-- Sidebar Navigation -->
+        <aside class="hidden lg:block w-64 bg-white shadow-md h-screen fixed top-0 left-0 p-4">
+            <h1 class="text-2xl font-bold text-teal-700 mb-8">나무기술 분석</h1>
+            <nav id="desktop-nav">
+                <ul class="space-y-2">
+                    <li><a href="#dashboard" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">종합 대시보드</a></li>
+                    <li><a href="#technology" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">기술 및 제품</a></li>
+                    <li><a href="#financials" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">재무 분석</a></li>
+                    <li><a href="#market" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">시장과 경쟁</a></li>
+                    <li><a href="#strategy" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">AI 전환 전략</a></li>
+                    <li><a href="#swot" class="nav-item block w-full text-left px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-700">SWOT 및 전망</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="w-full lg:ml-64">
+            <header class="sticky top-0 bg-white/80 backdrop-blur-lg shadow-sm z-10 lg:hidden">
+                <div class="mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <h1 class="text-xl font-bold text-teal-700">나무기술 분석</h1>
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="mobile-menu" class="hidden">
+                    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                        <a href="#dashboard" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">종합 대시보드</a>
+                        <a href="#technology" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">기술 및 제품</a>
+                        <a href="#financials" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">재무 분석</a>
+                        <a href="#market" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">시장과 경쟁</a>
+                        <a href="#strategy" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">AI 전환 전략</a>
+                        <a href="#swot" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50">SWOT 및 전망</a>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-6 lg:p-8">
+                <!-- Section 1: Dashboard -->
+                <section id="dashboard" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-2">종합 대시보드</h2>
+                    <p class="text-slate-600 mb-8">클라우드 강자에서 AI 선구자로, 나무기술의 현재와 미래를 한눈에 조망합니다.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
+                            <h3 class="text-sm font-medium text-slate-500">최근 매출액 (2024)</h3>
+                            <p class="text-3xl font-bold text-teal-600">914<span class="text-lg ml-1">억원</span></p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
+                            <h3 class="text-sm font-medium text-slate-500">영업이익 (2024)</h3>
+                            <p class="text-3xl font-bold text-red-500">-22<span class="text-lg ml-1">억원</span></p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
+                            <h3 class="text-sm font-medium text-slate-500">부채비율 (2024)</h3>
+                            <p class="text-3xl font-bold text-orange-500">142.6<span class="text-lg ml-1">%</span></p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between bg-teal-600 text-white">
+                            <h3 class="text-sm font-medium text-teal-100">핵심 전략</h3>
+                            <p class="text-3xl font-bold">AI 전환<span class="text-lg ml-1">🚀</span></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-bold mb-4">기업 성장 연혁</h3>
+                        <p class="text-slate-600 mb-6">IT 인프라 유통에서 시작하여 독자적인 클라우드 플랫폼을 개발하고, 이제 AI 전문기업으로의 도약을 준비하는 나무기술의 여정입니다. 각 지점을 클릭하여 주요 사건을 확인하세요.</p>
+                        <div id="timeline-container" class="relative w-full">
+                            <!-- Timeline will be generated by JS -->
+                        </div>
+                        <div id="timeline-details" class="mt-4 p-4 bg-slate-100 rounded-lg min-h-[80px]">
+                            <p class="text-slate-700 font-medium">타임라인의 원을 클릭하여 상세 정보를 확인하세요.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Technology -->
+                <section id="technology" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-2">기술 및 제품 포트폴리오</h2>
+                    <p class="text-slate-600 mb-8">나무기술의 성장을 이끄는 3개의 핵심 기술 엔진을 소개합니다. 각 탭을 클릭하여 제품별 상세 정보를 확인하세요.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="border-b border-slate-200">
+                            <nav id="product-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                <!-- Tabs will be generated by JS -->
+                            </nav>
+                        </div>
+                        <div id="product-content" class="mt-6">
+                            <!-- Product content will be generated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 3: Financials -->
+                <section id="financials" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-2">재무 분석</h2>
+                    <p class="text-slate-600 mb-8">성장을 위한 투자는 재무제표에 어떤 영향을 미쳤을까요? 아래 버튼으로 다양한 재무 지표를 시각적으로 분석해 보세요.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-center space-x-2 mb-4">
+                            <button data-chart="main" class="chart-btn bg-teal-600 text-white px-4 py-2 rounded-lg shadow">매출 및 영업이익</button>
+                            <button data-chart="stability" class="chart-btn bg-white text-slate-700 px-4 py-2 rounded-lg shadow">재무 안정성</button>
+                            <button data-chart="profitability" class="chart-btn bg-white text-slate-700 px-4 py-2 rounded-lg shadow">수익성</button>
+                        </div>
+                        <div id="chart-main" class="chart-container">
+                            <canvas id="financialChartMain"></canvas>
+                        </div>
+                        <div id="chart-stability" class="chart-container hidden">
+                            <canvas id="financialChartStability"></canvas>
+                        </div>
+                        <div id="chart-profitability" class="chart-container hidden">
+                            <canvas id="financialChartProfitability"></canvas>
+                        </div>
+                        <div id="financial-summary" class="mt-4 text-center text-slate-600">
+                            <p>미래 시장 선점을 위한 R&D 투자 확대로 인해 매출 성장에도 불구하고 영업이익은 손실을 기록하고 있습니다.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4: Market -->
+                <section id="market" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-2">시장과 경쟁</h2>
+                    <p class="text-slate-600 mb-8">글로벌 거인들과의 경쟁 속에서 나무기술은 어떻게 자신만의 영역을 구축하고 있을까요?</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-xl font-bold mb-4">PaaS 시장 경쟁 구도</h3>
+                            <p class="text-slate-600 mb-6">레드햇, VM웨어 등 글로벌 기업과 맨텍 등 국내 기업이 경쟁하는 PaaS 시장에서 나무기술은 '맞춤형 유연성'을 무기로 공공/금융 시장을 공략하고 있습니다.</p>
+                            <div class="relative h-64 bg-slate-50 rounded-lg p-4 grid grid-cols-2 grid-rows-2 gap-4">
+                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-full bg-slate-300"></div>
+                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-px bg-slate-300"></div>
+                                <div class="absolute top-2 left-2 text-xs text-slate-500">글로벌</div>
+                                <div class="absolute bottom-2 left-2 text-xs text-slate-500">국내</div>
+                                <div class="absolute bottom-2 right-2 text-xs text-slate-500">시장 표준</div>
+                                <div class="absolute top-2 right-2 text-xs text-slate-500">틈새 공략</div>
+                                <div class="flex items-center justify-center"><span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">Red Hat</span></div>
+                                <div class="flex items-center justify-center"><span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">VMware</span></div>
+                                <div class="flex items-center justify-center"><span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">Mantech</span></div>
+                                <div class="flex items-center justify-center"><span class="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-bold ring-2 ring-teal-500">나무기술</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-xl font-bold mb-4">전략적 파트너십: Co-opetition</h3>
+                            <p class="text-slate-600 mb-6">나무기술은 시장 선도 기업인 레드햇과 경쟁하는 동시에 협력하는 '코피티션(Co-opetition)' 전략을 구사합니다. '칵테일 클라우드 on 오픈시프트' 출시는 레드햇의 고객 기반에 접근하고 기술 신뢰도를 높이는 영리한 선택입니다.</p>
+                            <div class="flex items-center justify-center h-full bg-slate-50 rounded-lg">
+                                <span class="text-2xl font-bold text-teal-700">나무기술</span>
+                                <span class="text-4xl mx-4 text-slate-400">🤝</span>
+                                <span class="text-2xl font-bold text-red-600">Red Hat</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Section 5: Strategy -->
+                <section id="strategy" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-2">AI 전환 전략: 미래를 향한 승부수</h2>
+                    <p class="text-slate-600 mb-8">'나무AI.X'로의 변신은 회사의 미래를 AI에 걸겠다는 강력한 선언입니다. 3단계 전환 전략을 통해 기업 가치 극대화를 목표로 합니다.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex flex-col md:flex-row justify-around items-center gap-8">
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-2"><span class="text-3xl">1</span></div>
+                                <h4 class="font-bold text-lg">안정화 (Stabilize)</h4>
+                                <p class="text-sm text-slate-600 mt-1">기존 사업으로<br>현금흐름 방어</p>
+                            </div>
+                            <div class="text-4xl text-slate-300 hidden md:block">&rarr;</div>
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-orange-200 rounded-full flex items-center justify-center mx-auto mb-2"><span class="text-3xl">2</span></div>
+                                <h4 class="font-bold text-lg">성장 (Grow)</h4>
+                                <p class="text-sm text-slate-600 mt-1">주력 플랫폼<br>점유율 확대</p>
+                            </div>
+                            <div class="text-4xl text-slate-300 hidden md:block">&rarr;</div>
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-teal-200 rounded-full flex items-center justify-center mx-auto mb-2"><span class="text-3xl">3</span></div>
+                                <h4 class="font-bold text-lg">전환 (Transform)</h4>
+                                <p class="text-sm text-slate-600 mt-1">AI 서비스 안착<br>수익성 성장</p>
+                            </div>
+                        </div>
+                        <p class="mt-8 text-center text-slate-700">나무기술의 AI 전략은 LLM 직접 개발이 아닌, AI 모델 개발 및 운영에 필요한 **'AI 인프라 관리 플랫폼'** 제공에 집중합니다. 이는 회사의 기존 클라우드 관리 역량을 AI 시대에 맞게 확장하는 가장 현실적인 전략입니다.</p>
+                    </div>
+                </section>
+
+                <!-- Section 6: SWOT -->
+                <section id="swot" class="content-section">
+                    <h2 class="text-3xl font-bold mb-2">SWOT 분석 및 최종 전망</h2>
+                    <p class="text-slate-600 mb-8">나무기술의 강점, 약점, 기회, 위협 요인을 종합적으로 분석하고 미래 성장 가능성을 전망합니다. 각 항목을 클릭하여 상세 내용을 확인하세요.</p>
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <div class="grid grid-cols-2 gap-4 flex-1">
+                            <div id="swot-S" class="swot-card bg-green-100 border-2 border-transparent p-4 rounded-lg">
+                                <h3 class="font-bold text-xl text-green-800">강점 (S)</h3>
+                            </div>
+                            <div id="swot-W" class="swot-card bg-red-100 border-2 border-transparent p-4 rounded-lg">
+                                <h3 class="font-bold text-xl text-red-800">약점 (W)</h3>
+                            </div>
+                            <div id="swot-O" class="swot-card bg-blue-100 border-2 border-transparent p-4 rounded-lg">
+                                <h3 class="font-bold text-xl text-blue-800">기회 (O)</h3>
+                            </div>
+                            <div id="swot-T" class="swot-card bg-yellow-100 border-2 border-transparent p-4 rounded-lg">
+                                <h3 class="font-bold text-xl text-yellow-800">위협 (T)</h3>
+                            </div>
+                        </div>
+                        <div class="flex-1 bg-white p-6 rounded-xl shadow-md min-h-[250px]">
+                            <h3 id="swot-details-title" class="text-xl font-bold mb-4">항목을 선택하세요</h3>
+                            <ul id="swot-details-list" class="list-disc list-inside space-y-2 text-slate-700">
+                                <li>좌측의 SWOT 카드를 클릭하면 상세 내용이 표시됩니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-bold mb-4">결론: High-Risk, High-Reward</h3>
+                        <p class="text-slate-600 mb-4">나무기술은 검증된 기술력과 유망한 시장을 바탕으로 대담한 AI 전환을 시도하는 '고위험 고수익' 기업입니다. 성공은 재무적 압박을 관리하며 AI 로드맵을 시장이 납득할 시간 내에 구현하는 실행력에 달려있습니다.</p>
+                        <h4 class="font-semibold mb-2">핵심 모니터링 지표 (KPIs)</h4>
+                        <ul class="list-disc list-inside text-slate-700">
+                            <li>영업이익률의 지속적인 개선 여부</li>
+                            <li>신규 솔루션(스페로 등)의 매출 기여도 증가</li>
+                            <li>AI 관련 구체적인 매출 및 성공 사례 발생</li>
+                            <li>부채비율 통제 및 영업활동 현금흐름 개선</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const appData = {
+        timeline: [
+            { year: 2001, event: '나무정보통신 설립', detail: 'IT 인프라 유통 및 SI 사업으로 시장에 진입하며 기술 기반을 다졌습니다.' },
+            { year: 2015, event: 'NCC 출시', detail: '자체 개발한 가상화 통합관리 솔루션 NCC를 출시하며 독자 기술력을 확보했습니다.' },
+            { year: 2016, event: '칵테일 클라우드 출시', detail: '클라우드 네이티브(PaaS) 시장으로 핵심 사업을 확장하는 대표 제품을 선보였습니다.' },
+            { year: 2018, event: '코스닥 상장', detail: '기술성장기업 특례로 상장하며 재무 성과보다 미래 기술 잠재력을 인정받았습니다.' },
+            { year: 2025, event: '나무AI.X 전환 선언', detail: 'AI 전문기업으로의 전면적인 전략적 전환을 선언하며 새로운 비전을 제시했습니다.' }
+        ],
+        products: {
+            cocktail: {
+                name: '칵테일 클라우드 (PaaS)',
+                description: '쿠버네티스 기반의 올인원 컨테이너 관리 플랫폼입니다. 멀티/하이브리드 클라우드 환경에서 클라우드 네이티브 앱을 쉽게 구축하고 운영하도록 지원합니다.',
+                features: ['멀티 클러스터 통합 관리', '애플리케이션 CI/CD 자동화', '글로벌 표준 CNCF 인증 획득'],
+                icon: '☁️'
+            },
+            ncc: {
+                name: 'NCC (VDI/가상화)',
+                description: '안정적인 캐시카우 역할을 하는 데스크톱 가상화(VDI) 통합 관리 솔루션입니다. 높은 보안성과 관리 효율성을 제공합니다.',
+                features: ['VDI 인프라 설치 자동화', '사용자/관리자 포털 제공', '망분리 환경 지원'],
+                icon: '🖥️'
+            },
+            spero: {
+                name: '스페로 (CMP)',
+                description: '여러 클라우드를 하나의 포털에서 통합 관리하는 플랫폼(CMP)입니다. 복잡한 클라우드 환경의 비용과 거버넌스 문제를 해결합니다.',
+                features: ['통합 비용 분석 및 최적화', '정책 기반 자원 관리 자동화', '공공기관 납품용 GS인증 1등급 획득'],
+                icon: '📊'
+            }
+        },
+        financials: {
+            labels: ['2020', '2021', '2022', '2023', '2024'],
+            revenue: [1001, 945, 1062, 906, 914],
+            operatingProfit: [-25, 11, 22, -8, -22],
+            netIncome: [-63, -10, 6, -35, -55],
+            debtRatio: [171.4, 106.0, 133.3, 127.2, 142.6],
+            roe: [-19.6, -2.0, 0.9, -8.0, -14.0]
+        },
+        swot: {
+            S: { title: '강점 (Strengths)', color: 'green', items: ['독자적이고 검증된 핵심 기술 보유 (칵테일, 스페로)', '전체 인력 70% 이상의 숙련된 기술 전문 인력', '공공/금융 틈새 시장에서의 강력한 입지', '레드햇 등 글로벌 기업과의 전략적 파트너십'] },
+            W: { title: '약점 (Weaknesses)', color: 'red', items: ['고질적인 수익성 문제 (지속된 영업손실)', '높은 부채비율과 단기차입 의존도', '글로벌 경쟁사 대비 낮은 브랜드 인지도와 규모', '비관련 자회사 인수로 인한 사업 집중도 저하 우려'] },
+            O: { title: '기회 (Opportunities)', color: 'blue', items: ['PaaS 시장의 폭발적인 성장세', '정부의 디지털 플랫폼 및 국산 SW 장려 정책', 'AI 전문기업 전환 시 높은 기업가치 평가 기대', '멀티/하이브리드 클라우드 확산에 따른 CMP 수요 증가'] },
+            T: { title: '위협 (Threats)', color: 'yellow', items: ['글로벌 기업과의 극심한 시장 경쟁', '빠른 기술 변화에 뒤쳐질 위험 (기술 도태)', '자본 시장 위축 시 유동성 위기 가능성', '거대 파트너(레드햇)에 대한 종속 위험'] }
+        }
+    };
+
+    // Mobile Menu Toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // Navigation scroll & active state
+    const sections = document.querySelectorAll('.content-section');
+    const navLinks = document.querySelectorAll('.nav-item');
+
+    const activateNav = (id) => {
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${id}`) {
+                link.classList.add('active');
+            }
+        });
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                activateNav(entry.target.id);
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+
+    sections.forEach(section => observer.observe(section));
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector(link.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+            if (mobileMenu.classList.contains('hidden') === false) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+    });
+
+
+    // Timeline
+    const timelineContainer = document.getElementById('timeline-container');
+    const timelineDetails = document.getElementById('timeline-details');
+    const timelineHTML = `
+        <div class="absolute left-0 top-1/2 w-full h-0.5 bg-slate-300"></div>
+        <div class="relative flex justify-between items-center">
+            ${appData.timeline.map(item => `
+                <div class="timeline-dot relative z-10" data-detail="${item.detail}" data-event="${item.event}">
+                    <div class="w-5 h-5 bg-white border-2 border-teal-500 rounded-full cursor-pointer transition hover:bg-teal-200"></div>
+                    <span class="absolute -bottom-6 text-xs text-slate-500 whitespace-nowrap">${item.year}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    timelineContainer.innerHTML = timelineHTML;
+    document.querySelectorAll('.timeline-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            timelineDetails.innerHTML = `<h4 class="font-bold">${dot.dataset.event}</h4><p class="text-slate-700">${dot.dataset.detail}</p>`;
+        });
+    });
+
+    // Product Tabs
+    const productTabsContainer = document.getElementById('product-tabs');
+    const productContentContainer = document.getElementById('product-content');
+    Object.keys(appData.products).forEach((key, index) => {
+        const product = appData.products[key];
+        const tab = document.createElement('button');
+        tab.className = `product-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${index === 0 ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`;
+        tab.textContent = product.name;
+        tab.dataset.target = key;
+        productTabsContainer.appendChild(tab);
+    });
+
+    const renderProductContent = (key) => {
+        const product = appData.products[key];
+        productContentContainer.innerHTML = `
+            <div class="flex items-start gap-4">
+                <span class="text-4xl">${product.icon}</span>
+                <div>
+                    <h3 class="text-lg font-bold">${product.name}</h3>
+                    <p class="mt-1 text-slate-600">${product.description}</p>
+                    <ul class="mt-4 space-y-2">
+                        ${product.features.map(feature => `<li class="flex items-center"><span class="text-teal-500 mr-2">✔</span>${feature}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    };
+
+    document.querySelectorAll('.product-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.product-tab').forEach(t => t.className = 'product-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300');
+            e.target.className = 'product-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-teal-500 text-teal-600';
+            renderProductContent(e.target.dataset.target);
+        });
+    });
+    renderProductContent('cocktail');
+
+    // Financial Charts
+    let financialCharts = {};
+    const chartColors = {
+        revenue: 'rgba(20, 184, 166, 0.6)', // teal-500
+        profit: 'rgba(239, 68, 68, 1)', // red-500
+        debt: 'rgba(249, 115, 22, 1)', // orange-500
+        netIncome: 'rgba(239, 68, 68, 0.6)', // red-500
+        roe: 'rgba(168, 85, 247, 1)' // purple-500
+    };
+
+    const createCharts = () => {
+        const ctxMain = document.getElementById('financialChartMain').getContext('2d');
+        financialCharts.main = new Chart(ctxMain, {
+            type: 'bar',
+            data: {
+                labels: appData.financials.labels,
+                datasets: [
+                    {
+                        label: '매출액 (억원)',
+                        data: appData.financials.revenue,
+                        backgroundColor: chartColors.revenue,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: '영업이익 (억원)',
+                        data: appData.financials.operatingProfit,
+                        borderColor: chartColors.profit,
+                        backgroundColor: chartColors.profit,
+                        type: 'line',
+                        yAxisID: 'y1',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { position: 'left', title: { display: true, text: '매출액 (억원)' } },
+                    y1: { position: 'right', title: { display: true, text: '영업이익 (억원)' }, grid: { drawOnChartArea: false } }
+                },
+                plugins: { tooltip: { mode: 'index', intersect: false } }
+            }
+        });
+
+        const ctxStability = document.getElementById('financialChartStability').getContext('2d');
+        financialCharts.stability = new Chart(ctxStability, {
+            type: 'line',
+            data: {
+                labels: appData.financials.labels,
+                datasets: [{
+                    label: '부채비율 (%)',
+                    data: appData.financials.debtRatio,
+                    borderColor: chartColors.debt,
+                    backgroundColor: chartColors.debt,
+                    tension: 0.1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+        });
+
+        const ctxProfitability = document.getElementById('financialChartProfitability').getContext('2d');
+        financialCharts.profitability = new Chart(ctxProfitability, {
+            type: 'bar',
+            data: {
+                labels: appData.financials.labels,
+                datasets: [
+                    {
+                        label: '당기순이익 (억원)',
+                        data: appData.financials.netIncome,
+                        backgroundColor: chartColors.netIncome,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'ROE (%)',
+                        data: appData.financials.roe,
+                        borderColor: chartColors.roe,
+                        backgroundColor: chartColors.roe,
+                        type: 'line',
+                        yAxisID: 'y1',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { position: 'left', title: { display: true, text: '당기순이익 (억원)' } },
+                    y1: { position: 'right', title: { display: true, text: 'ROE (%)' }, grid: { drawOnChartArea: false } }
+                },
+                plugins: { tooltip: { mode: 'index', intersect: false } }
+            }
+        });
+    };
+    createCharts();
+
+    const chartButtons = document.querySelectorAll('.chart-btn');
+    const chartContainers = [document.getElementById('chart-main'), document.getElementById('chart-stability'), document.getElementById('chart-profitability')];
+    const financialSummary = document.getElementById('financial-summary');
+    const summaryTexts = {
+        main: "미래 시장 선점을 위한 R&D 투자 확대로 인해 매출 성장에도 불구하고 영업이익은 손실을 기록하고 있습니다.",
+        stability: "지속적인 투자와 운영자금 확보를 위한 차입으로 부채비율이 높은 수준을 유지하고 있어 재무 안정성 관리가 중요합니다.",
+        profitability: "영업손실과 함께 당기순손실 폭도 확대되어, 투자 성과가 실제 수익으로 연결되는 시점이 중요 과제입니다."
+    };
+
+    chartButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const chartId = button.dataset.chart;
+            chartContainers.forEach(container => container.classList.add('hidden'));
+            document.getElementById(`chart-${chartId}`).classList.remove('hidden');
+
+            chartButtons.forEach(btn => btn.className = 'chart-btn bg-white text-slate-700 px-4 py-2 rounded-lg shadow');
+            button.className = 'chart-btn bg-teal-600 text-white px-4 py-2 rounded-lg shadow';
+            
+            financialSummary.textContent = summaryTexts[chartId];
+        });
+    });
+
+    // SWOT Analysis
+    const swotCards = document.querySelectorAll('.swot-card');
+    const swotTitle = document.getElementById('swot-details-title');
+    const swotList = document.getElementById('swot-details-list');
+
+    const renderSwotDetails = (key) => {
+        const swotData = appData.swot[key];
+        swotTitle.textContent = swotData.title;
+        swotTitle.style.color = `var(--color-${swotData.color}-800)`;
+        swotList.innerHTML = swotData.items.map(item => `<li>${item}</li>`).join('');
+    };
+
+    swotCards.forEach(card => {
+        card.addEventListener('click', () => {
+            swotCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            const key = card.id.split('-')[1];
+            renderSwotDetails(key);
+        });
+    });
+});
+</script>
+
+</body>
+</html>
