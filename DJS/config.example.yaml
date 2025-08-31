@@ -1,0 +1,49 @@
+# DJS (Data-based Junction Search) 설정 예제
+# 이 파일을 config.yaml로 복사하여 실제 값으로 변경하세요
+
+# Gemini API 설정
+gemini:
+  api_key: "your_gemini_api_key_here"
+  model: "gemini-2.5-flash-lite"
+  max_tokens: 2000
+  temperature: 0.3
+
+# 네이버 검색 API 설정
+naver:
+  client_id: "your_naver_client_id_here"
+  client_secret: "your_naver_client_secret_here"
+
+# 데이터베이스 설정
+database:
+  url: "sqlite:///./data/djs.db"
+
+# 임베딩 설정
+embedding:
+  model: "models/gemini-embedding-001"
+  similarity_threshold: 0.85
+
+# 검색 설정
+search:
+  max_news_per_search: 100
+  default_keywords:
+    - "오픈이노베이션"
+    - "공동연구"
+    - "협력연구"
+    - "기술협력"
+
+# 스케줄러 설정
+scheduler:
+  interval_days: 7
+  auto_approve_threshold: 0.8
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  file: "logs/djs.log"
+
+# 서버 설정
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "*"

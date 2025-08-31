@@ -1,0 +1,51 @@
+# 로그 파일 제외
+logs/
+*.log
+
+# 빌드 결과물 제외
+/build/
+*.o
+*.class
+
+# 환경 설정 파일 제외
+.env
+config/local.json
+
+config.yaml
+
+# Python 캐시/패키징
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.cache
+
+# 가상환경 제외
+venv/
+.venv/
+env/
+
+# 편집기/OS 파일
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# 데이터/아티팩트(필요시 LFS 사용 권장)
+*.sqlite3
+*.db
+/data/embeddings/
+/data/raw_news/
+/data/processed_relations/
+
+# Node/프론트엔드
+node_modules/
+dist/
+build/
+
+# 기타 임시
+*.bak
+*.tmp
