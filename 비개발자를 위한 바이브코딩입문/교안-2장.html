@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2장. LLM의 비밀을 풀다 (60분)</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --fg: #222;
+      --muted: #666;
+      --line: #eee;
+      --brand: #4f46e5;
+      --soft: #eef2ff;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --error: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo', Arial, sans-serif;
+      line-height: 1.7;
+      color: var(--fg);
+      margin: 0;
+      background: var(--bg);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 5rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.3;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 1rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin: 1.6rem 0 0.6rem;
+      color: var(--brand);
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin: 0.2rem 0;
+    } 
+   .muted {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 2rem 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .note {
+      background: var(--soft);
+      border-left: 4px solid var(--brand);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .activity {
+      background: #f8fffe;
+      border-left: 4px solid:#10b981;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .timeline {
+      background: #fefce8;
+      border-left: 4px solid:#eab308;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap
+    }
+
+    .col {
+      flex: 1 1 320px
+    }
+
+    .btn {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 0.55rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn.secondary {
+      background: #64748b
+    }
+
+    .btn:hover {
+      opacity: 0.9
+    }    .btn:d
+isabled {
+      opacity: .6;
+      cursor: not-allowed
+    }
+
+    input[type="text"],
+    input[type="range"],
+    textarea {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin: 0.5rem 0;
+    }
+
+    .quiz-container {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .quiz-question {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .quiz-options label {
+      display: block;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .quiz-options label:hover {
+      background: #f1f5f9;
+    }
+
+    .correct {
+      color: var(--ok);
+      font-weight: bold;
+    }
+
+    .wrong {
+      color: var(--error);
+    }
+
+    .prediction-demo {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
+
+    .prediction-demo h3 {
+      color: white;
+      margin-top: 0;
+    }    .
+tokens {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .token {
+      padding: 0.35rem 0.55rem;
+      border: 1px dashed #c7d2fe;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .probability-bars {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem 1rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+
+    .prob-bar {
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prob-bar > span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, #6366f1, #22d3ee);
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .prob-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .prob-value {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: right;
+      min-width: 50px;
+    }
+
+    .transformer-demo {
+      background: #f8fafc;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .attention-matrix {
+      display: grid;
+      gap: 2px;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+
+    .attention-cell {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: white;
+    } 
+   .prompt-builder {
+      background: #f0f9ff;
+      border: 2px solid #0ea5e9;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .prompt-section {
+      margin: 1rem 0;
+    }
+
+    .prompt-section label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--brand);
+    }
+
+    .prompt-output {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      min-height: 100px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+      white-space: pre-wrap;
+    }
+
+    .model-comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .model-card {
+      background: white;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .model-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.15);
+    }
+
+    .model-card.commercial {
+      border-color: #ef4444;
+    }
+
+    .model-card.opensource {
+      border-color: #10b981;
+    }
+
+    .model-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .interactive-demo {
+      background: #f8fafc;
+      border: 2px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      text-align: center;
+    }    
+.demo-button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem;
+      transition: transform 0.2s;
+    }
+
+    .demo-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .demo-result {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .temperature-control {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .temperature-control input[type="range"] {
+      flex: 1;
+      margin: 0;
+    }
+
+    .temp-label {
+      font-weight: 500;
+      min-width: 120px;
+    }
+
+    .temp-value {
+      font-weight: bold;
+      color: var(--brand);
+      min-width: 40px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }    .c
+omparison-table th {
+      background: var(--brand);
+      color: white;
+      font-weight: bold;
+    }
+
+    .comparison-table tr:hover {
+      background: #f8fafc;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="muted">AI 첫걸음: 비전공자를 위한 LLM 이론부터 코딩 맛보기까지 4시간 완성 과정</div>
+    <h1>2장. LLM의 비밀을 풀다 (60분)</h1>
+
+    <div class="note">
+      <strong>2장 목표:</strong> LLM이 '다음 단어 예측'이라는 핵심 원리로 작동함을 직관적으로 이해하고, Transformer 아키텍처의 핵심 개념을 파악하며, 효과적인 프롬프트 작성법이라는 실용적인 기술을 습득합니다.
+    </div>
+
+    <h2>학습 목표</h2>
+    <ul>
+      <li>LLM의 핵심 작동 원리인 '다음 단어 예측' 메커니즘을 이해</li>
+      <li>Transformer 아키텍처와 Attention 메커니즘의 기본 개념 파악</li>
+      <li>효과적인 프롬프트 엔지니어링 기법을 습득하고 실습</li>
+      <li>상업용 vs 오픈소스 LLM의 특징과 선택 기준을 이해</li>
+    </ul>
+
+    <div class="timeline">
+      <strong>타임라인 (60분)</strong>
+      <ul style="margin:0.5rem 0;">
+        <li>0~15분: 핵심 원리 - 세상에서 가장 정교한 '다음 단어 맞히기' 게임</li>
+        <li>15~35분: Transformer 아키텍처의 핵심 - Attention 메커니즘</li>
+        <li>35~55분: 대화의 기술 - 프롬프트 엔지니어링 심화</li>
+        <li>55~60분: LLM 생태계 - 상업용 vs 오픈소스 모델 비교</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2.1 핵심 원리: 세상에서 가장 정교한 '다음 단어 맞히기' 게임 (15분)</h2>
+      
+      <p><strong>"거대 언어 모델의 작동 원리는 놀라울 정도로 단순합니다. LLM의 핵심 임무는 주어진 문맥에서 가장 확률이 높은 다음 단어를 예측하는 것, 단 하나입니다."</strong></p>
+
+      <div class="prediction-demo">
+        <h3>🎯 다음 단어 예측 체험</h3>
+        <p>다음 문장을 완성해보세요:</p>
+        <ul>
+          <li><strong>"하늘은 높고 말은 살찌는 천고..."</strong> → "마비!"</li>
+          <li><strong>"백설공주를 도와준 일곱..."</strong> → "난쟁이!"</li>
+          <li><strong>"내가 가장 좋아하는 색은..."</strong> → ?</li>
+        </ul>
+        <p>LLM도 정확히 이와 같은 일을 하지만, 그 규모가 상상을 초월합니다!</p>
+      </div> 
+     <h3>🔄 LLM 작동 원리 3단계</h3>
+      <div class="row">
+        <div class="col">
+          <div class="activity">
+            <h4>1단계: 토큰화 (Tokenization)</h4>
+            <p>입력 텍스트를 작은 단위(토큰)로 분해합니다.</p>
+            <div class="tokens">
+              <span class="token">안녕</span>
+              <span class="token">하세요</span>
+              <span class="token">,</span>
+              <span class="token">오늘</span>
+              <span class="token">날씨</span>
+              <span class="token">가</span>
+              <span class="token">좋</span>
+              <span class="token">네요</span>
+            </div>
+            <p><small>※ 실제로는 더 복잡한 서브워드 단위로 분해됩니다</small></p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="activity">
+            <h4>2단계: 확률 계산</h4>
+            <p>각 가능한 다음 단어의 확률을 계산합니다.</p>
+            <div class="probability-bars">
+              <div class="prob-label">파란색</div>
+              <div class="prob-bar"><span style="width: 45%"></span></div>
+              <div class="prob-value">45%</div>
+              
+              <div class="prob-label">초록색</div>
+              <div class="prob-bar"><span style="width: 20%"></span></div>
+              <div class="prob-value">20%</div>
+              
+              <div class="prob-label">빨간색</div>
+              <div class="prob-bar"><span style="width: 15%"></span></div>
+              <div class="prob-value">15%</div>
+              
+              <div class="prob-label">토스터기</div>
+              <div class="prob-bar"><span style="width: 0.1%"></span></div>
+              <div class="prob-value">0.01%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="activity">
+        <h4>3단계: 선택 및 반복</h4>
+        <p><strong>반복의 마법:</strong> LLM이 '파란색'을 선택하면, 이를 원래 문장에 덧붙여 새로운 문맥을 만들고, 다시 다음 단어를 예측하는 과정을 무한히 반복합니다.</p>
+        <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+          <p><strong>1회차:</strong> "내가 가장 좋아하는 색은" → <span style="color: var(--brand);">파란색</span></p>
+          <p><strong>2회차:</strong> "내가 가장 좋아하는 색은 파란색" → <span style="color: var(--brand);">입니다</span></p>
+          <p><strong>3회차:</strong> "내가 가장 좋아하는 색은 파란색입니다" → <span style="color: var(--brand);">.</span></p>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>🌟 창발적 속성 (Emergent Properties):</strong> 단순한 "다음 단어 예측"이 방대한 데이터와 거대한 모델 크기에서 복잡한 추론, 창작, 번역 능력으로 발현됩니다. 이는 인간이 직접 프로그래밍하지 않은 능력들이 자연스럽게 등장하는 놀라운 현상입니다.
+      </div>
+
+      <div class="interactive-demo">
+        <h3>🎮 온도(Temperature) 조절 체험</h3>
+        <p>온도 값을 조절해서 LLM의 창의성을 제어해보세요!</p>
+        <div class="temperature-control">
+          <span class="temp-label">온도 (Temperature):</span>
+          <input type="range" id="temperature" min="0.1" max="2.0" step="0.1" value="0.8">
+          <span class="temp-value" id="temp-display">0.8</span>
+        </div>
+        <button class="demo-button" onclick="generateWithTemp()">다음 단어 생성</button>
+        <div id="temp-result" class="demo-result">
+          온도를 조절하고 버튼을 클릭해보세요!
+        </div>
+        <div class="note" style="text-align: left; margin-top: 1rem;">
+          <strong>온도 효과:</strong><br>
+          • <strong>낮은 온도 (0.1-0.5):</strong> 예측 가능하고 일관된 결과<br>
+          • <strong>중간 온도 (0.6-1.0):</strong> 균형잡힌 창의성과 일관성<br>
+          • <strong>높은 온도 (1.1-2.0):</strong> 창의적이지만 예측 불가능한 결과
+        </div>
+      </div>
+    </div>    <
+div class="card">
+      <h2>2.2 Transformer 아키텍처의 핵심: Attention 메커니즘 (20분)</h2>
+      
+      <p>LLM의 핵심 기술인 <strong>Transformer 아키텍처</strong>와 <strong>Attention 메커니즘</strong>을 비전공자도 이해할 수 있도록 직관적으로 설명합니다.</p>
+
+      <div class="transformer-demo">
+        <h3>🔍 Attention 메커니즘 이해</h3>
+        <p><strong>비유:</strong> 독서할 때 중요한 부분에 형광펜을 치는 것과 같습니다!</p>
+        
+        <div class="row">
+          <div class="col">
+            <h4>예시 문장 분석</h4>
+            <p><strong>"그 남자가 길을 건너다가 차에 치였다"</strong></p>
+            <p>이 문장에서 <strong>"그"</strong>는 누구를 가리킬까요?</p>
+            <ul>
+              <li>✅ <strong>"남자"</strong>와 높은 연관성 (Attention 점수: 0.9)</li>
+              <li>❌ <strong>"길"</strong>과 낮은 연관성 (Attention 점수: 0.1)</li>
+              <li>❌ <strong>"차"</strong>와 낮은 연관성 (Attention 점수: 0.2)</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h4>Attention 시각화</h4>
+            <div class="attention-matrix" id="attention-demo" style="grid-template-columns: repeat(4, 1fr);">
+              <div class="attention-cell" style="background: #2563eb;">그</div>
+              <div class="attention-cell" style="background: #93c5fd;">남자</div>
+              <div class="attention-cell" style="background: #dbeafe;">길</div>
+              <div class="attention-cell" style="background: #dbeafe;">차</div>
+            </div>
+            <p><small>색이 진할수록 높은 Attention 점수</small></p>
+          </div>
+        </div>
+      </div>
+
+      <h3>🧠 Self-Attention의 3가지 핵심 요소</h3>
+      <div class="row">
+        <div class="col">
+          <div class="activity">
+            <h4>1. Query (질문) 🤔</h4>
+            <p><strong>"지금 처리하고 있는 단어"</strong></p>
+            <p>예: "그"라는 단어가 현재 처리 중인 Query</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="activity">
+            <h4>2. Key (열쇠) 🔑</h4>
+            <p><strong>"문장 내 모든 단어들"</strong></p>
+            <p>예: "그", "남자", "길", "차" 등 모든 단어들</p>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="activity">
+          <h4>3. Value (값) 💎</h4>
+          <p><strong>"각 단어가 가진 의미 정보"</strong></p>
+          <p>예: "남자"의 의미 정보 (성별, 인간, 주어 등)</p>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>🎯 Attention 계산 과정:</strong><br>
+        1. Query와 모든 Key들 간의 유사도를 계산<br>
+        2. 유사도 점수를 확률로 변환 (Softmax)<br>
+        3. 각 Value에 확률을 곱해서 가중 평균 계산<br>
+        4. 최종 결과가 해당 단어의 새로운 표현이 됨
+      </div>
+
+      <h3>🔄 Multi-Head Attention</h3>
+      <div class="row">
+        <div class="col">
+          <p><strong>여러 개의 Attention을 병렬로 실행</strong>하여 다양한 관점에서 단어 간 관계를 파악합니다.</p>
+          <ul>
+            <li><strong>Head 1:</strong> 문법적 관계 (주어-동사)</li>
+            <li><strong>Head 2:</strong> 의미적 관계 (동의어-반의어)</li>
+            <li><strong>Head 3:</strong> 위치적 관계 (앞-뒤)</li>
+            <li><strong>Head 4:</strong> 감정적 관계 (긍정-부정)</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="activity">
+            <h4>🎭 Multi-Head 비유</h4>
+            <p>한 편의 영화를 여러 관점에서 동시에 분석하는 것과 같습니다:</p>
+            <ul>
+              <li>🎬 연출 관점</li>
+              <li>🎭 연기 관점</li>
+              <li>🎵 음악 관점</li>
+              <li>📸 촬영 관점</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="interactive-demo">
+        <h3>🎯 Attention 메커니즘 체험</h3>
+        <p>문장을 입력하면 단어 간 Attention 관계를 시각화해드립니다!</p>
+        <input type="text" id="attention-input" placeholder="예: 고양이가 창밖을 보고 있다" value="고양이가 창밖을 보고 있다">
+        <button class="demo-button" onclick="visualizeAttention()">Attention 분석</button>
+        <div id="attention-result" class="demo-result">
+          문장을 입력하고 버튼을 클릭해보세요!
+        </div>
+      </div>
+    </div>    <div
+ class="card">
+      <h2>2.3 대화의 기술: 프롬프트 엔지니어링 심화 (20분)</h2>
+      
+      <p><strong>"AI와 대화하는 것은 하나의 기술입니다. 내가 얻는 결과물의 품질은 내가 던지는 질문의 품질에 정비례합니다."</strong></p>
+
+      <div class="prompt-builder">
+        <h3>🏗️ 프롬프트 구성의 5가지 핵심 요소</h3>
+        
+        <div class="prompt-section">
+          <label>1. 역할 설정 (Role)</label>
+          <input type="text" id="role" placeholder="예: 당신은 전문 마케터입니다" value="당신은 친절한 AI 어시스턴트입니다">
+        </div>
+
+        <div class="prompt-section">
+          <label>2. 맥락 제공 (Context)</label>
+          <textarea id="context" rows="2" placeholder="상황과 배경 정보를 제공하세요">새로운 친환경 커피 브랜드를 런칭하려고 합니다. 타겟은 20-30대 도시 거주자입니다.</textarea>
+        </div>
+
+        <div class="prompt-section">
+          <label>3. 구체적 지시 (Instruction)</label>
+          <input type="text" id="instruction" placeholder="명확하고 구체적인 요청" value="마케팅 이메일을 작성해주세요">
+        </div>
+
+        <div class="prompt-section">
+          <label>4. 출력 형식 (Format)</label>
+          <input type="text" id="format" placeholder="원하는 결과물의 형태" value="제목과 본문으로 구성된 이메일 형식">
+        </div>
+
+        <div class="prompt-section">
+          <label>5. 제약 조건 (Constraints)</label>
+          <input type="text" id="constraints" placeholder="금지사항이나 제한사항" value="200단어 이내, 유머러스하고 캐주얼한 톤">
+        </div>
+
+        <button class="btn" onclick="buildPrompt()">프롬프트 생성</button>
+        <button class="btn secondary" onclick="clearPrompt()">초기화</button>
+
+        <div class="prompt-output" id="prompt-output">
+여기에 생성된 프롬프트가 표시됩니다...
+        </div>
+      </div>
+
+      <h3>🚀 고급 프롬프트 기법</h3>
+      <div class="row">
+        <div class="col">
+          <div class="activity">
+            <h4>Chain-of-Thought (사고 연쇄)</h4>
+            <p><strong>기법:</strong> "단계별로 생각해보세요"</p>
+            <p><strong>예시:</strong> "이 수학 문제를 단계별로 풀어보세요: 1) 먼저 주어진 조건을 정리하고, 2) 적용할 공식을 선택하고, 3) 계산 과정을 보여주세요."</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="activity">
+            <h4>Few-Shot Learning (예시 학습)</h4>
+            <p><strong>기법:</strong> 예시를 통한 학습 유도</p>
+            <p><strong>예시:</strong> "다음과 같은 형식으로 요약해주세요:<br>
+            입력: 긴 기사 내용<br>
+            출력: • 핵심 포인트 1<br>
+            • 핵심 포인트 2"</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div class="activity">
+            <h4>Role Playing (역할 연기)</h4>
+            <p><strong>기법:</strong> 특정 인물이나 전문가 역할 부여</p>
+            <p><strong>예시:</strong> "당신은 20년 경력의 심리상담사입니다. 다음 상황에서 어떤 조언을 하시겠습니까?"</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="activity">
+            <h4>Temperature 조절</h4>
+            <p><strong>기법:</strong> 창의성 vs 일관성 조절</p>
+            <p><strong>예시:</strong> "창의적인 아이디어가 필요하면 높은 온도(1.2), 정확한 정보가 필요하면 낮은 온도(0.3)"</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="interactive-demo">
+        <h3>🎯 프롬프트 개선 워크숍</h3>
+        <p>나쁜 프롬프트를 좋은 프롬프트로 변환해보세요!</p>
+        
+        <div class="row">
+          <div class="col">
+            <h4>❌ 나쁜 프롬프트 예시</h4>
+            <button class="demo-button" onclick="showBadPrompt('vague')">모호한 요청</button>
+            <button class="demo-button" onclick="showBadPrompt('nocontext')">맥락 없음</button>
+            <button class="demo-button" onclick="showBadPrompt('norole')">역할 미지정</button>
+          </div>
+          <div class="col">
+            <h4>✅ 개선된 프롬프트</h4>
+            <button class="demo-button" onclick="showGoodPrompt('specific')">구체적 요청</button>
+            <button class="demo-button" onclick="showGoodPrompt('context')">맥락 제공</button>
+            <button class="demo-button" onclick="showGoodPrompt('role')">역할 부여</button>
+          </div>
+        </div>
+
+        <div id="prompt-comparison" class="demo-result">
+          버튼을 클릭해서 프롬프트 비교를 확인해보세요!
+        </div>
+      </div>
+    </div>    <div 
+class="card">
+      <h2>2.4 LLM 생태계: 상업용 vs 오픈소스 모델 비교 (5분)</h2>
+      
+      <p>LLM이 개발되고 배포되는 두 가지 주요 방식을 비교하여 AI 업계 생태계를 이해합니다.</p>
+
+      <div class="model-comparison">
+        <div class="model-card commercial">
+          <div class="model-icon">🏢</div>
+          <h3>상업용 모델</h3>
+          <h4>특징</h4>
+          <ul style="text-align: left;">
+            <li><strong>장점:</strong> 즉시 사용 가능, 안정적 성능, 기술 지원</li>
+            <li><strong>단점:</strong> 사용료 발생, 제한된 커스터마이징</li>
+            <li><strong>대표 모델:</strong> GPT-4, Claude, Gemini</li>
+            <li><strong>적합한 사용자:</strong> 빠른 도입이 필요한 기업, 비기술 사용자</li>
+          </ul>
+        </div>
+
+        <div class="model-card opensource">
+          <div class="model-icon">🌍</div>
+          <h3>오픈소스 모델</h3>
+          <h4>특징</h4>
+          <ul style="text-align: left;">
+            <li><strong>장점:</strong> 무료 사용, 완전한 커스터마이징, 데이터 보안</li>
+            <li><strong>단점:</strong> 기술적 전문성 필요, 인프라 구축 비용</li>
+            <li><strong>대표 모델:</strong> Llama, Mistral, Qwen</li>
+            <li><strong>적합한 사용자:</strong> 연구자, 개발자, 특수 요구사항이 있는 기업</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📊 선택 기준 매트릭스</h3>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>기준</th>
+            <th>상업용 모델</th>
+            <th>오픈소스 모델</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>초기 비용</strong></td>
+            <td>낮음 (API 사용료만)</td>
+            <td>높음 (인프라 구축)</td>
+          </tr>
+          <tr>
+            <td><strong>운영 비용</strong></td>
+            <td>사용량에 비례</td>
+            <td>고정 (서버 유지)</td>
+          </tr>
+          <tr>
+            <td><strong>기술 역량</strong></td>
+            <td>불필요</td>
+            <td>고급 기술 필요</td>
+          </tr>
+          <tr>
+            <td><strong>데이터 보안</strong></td>
+            <td>제한적 통제</td>
+            <td>완전한 통제</td>
+          </tr>
+          <tr>
+            <td><strong>커스터마이징</strong></td>
+            <td>프롬프트 수준</td>
+            <td>모델 수준</td>
+          </tr>
+          <tr>
+            <td><strong>확장성</strong></td>
+            <td>자동 확장</td>
+            <td>수동 관리</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        <strong>💡 선택 가이드:</strong><br>
+        • <strong>스타트업/프로토타입:</strong> 상업용 API (빠른 검증)<br>
+        • <strong>대기업/보안 중시:</strong> 오픈소스 + 자체 인프라<br>
+        • <strong>교육/연구:</strong> 오픈소스 모델 (실험과 학습)<br>
+        • <strong>일반 업무:</strong> 상업용 서비스 (편의성 중시)
+      </div>
+    </div>
+
+    <div class="quiz-container">
+      <h2>💡 2장 마무리 퀴즈</h2>
+      <p>지금까지 배운 LLM의 핵심 개념을 확인해보세요!</p>
+
+      <div class="quiz-question">
+        <div><strong>Q1.</strong> LLM의 핵심 작동 원리는?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q1" value="a"> 규칙 기반 추론</label>
+          <label><input type="radio" name="q1" value="b"> 다음 단어 확률 예측</label>
+          <label><input type="radio" name="q1" value="c"> 데이터베이스 검색</label>
+          <label><input type="radio" name="q1" value="d"> 패턴 매칭</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q2.</strong> Attention 메커니즘의 주요 기능은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q2" value="a"> 단어 간 관련성을 계산</label>
+          <label><input type="radio" name="q2" value="b"> 텍스트를 토큰으로 분해</label>
+          <label><input type="radio" name="q2" value="c"> 확률을 정규화</label>
+          <label><input type="radio" name="q2" value="d"> 모델 크기를 줄임</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q3.</strong> 효과적인 프롬프트의 5가지 요소가 아닌 것은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q3" value="a"> 역할 설정</label>
+          <label><input type="radio" name="q3" value="b"> 맥락 제공</label>
+          <label><input type="radio" name="q3" value="c"> 모델 크기</label>
+          <label><input type="radio" name="q3" value="d"> 출력 형식</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q4.</strong> Temperature가 높을 때의 특징은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q4" value="a"> 더 예측 가능한 결과</label>
+          <label><input type="radio" name="q4" value="b"> 더 창의적인 결과</label>
+          <label><input type="radio" name="q4" value="c"> 더 빠른 처리</label>
+          <label><input type="radio" name="q4" value="d"> 더 정확한 결과</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q5.</strong> 오픈소스 LLM의 주요 장점은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q5" value="a"> 사용이 쉬움</label>
+          <label><input type="radio" name="q5" value="b"> 기술 지원 제공</label>
+          <label><input type="radio" name="q5" value="c"> 완전한 커스터마이징 가능</label>
+          <label><input type="radio" name="q5" value="d"> 자동 업데이트</label>
+        </div>
+      </div>
+
+      <button class="btn" onclick="gradeQuiz()">채점하기</button>
+      <div id="quiz-result" style="margin-top: 1rem;"></div>
+    </div>    <
+div class="card">
+      <h2>🎯 2장 핵심 정리</h2>
+      <div class="row">
+        <div class="col">
+          <h3>핵심 개념</h3>
+          <ul>
+            <li><strong>다음 단어 예측:</strong> LLM의 핵심 작동 원리</li>
+            <li><strong>Attention 메커니즘:</strong> 단어 간 관련성 계산</li>
+            <li><strong>Multi-Head Attention:</strong> 다양한 관점에서 분석</li>
+            <li><strong>프롬프트 엔지니어링:</strong> AI와의 효과적인 소통 기술</li>
+            <li><strong>Temperature:</strong> 창의성과 일관성의 균형</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>다음 장 예고</h3>
+          <p>3장에서는 AI 생태계의 주요 플레이어들을 분석해보겠습니다:</p>
+          <ul>
+            <li>OpenAI, Google, Anthropic의 차별화 전략</li>
+            <li>오픈소스 혁명과 Meta Llama의 임팩트</li>
+            <li>상황별 모델 선택 가이드</li>
+            <li>AI와 함께하는 미래 협업 패러다임</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+    <div class="muted">© 2024 AI 교육 자료 | 재배포 시 출처 표기 필요</div>
+  </main>
+
+  <script>
+    // Temperature 조절 기능
+    document.getElementById('temperature').addEventListener('input', function() {
+      document.getElementById('temp-display').textContent = this.value;
+    });
+
+    function generateWithTemp() {
+      const temp = parseFloat(document.getElementById('temperature').value);
+      const resultDiv = document.getElementById('temp-result');
+      
+      const examples = {
+        low: ['파란색', '빨간색', '검은색', '흰색'],
+        medium: ['파란색', '초록색', '보라색', '황금색', '은색'],
+        high: ['무지개색', '투명한', '시간의', '꿈속의', '우주의', '마법의']
+      };
+      
+      let words, description;
+      if (temp <= 0.5) {
+        words = examples.low;
+        description = '예측 가능하고 일반적인 선택';
+      } else if (temp <= 1.0) {
+        words = examples.medium;
+        description = '적당히 다양한 선택';
+      } else {
+        words = examples.high;
+        description = '창의적이고 예상치 못한 선택';
+      }
+      
+      const randomWord = words[Math.floor(Math.random() * words.length)];
+      resultDiv.innerHTML = `
+        <div>
+          <strong>생성된 단어:</strong> "${randomWord}"<br>
+          <strong>특징:</strong> ${description}<br>
+          <strong>온도:</strong> ${temp}
+        </div>
+      `;
+    }
+
+    // Attention 시각화 기능
+    function visualizeAttention() {
+      const input = document.getElementById('attention-input').value;
+      const resultDiv = document.getElementById('attention-result');
+      
+      if (!input.trim()) {
+        resultDiv.innerHTML = '문장을 입력해주세요!';
+        return;
+      }
+      
+      const words = input.trim().split(/\s+/);
+      const colors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
+      
+      let html = '<div><strong>Attention 분석 결과:</strong><br><br>';
+      html += '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">';
+      
+      words.forEach((word, i) => {
+        const colorIndex = Math.floor(Math.random() * colors.length);
+        html += `<span style="background: ${colors[colorIndex]}; color: white; padding: 0.5rem; border-radius: 6px; font-weight: bold;">${word}</span>`;
+      });
+      
+      html += '</div><br><small>각 단어의 색상 강도가 Attention 점수를 나타냅니다</small></div>';
+      resultDiv.innerHTML = html;
+    }
+
+    // 프롬프트 빌더 기능
+    function buildPrompt() {
+      const role = document.getElementById('role').value;
+      const context = document.getElementById('context').value;
+      const instruction = document.getElementById('instruction').value;
+      const format = document.getElementById('format').value;
+      const constraints = document.getElementById('constraints').value;
+      
+      let prompt = '';
+      if (role) prompt += `역할: ${role}\n\n`;
+      if (context) prompt += `맥락: ${context}\n\n`;
+      if (instruction) prompt += `지시: ${instruction}\n\n`;
+      if (format) prompt += `출력 형식: ${format}\n\n`;
+      if (constraints) prompt += `제약 조건: ${constraints}`;
+      
+      document.getElementById('prompt-output').textContent = prompt || '프롬프트 요소를 입력해주세요.';
+    }
+
+    function clearPrompt() {
+      document.getElementById('role').value = '당신은 친절한 AI 어시스턴트입니다';
+      document.getElementById('context').value = '새로운 친환경 커피 브랜드를 런칭하려고 합니다. 타겟은 20-30대 도시 거주자입니다.';
+      document.getElementById('instruction').value = '마케팅 이메일을 작성해주세요';
+      document.getElementById('format').value = '제목과 본문으로 구성된 이메일 형식';
+      document.getElementById('constraints').value = '200단어 이내, 유머러스하고 캐주얼한 톤';
+      buildPrompt();
+    }    // 
+프롬프트 비교 기능
+    function showBadPrompt(type) {
+      const examples = {
+        vague: {
+          title: '❌ 모호한 요청',
+          content: '<strong>나쁜 예:</strong> "AI에 대해 알려줘"<br><br><strong>문제점:</strong><br>• 너무 광범위함<br>• 구체적인 목적이 없음<br>• 출력 형식이 불분명'
+        },
+        nocontext: {
+          title: '❌ 맥락 없음',
+          content: '<strong>나쁜 예:</strong> "마케팅 이메일 써줘"<br><br><strong>문제점:</strong><br>• 제품/서비스가 무엇인지 모름<br>• 타겟 고객이 누구인지 모름<br>• 톤앤매너가 불분명'
+        },
+        norole: {
+          title: '❌ 역할 미지정',
+          content: '<strong>나쁜 예:</strong> "여행 계획 좀 짜줘"<br><br><strong>문제점:</strong><br>• AI의 전문성이 불분명<br>• 어떤 관점에서 답변할지 모호<br>• 일반적인 답변만 가능'
+        }
+      };
+      
+      const example = examples[type];
+      document.getElementById('prompt-comparison').innerHTML = `<div><strong>${example.title}</strong><br><br>${example.content}</div>`;
+    }
+
+    function showGoodPrompt(type) {
+      const examples = {
+        specific: {
+          title: '✅ 구체적 요청',
+          content: '<strong>좋은 예:</strong> "머신러닝의 개념을 고등학생이 이해할 수 있도록 세 개의 간단한 문단으로 설명해줘"<br><br><strong>개선점:</strong><br>• 명확한 주제 (머신러닝)<br>• 구체적인 대상 (고등학생)<br>• 명확한 형식 (3개 문단)'
+        },
+        context: {
+          title: '✅ 맥락 제공',
+          content: '<strong>좋은 예:</strong> "친환경 원두 커피 브랜드를 새로 런칭했어. 도시 지역에 거주하는 20-30대를 타겟으로 하는 마케팅 이메일을 작성해줘. 톤앤매너는 유머러스하고 캐주얼하게."<br><br><strong>개선점:</strong><br>• 제품 정보 제공<br>• 타겟 고객 명시<br>• 원하는 톤 지정'
+        },
+        role: {
+          title: '✅ 역할 부여',
+          content: '<strong>좋은 예:</strong> "당신은 최고의 여행 전문가입니다. 4인 가족이 처음으로 도쿄를 방문하는 7일간의 여행 일정을 짜주세요. 문화 체험과 아이들이 좋아할 만한 활동에 초점을 맞춰주세요."<br><br><strong>개선점:</strong><br>• 전문가 역할 부여<br>• 구체적인 조건 제시<br>• 우선순위 명시'
+        }
+      };
+      
+      const example = examples[type];
+      document.getElementById('prompt-comparison').innerHTML = `<div><strong>${example.title}</strong><br><br>${example.content}</div>`;
+    }
+
+    // 퀴즈 채점 기능
+    function gradeQuiz() {
+      const answers = {
+        q1: 'b', // 다음 단어 확률 예측
+        q2: 'a', // 단어 간 관련성을 계산
+        q3: 'c', // 모델 크기
+        q4: 'b', // 더 창의적인 결과
+        q5: 'c'  // 완전한 커스터마이징 가능
+      };
+
+      let score = 0;
+      let total = Object.keys(answers).length;
+      let results = [];
+
+      for (const [question, correctAnswer] of Object.entries(answers)) {
+        const selectedAnswer = document.querySelector(`input[name="${question}"]:checked`);
+        if (selectedAnswer) {
+          if (selectedAnswer.value === correctAnswer) {
+            score++;
+            results.push(`${question.toUpperCase()}: ✅ 정답`);
+          } else {
+            results.push(`${question.toUpperCase()}: ❌ 오답`);
+          }
+        } else {
+          results.push(`${question.toUpperCase()}: ⚪ 미응답`);
+        }
+      }
+
+      const percentage = Math.round((score / total) * 100);
+      let message = `<div class="note">`;
+      message += `<strong>점수: ${score}/${total} (${percentage}%)</strong><br><br>`;
+      message += results.join('<br>');
+
+      if (percentage >= 80) {
+        message += `<br><br><span class="correct">🎉 훌륭합니다! LLM의 핵심 개념을 잘 이해하셨네요!</span>`;
+      } else if (percentage >= 60) {
+        message += `<br><br><span style="color: var(--warn)">👍 좋습니다! 조금 더 복습하면 완벽할 것 같아요.</span>`;
+      } else {
+        message += `<br><br><span class="wrong">💪 다시 한번 내용을 살펴보시고 도전해보세요!</span>`;
+      }
+      message += `</div>`;
+
+      document.getElementById('quiz-result').innerHTML = message;
+    }
+
+    // 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      buildPrompt();
+      
+      // 애니메이션 효과
+      const cards = document.querySelectorAll('.card');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      });
+
+      cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+      });
+    });
+  </script>
+</body>
+</html>

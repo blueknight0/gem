@@ -1,0 +1,1490 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1장. AI 기초와 생성형 AI의 이해 (60분)</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --fg: #222;
+      --muted: #666;
+      --line: #eee;
+      --brand: #4f46e5;
+      --soft: #eef2ff;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --error: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo', Arial, sans-serif;
+      line-height: 1.7;
+      color: var(--fg);
+      margin: 0;
+      background: var(--bg);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 5rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.3;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 1rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin: 1.6rem 0 0.6rem;
+      color: var(--brand);
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin: 0.2rem 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 2rem 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .note {
+      background: var(--soft);
+      border-left: 4px solid var(--brand);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .activity {
+      background: #f8fffe;
+      border-left: 4px solid:#10b981;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .timeline {
+      background: #fefce8;
+      border-left: 4px solid:#eab308;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap
+    }
+
+    .col {
+      flex: 1 1 320px
+    }
+
+    .btn {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 0.55rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn.secondary {
+      background: #64748b
+    }
+
+    .btn:hover {
+      opacity: 0.9
+    }
+
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin: 0.5rem 0;
+    }
+
+    .quiz-container {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .quiz-question {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .quiz-options label {
+      display: block;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .quiz-options label:hover {
+      background: #f1f5f9;
+    }
+
+    .correct {
+      color: var(--ok);
+      font-weight: bold;
+    }
+
+    .wrong {
+      color: var(--error);
+    }
+
+    .ai-example {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
+
+    .ai-example h3 {
+      color: white;
+      margin-top: 0;
+    }
+
+    .history-timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .history-item {
+      position: relative;
+      padding: 1rem 0;
+      border-left: 2px solid var(--brand);
+      margin-left: 1rem;
+      padding-left: 2rem;
+    }
+
+    .history-item::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 1.5rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+
+    .history-year {
+      font-weight: bold;
+      color: var(--brand);
+      font-size: 1.1rem;
+    }
+
+    .matryoshka {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .doll {
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .doll.ai {
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .doll.ml {
+      width: 140px;
+      height: 140px;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .doll.dl {
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .interactive-demo {
+      background: #f8fafc;
+      border: 2px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .demo-button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem;
+      transition: transform 0.2s;
+    }
+
+    .demo-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .demo-result {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .comparison-table th {
+      background: var(--brand);
+      color: white;
+      font-weight: bold;
+    }
+
+    .comparison-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .tech-stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .tech-card {
+      background: white;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .tech-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15);
+    }
+
+    .tech-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .image-gen-demo {
+      background: linear-gradient(135deg, #ff6b6b, #feca57);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
+
+    .image-gen-demo h3 {
+      color: white;
+      margin-top: 0;
+    }
+
+    .model-comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .model-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .model-card h4 {
+      color: var(--brand);
+      margin-top: 0;
+      font-size: 1.2rem;
+    }
+
+    .progress-bar {
+      background: #e5e7eb;
+      border-radius: 10px;
+      height: 8px;
+      margin: 0.5rem 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), #22d3ee);
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .architecture-diagram {
+      background: #f8fafc;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      overflow-x: auto;
+    }
+
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      min-width: 800px;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: nowrap;
+    }
+
+    .flow-box {
+      background: white;
+      border: 2px solid var(--brand);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      min-width: 120px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+    }
+
+    .flow-box.user {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-color: #059669;
+    }
+
+    .flow-box.router {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      border-color: #d97706;
+    }
+
+    .flow-box.model {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+      border-color: #7c3aed;
+    }
+
+    .flow-box.api {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border-color: #dc2626;
+    }
+
+    .flow-arrow {
+      font-size: 1.5rem;
+      color: var(--brand);
+      font-weight: bold;
+    }
+
+    .flow-arrow.down {
+      transform: rotate(90deg);
+    }
+
+    .decision-diamond {
+      width: 150px;
+      height: 150px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 1rem;
+      position: relative;
+    }
+
+    .decision-diamond .text {
+      transform: rotate(-45deg);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .api-structure {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
+
+    .api-structure h3 {
+      color: white;
+      margin-top: 0;
+    }
+
+    .endpoint-box {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      font-family: monospace;
+    }
+
+    .service-layer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .layer-card {
+      background: white;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .layer-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.15);
+    }
+
+    .layer-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="muted">AI 첫걸음: 비전공자를 위한 LLM 이론부터 코딩 맛보기까지 4시간 완성 과정</div>
+    <h1>1장. AI 기초와 생성형 AI의 이해 (60분)</h1>
+
+    <div class="note">
+      <strong>과정 전체 목표:</strong> 이 4시간 과정이 끝날 때까지, 참가자들은 인공지능(AI), 머신러닝(ML), 거대 언어 모델(LLM)의 기본 개념을 설명하고, 최신 AI 모델들의 유형을
+      비교할 수 있게 됩니다. 또한, AI 어시스턴트가 어떻게 프로그래밍의 진입 장벽을 낮추는지 직접 체험함으로써, 기술에 대한 두려움 대신 자신감과 호기심을 갖게 되는 것을 목표로 합니다.
+    </div>
+
+    <h2>학습 목표</h2>
+    <ul>
+      <li>AI, 머신러닝, 딥러닝의 관계를 명확히 구분하여 설명할 수 있음</li>
+      <li>생성형 AI의 종류와 각각의 기반 기술을 이해</li>
+      <li>LLM과 이미지 생성 AI의 작동 원리와 차이점을 파악</li>
+      <li>현재 AI 기술의 발전 방향과 한계를 이해</li>
+    </ul>
+
+    <div class="timeline">
+      <strong>타임라인 (60분)</strong>
+      <ul style="margin:0.5rem 0;">
+        <li>0~15분: AI 기본 개념과 가족 관계도</li>
+        <li>15~25분: 생성형 AI 개요와 분류</li>
+        <li>25~40분: AI 서비스 구조의 이해 (OpenAI 사례)</li>
+        <li>40~50분: 이미지 생성 AI와 기반 기술들</li>
+        <li>50~60분: LLM vs 이미지 생성 AI 비교 및 정리</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>1.1 AI 기본 개념과 가족 관계도 (15분)</h2>
+
+      <p>세 용어는 종종 혼용되지만, 그 관계를 이해하는 것은 AI를 제대로 파악하는 데 매우 중요합니다. 간단하고 기억하기 쉬운 <strong>마트료시카 인형 비유</strong>를 사용하겠습니다.</p>
+
+      <div class="matryoshka">
+        <div class="doll ai">
+          <div>인공지능<br>(AI)</div>
+        </div>
+        <div class="doll ml">
+          <div>머신러닝<br>(ML)</div>
+        </div>
+        <div class="doll dl">
+          <div>딥러닝<br>(DL)</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>🪆 가장 큰 인형: 인공지능(AI)</h3>
+          <p>튜링 시대부터 시작된 가장 큰 꿈, 즉 <strong>인간의 지능을 어떤 방식으로든 흉내 내는 기계</strong>를 만들려는 모든 개념과 시도를 포함합니다.</p>
+          <ul>
+            <li>딥블루와 같은 '구식' 규칙 기반 시스템도 포함</li>
+            <li>체스, 바둑부터 대화, 이미지 인식까지 모든 지능적 행동</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>🪆 중간 인형: 머신러닝(ML)</h3>
+          <p>AI를 구현하기 위한 <strong>'접근법'</strong> 중 하나입니다. 모든 상황에 대한 규칙을 인간이 일일이 프로그래밍하는 대신, <strong>기계가 데이터로부터 '스스로
+              학습'</strong>하게 만드는 방식입니다.</p>
+          <ul>
+            <li><strong>지도 학습:</strong> '정답지'를 주고 배우는 방식</li>
+            <li><strong>비지도 학습:</strong> 정답 없이 데이터 속에서 패턴을 찾는 방식</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="col">
+        <h3>🪆 가장 작은 인형: 딥러닝(DL)</h3>
+        <p>머신러닝의 여러 '기술' 중 하나로, <strong>현재 가장 강력한 성능</strong>을 보여주는 기술입니다. 인간의 뇌 구조에서 영감을 받은 <strong>'인공 신경망(Artificial
+            Neural Networks)'</strong>을 여러 겹으로 깊게 쌓아 올린 구조를 사용합니다.</p>
+        <div class="activity">
+          <strong>딥러닝의 성과:</strong>
+          <ul>
+            <li>알파고의 승리를 이끌었음</li>
+            <li>이미지 인식, 음성 인식의 혁신</li>
+            <li>오늘날의 거대 언어 모델(LLM)을 가능하게 한 핵심 기술</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>핵심:</strong> 어떤 것이 절대적으로 '더 좋다'의 문제가 아니라, 주어진 상황에 어떤 것이 '더 적합한가'의 문제입니다. 각각은 서로 다른 문제를 해결하기 위한 도구들입니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1.2 생성형 AI 개요와 분류 (10분)</h2>
+
+      <p>이전의 AI가 주로 <strong>'분석'</strong>과 <strong>'분류'</strong>에 집중했다면, 생성형 AI는 완전히 새로운 패러다임을 제시합니다.</p>
+
+      <div class="row">
+        <div class="col">
+          <h3>🔍 전통적 AI (분석형)</h3>
+          <ul>
+            <li>이미지 분류: "이것은 고양이입니다"</li>
+            <li>스팸 탐지: "이것은 스팸 메일입니다"</li>
+            <li>음성 인식: "안녕하세요"</li>
+            <li>추천 시스템: "이 영화를 좋아할 것입니다"</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>🎨 생성형 AI (창조형)</h3>
+          <ul>
+            <li>텍스트 생성: "새로운 소설을 써드립니다"</li>
+            <li>이미지 생성: "상상 속 그림을 그려드립니다"</li>
+            <li>음악 생성: "새로운 멜로디를 작곡합니다"</li>
+            <li>코드 생성: "프로그램을 작성해드립니다"</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎯 생성형 AI의 주요 분야</h3>
+      <div class="tech-stack">
+        <div class="tech-card">
+          <div class="tech-icon">📝</div>
+          <h4>텍스트 생성</h4>
+          <p><strong>대표 모델:</strong> GPT, Claude, Gemini</p>
+          <p><strong>기반 기술:</strong> Transformer, Attention</p>
+          <p><strong>활용:</strong> 글쓰기, 번역, 요약, 대화</p>
+        </div>
+        <div class="tech-card">
+          <div class="tech-icon">🖼️</div>
+          <h4>이미지 생성</h4>
+          <p><strong>대표 모델:</strong> DALL-E, Midjourney, Stable Diffusion</p>
+          <p><strong>기반 기술:</strong> Diffusion, GAN, VAE</p>
+          <p><strong>활용:</strong> 아트, 디자인, 사진 편집</p>
+        </div>
+        <div class="tech-card">
+          <div class="tech-icon">🎵</div>
+          <h4>음성/음악 생성</h4>
+          <p><strong>대표 모델:</strong> WaveNet, Jukebox, AIVA</p>
+          <p><strong>기반 기술:</strong> RNN, Transformer</p>
+          <p><strong>활용:</strong> 음성 합성, 작곡, 효과음</p>
+        </div>
+        <div class="tech-card">
+          <div class="tech-icon">🎬</div>
+          <h4>비디오 생성</h4>
+          <p><strong>대표 모델:</strong> Sora, RunwayML, Pika</p>
+          <p><strong>기반 기술:</strong> Diffusion + Temporal</p>
+          <p><strong>활용:</strong> 영상 제작, 애니메이션</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1.3 AI 서비스 구조의 이해: OpenAI 사례 분석 (15분)</h2>
+
+      <p>실제 AI 서비스가 어떻게 구성되어 있는지 OpenAI를 예시로 들어 <strong>사용자 프롬프트부터 최종 응답까지의 전체 프로세스</strong>를 살펴보겠습니다.</p>
+
+      <h3>🔄 OpenAI 서비스 아키텍처 전체 흐름</h3>
+      <div class="architecture-diagram">
+        <div class="flow-container">
+          <!-- 사용자 입력 -->
+          <div class="flow-row">
+            <div class="flow-box user">
+              <strong>👤 사용자</strong><br>
+              <small>"고양이 그림 그려줘"</small>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box">
+              <strong>🌐 ChatGPT/API</strong><br>
+              <small>웹 인터페이스</small>
+            </div>
+          </div>
+
+          <div class="flow-arrow down">↓</div>
+
+          <!-- 라우터/분석기 -->
+          <div class="flow-row">
+            <div class="flow-box router">
+              <strong>🧠 Intent Router</strong><br>
+              <small>프롬프트 분석 & 라우팅</small>
+            </div>
+          </div>
+
+          <div class="flow-arrow down">↓</div>
+
+          <!-- 의사결정 다이아몬드 -->
+          <div class="flow-row" style="justify-content: center;">
+            <div class="decision-diamond">
+              <div class="text">
+                텍스트?<br>
+                이미지?<br>
+                검색?
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow down">↓</div>
+
+          <!-- 모델 선택 -->
+          <div class="flow-row">
+            <div class="flow-box model">
+              <strong>📝 GPT-4</strong><br>
+              <small>텍스트 생성</small>
+            </div>
+            <div class="flow-box model">
+              <strong>🎨 DALL-E 3</strong><br>
+              <small>이미지 생성</small>
+            </div>
+            <div class="flow-box model">
+              <strong>🔍 Web Search</strong><br>
+              <small>실시간 정보</small>
+            </div>
+          </div>
+
+          <div class="flow-arrow down">↓</div>
+
+          <!-- 결과 통합 -->
+          <div class="flow-row">
+            <div class="flow-box">
+              <strong>⚙️ Response Processor</strong><br>
+              <small>결과 통합 & 포맷팅</small>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box user">
+              <strong>👤 사용자</strong><br>
+              <small>최종 응답 수신</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="activity">
+        <strong>🎯 프롬프트 라우팅 예시:</strong>
+        <ul>
+          <li><strong>"파이썬 코드 작성해줘"</strong> → GPT-4 (코드 생성 모드)</li>
+          <li><strong>"고양이 그림 그려줘"</strong> → DALL-E 3 (이미지 생성)</li>
+          <li><strong>"오늘 날씨 어때?"</strong> → Web Search + GPT-4 (실시간 정보)</li>
+          <li><strong>"이 이미지 설명해줘"</strong> → GPT-4V (비전 모델)</li>
+        </ul>
+      </div>
+
+      <h3>🔌 API를 통한 직접 모델 접근</h3>
+      <div class="api-structure">
+        <h3>OpenAI API 구조</h3>
+        <p>개발자들은 웹 인터페이스 대신 <strong>API를 통해 직접 모델에 접근</strong>할 수 있습니다.</p>
+
+        <div class="row">
+          <div class="col">
+            <h4>📡 주요 API 엔드포인트</h4>
+            <div class="endpoint-box">
+              <strong>텍스트 생성:</strong><br>
+              POST /v1/chat/completions<br>
+              Model: gpt-4, gpt-3.5-turbo
+            </div>
+            <div class="endpoint-box">
+              <strong>이미지 생성:</strong><br>
+              POST /v1/images/generations<br>
+              Model: dall-e-3, dall-e-2
+            </div>
+            <div class="endpoint-box">
+              <strong>음성 변환:</strong><br>
+              POST /v1/audio/transcriptions<br>
+              Model: whisper-1
+            </div>
+          </div>
+          <div class="col">
+            <h4>🔑 API 사용 흐름</h4>
+            <ol>
+              <li><strong>API 키 발급:</strong> OpenAI 계정에서 생성</li>
+              <li><strong>HTTP 요청:</strong> JSON 형태로 프롬프트 전송</li>
+              <li><strong>모델 처리:</strong> 클라우드에서 AI 모델 실행</li>
+              <li><strong>응답 수신:</strong> JSON 형태로 결과 반환</li>
+              <li><strong>토큰 과금:</strong> 사용량에 따른 비용 청구</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <h3>🏗️ 서비스 계층 구조</h3>
+      <div class="service-layer">
+        <div class="layer-card">
+          <div class="layer-icon">🌐</div>
+          <h4>프론트엔드</h4>
+          <p><strong>사용자 인터페이스</strong></p>
+          <ul style="text-align: left; font-size: 0.9rem;">
+            <li>ChatGPT 웹사이트</li>
+            <li>모바일 앱</li>
+            <li>써드파티 앱</li>
+          </ul>
+        </div>
+        <div class="layer-card">
+          <div class="layer-icon">⚙️</div>
+          <h4>API 게이트웨이</h4>
+          <p><strong>요청 관리 & 라우팅</strong></p>
+          <ul style="text-align: left; font-size: 0.9rem;">
+            <li>인증 & 권한 관리</li>
+            <li>요청 제한 (Rate Limiting)</li>
+            <li>로드 밸런싱</li>
+          </ul>
+        </div>
+        <div class="layer-card">
+          <div class="layer-icon">🧠</div>
+          <h4>AI 모델 레이어</h4>
+          <p><strong>실제 AI 처리</strong></p>
+          <ul style="text-align: left; font-size: 0.9rem;">
+            <li>GPT-4 (텍스트)</li>
+            <li>DALL-E 3 (이미지)</li>
+            <li>Whisper (음성)</li>
+          </ul>
+        </div>
+        <div class="layer-card">
+          <div class="layer-icon">💾</div>
+          <h4>인프라 레이어</h4>
+          <p><strong>하드웨어 & 클라우드</strong></p>
+          <ul style="text-align: left; font-size: 0.9rem;">
+            <li>GPU 클러스터</li>
+            <li>데이터베이스</li>
+            <li>CDN & 캐싱</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>💡 핵심 인사이트:</strong>
+        <ul>
+          <li><strong>사용자 관점:</strong> 간단한 텍스트 입력으로 다양한 AI 기능 사용</li>
+          <li><strong>개발자 관점:</strong> API를 통해 AI 모델을 자신의 애플리케이션에 통합</li>
+          <li><strong>비즈니스 관점:</strong> 사용량 기반 과금으로 확장 가능한 AI 서비스 제공</li>
+        </ul>
+        이러한 구조를 이해하면 AI 서비스가 어떻게 작동하는지, 그리고 어떻게 활용할 수 있는지 명확해집니다.
+      </div>
+
+      <div class="interactive-demo">
+        <h3>🎯 서비스 구조 이해도 체크</h3>
+        <p>다음 시나리오에서 어떤 경로로 처리될까요?</p>
+        <button class="demo-button" onclick="showArchitectureDemo('text')">텍스트 질문</button>
+        <button class="demo-button" onclick="showArchitectureDemo('image')">이미지 생성</button>
+        <button class="demo-button" onclick="showArchitectureDemo('api')">API 호출</button>
+        <button class="demo-button" onclick="showArchitectureDemo('multimodal')">멀티모달</button>
+        <div id="architecture-demo-result" class="demo-result">
+          버튼을 클릭해서 각 시나리오의 처리 과정을 확인해보세요!
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1.4 이미지 생성 AI와 기반 기술들 (15분)</h2>
+
+      <p>이미지 생성 AI는 현재 가장 주목받는 생성형 AI 분야 중 하나입니다. 텍스트 설명만으로 놀라운 품질의 이미지를 생성할 수 있습니다.</p>
+
+      <div class="image-gen-demo">
+        <h3>🎨 이미지 생성 AI의 마법</h3>
+        <p><strong>입력:</strong> "석양이 지는 바다 위에서 고래가 점프하는 모습, 판타지 스타일"</p>
+        <p><strong>출력:</strong> 몇 초 만에 전문 아티스트 수준의 이미지 생성!</p>
+        <p>이것이 어떻게 가능할까요? 그 비밀을 파헤쳐보겠습니다.</p>
+      </div>
+
+      <h3>🔧 핵심 기반 기술들</h3>
+
+      <div class="model-comparison">
+        <div class="model-card">
+          <h4>🌊 Diffusion Models (확산 모델)</h4>
+          <p><strong>작동 원리:</strong> 노이즈에서 시작해서 점진적으로 이미지를 "복원"하는 방식</p>
+          <div class="activity">
+            <strong>단계별 과정:</strong>
+            <ol>
+              <li>완전한 노이즈 이미지에서 시작</li>
+              <li>텍스트 프롬프트를 분석</li>
+              <li>노이즈를 조금씩 제거하며 이미지 형성</li>
+              <li>수십 번의 반복을 통해 최종 이미지 완성</li>
+            </ol>
+          </div>
+          <p><strong>대표 모델:</strong> Stable Diffusion, DALL-E 2/3</p>
+          <p><strong>장점:</strong> 높은 품질, 안정적인 학습</p>
+        </div>
+
+        <div class="model-card">
+          <h4>⚔️ GAN (생성적 적대 신경망)</h4>
+          <p><strong>작동 원리:</strong> 생성자와 판별자가 서로 경쟁하며 발전하는 구조</p>
+          <div class="activity">
+            <strong>GAN의 구조:</strong>
+            <ul>
+              <li><strong>생성자(Generator):</strong> 가짜 이미지를 만드는 AI</li>
+              <li><strong>판별자(Discriminator):</strong> 진짜와 가짜를 구분하는 AI</li>
+              <li><strong>경쟁 학습:</strong> 서로를 속이고 찾아내며 실력 향상</li>
+            </ul>
+          </div>
+          <p><strong>비유:</strong> 위조지폐범(생성자) vs 경찰(판별자)의 끝없는 경쟁</p>
+          <p><strong>장점:</strong> 매우 사실적인 이미지 생성 가능</p>
+        </div>
+
+        <div class="model-card">
+          <h4>🧠 VAE (변분 오토인코더)</h4>
+          <p><strong>작동 원리:</strong> 이미지를 압축했다가 다시 복원하는 과정에서 새로운 이미지 생성</p>
+          <div class="activity">
+            <strong>VAE 과정:</strong>
+            <ol>
+              <li><strong>인코딩:</strong> 이미지를 작은 코드로 압축</li>
+              <li><strong>잠재 공간:</strong> 압축된 정보들이 모이는 공간</li>
+              <li><strong>디코딩:</strong> 코드를 다시 이미지로 복원</li>
+              <li><strong>변형:</strong> 코드를 조작해서 새로운 이미지 생성</li>
+            </ol>
+          </div>
+          <p><strong>장점:</strong> 이미지 편집과 스타일 변환에 유용</p>
+        </div>
+
+        <div class="model-card">
+          <h4>🔤 CLIP (텍스트-이미지 연결)</h4>
+          <p><strong>작동 원리:</strong> 텍스트와 이미지를 같은 공간에서 이해할 수 있게 해주는 기술</p>
+          <div class="activity">
+            <strong>CLIP의 역할:</strong>
+            <ul>
+              <li>텍스트 프롬프트를 이해</li>
+              <li>이미지의 내용을 파악</li>
+              <li>둘 사이의 연관성을 학습</li>
+              <li>텍스트 설명에 맞는 이미지 생성 가이드</li>
+            </ul>
+          </div>
+          <p><strong>중요성:</strong> 텍스트로 이미지를 생성하는 모든 AI의 핵심 기술</p>
+        </div>
+      </div>
+
+      <h3>🏆 주요 이미지 생성 AI 모델들</h3>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>모델</th>
+            <th>개발사</th>
+            <th>기반 기술</th>
+            <th>특징</th>
+            <th>접근성</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>DALL-E 3</strong></td>
+            <td>OpenAI</td>
+            <td>Diffusion + GPT</td>
+            <td>텍스트 이해력 뛰어남</td>
+            <td>ChatGPT Plus 구독</td>
+          </tr>
+          <tr>
+            <td><strong>Midjourney</strong></td>
+            <td>Midjourney Inc.</td>
+            <td>Diffusion</td>
+            <td>예술적 품질 최고</td>
+            <td>Discord 봇</td>
+          </tr>
+          <tr>
+            <td><strong>Stable Diffusion</strong></td>
+            <td>Stability AI</td>
+            <td>Diffusion</td>
+            <td>오픈소스, 커스터마이징 가능</td>
+            <td>무료 사용 가능</td>
+          </tr>
+          <tr>
+            <td><strong>Adobe Firefly</strong></td>
+            <td>Adobe</td>
+            <td>Diffusion</td>
+            <td>상업적 사용 안전</td>
+            <td>Creative Cloud</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="interactive-demo">
+        <h3>🎯 이미지 생성 AI 성능 비교</h3>
+        <p>각 기술의 강점을 확인해보세요!</p>
+        <button class="demo-button" onclick="showImageDemo('quality')">이미지 품질</button>
+        <button class="demo-button" onclick="showImageDemo('speed')">생성 속도</button>
+        <button class="demo-button" onclick="showImageDemo('control')">제어 가능성</button>
+        <button class="demo-button" onclick="showImageDemo('cost')">비용 효율성</button>
+        <div id="image-demo-result" class="demo-result">
+          버튼을 클릭해서 각 기술의 특성을 확인해보세요!
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1.5 LLM vs 이미지 생성 AI 비교 및 정리 (15분)</h2>
+
+      <p>앞선 내용들을 종합하여 현재 AI 기술의 최전선을 소개합니다. 딥러닝 기술의 발전이 <strong>'생성형 AI'</strong>라는 새로운 시대를 열었습니다.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">2개월</div>
+          <div>ChatGPT가 1억 사용자 달성</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">175B</div>
+          <div>GPT-3의 매개변수 개수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">45TB</div>
+          <div>학습에 사용된 텍스트 데이터</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">100+</div>
+          <div>지원하는 언어 수</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>🎨 생성형 AI(Generative AI)</h3>
+          <p>이전의 AI가 주로 주어진 데이터를 <strong>'분석'</strong>하고 <strong>'분류'</strong>하는 역할을 했다면:</p>
+          <ul>
+            <li>이미지가 고양이인지 개인지 판별</li>
+            <li>이메일이 스팸인지 아닌지 분류</li>
+            <li>음성을 텍스트로 변환</li>
+          </ul>
+
+          <p><strong>생성형 AI</strong>는 기존에 없던 새로운 콘텐츠를 <strong>'창조'</strong>하는 AI입니다:</p>
+          <ul>
+            <li>텍스트 생성 (글쓰기, 번역, 요약)</li>
+            <li>이미지 생성 (그림, 사진, 디자인)</li>
+            <li>음악 생성</li>
+            <li>코드 생성</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>🧠 거대 언어 모델(LLM)</h3>
+          <p>챗GPT(ChatGPT)와 같이 현재 가장 유명한 생성형 AI 도구들의 핵심 엔진이 바로 <strong>'거대 언어 모델(Large Language Model,
+              LLM)'</strong>입니다.</p>
+
+          <div class="activity">
+            <strong>LLM의 특징:</strong>
+            <ul>
+              <li><strong>거대한 규모:</strong> 수십억~수조 개의 매개변수</li>
+              <li><strong>언어 이해:</strong> 문맥과 의미를 파악</li>
+              <li><strong>다양한 작업:</strong> 번역, 요약, 창작, 코딩 등</li>
+              <li><strong>대화형 인터페이스:</strong> 자연어로 소통</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3>📊 전통적 AI vs 생성형 AI 비교</h3>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>전통적 AI</th>
+            <th>생성형 AI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>주요 기능</strong></td>
+            <td>분석, 분류, 예측</td>
+            <td>생성, 창작, 변환</td>
+          </tr>
+          <tr>
+            <td><strong>입력</strong></td>
+            <td>구조화된 데이터</td>
+            <td>자연어 프롬프트</td>
+          </tr>
+          <tr>
+            <td><strong>출력</strong></td>
+            <td>카테고리, 점수, 라벨</td>
+            <td>텍스트, 이미지, 코드</td>
+          </tr>
+          <tr>
+            <td><strong>사용자 경험</strong></td>
+            <td>간접적, 백그라운드</td>
+            <td>직접적, 대화형</td>
+          </tr>
+          <tr>
+            <td><strong>대표 사례</strong></td>
+            <td>스팸 필터, 추천 시스템</td>
+            <td>ChatGPT, DALL-E</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="interactive-demo">
+        <h3>🎯 생성형 AI 체험해보기</h3>
+        <p>다음 중 어떤 것이 생성형 AI로 만들어질 수 있을까요?</p>
+        <button class="demo-button" onclick="showDemo('poem')">시 작성</button>
+        <button class="demo-button" onclick="showDemo('code')">코드 생성</button>
+        <button class="demo-button" onclick="showDemo('summary')">요약 작성</button>
+        <button class="demo-button" onclick="showDemo('translate')">번역</button>
+        <div id="demo-result" class="demo-result">
+          버튼을 클릭해서 생성형 AI의 능력을 확인해보세요!
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>다음 장 예고:</strong> 2장에서는 이 놀라운 LLM이 실제로 어떻게 작동하는지 그 비밀을 파헤쳐 볼 것입니다. "세상에서 가장 정교한 다음 단어 맞히기 게임"의 원리를 이해하고,
+        효과적인 프롬프트 작성법을 배워보겠습니다!
+      </div>
+    </div>
+
+    <div class="quiz-container">
+      <h2>💡 1장 마무리 퀴즈</h2>
+      <p>지금까지 배운 내용을 확인해보세요!</p>
+
+      <div class="quiz-question">
+        <div><strong>Q1.</strong> AI, 머신러닝, 딥러닝의 관계를 올바르게 설명한 것은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q1" value="a"> 딥러닝 ⊃ 머신러닝 ⊃ AI</label>
+          <label><input type="radio" name="q1" value="b"> AI ⊃ 머신러닝 ⊃ 딥러닝</label>
+          <label><input type="radio" name="q1" value="c"> 머신러닝 ⊃ AI ⊃ 딥러닝</label>
+          <label><input type="radio" name="q1" value="d"> 모두 같은 의미</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q2.</strong> 생성형 AI의 특징으로 가장 적절한 것은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q2" value="a"> 데이터를 분류하고 분석한다</label>
+          <label><input type="radio" name="q2" value="b"> 새로운 콘텐츠를 창조한다</label>
+          <label><input type="radio" name="q2" value="c"> 기존 데이터를 복사한다</label>
+          <label><input type="radio" name="q2" value="d"> 오직 텍스트만 처리한다</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q3.</strong> Diffusion Model의 작동 원리는?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q3" value="a"> 생성자와 판별자가 경쟁한다</label>
+          <label><input type="radio" name="q3" value="b"> 노이즈에서 시작해서 점진적으로 이미지를 복원한다</label>
+          <label><input type="radio" name="q3" value="c"> 이미지를 압축했다가 다시 복원한다</label>
+          <label><input type="radio" name="q3" value="d"> 텍스트와 이미지를 연결한다</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q4.</strong> CLIP 기술의 주요 역할은?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q4" value="a"> 이미지의 노이즈를 제거한다</label>
+          <label><input type="radio" name="q4" value="b"> 텍스트와 이미지를 같은 공간에서 이해할 수 있게 한다</label>
+          <label><input type="radio" name="q4" value="c"> 이미지의 해상도를 높인다</label>
+          <label><input type="radio" name="q4" value="d"> 이미지를 압축한다</label>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div><strong>Q5.</strong> 다음 중 오픈소스 이미지 생성 AI는?</div>
+        <div class="quiz-options">
+          <label><input type="radio" name="q5" value="a"> DALL-E 3</label>
+          <label><input type="radio" name="q5" value="b"> Midjourney</label>
+          <label><input type="radio" name="q5" value="c"> Stable Diffusion</label>
+          <label><input type="radio" name="q5" value="d"> Adobe Firefly</label>
+        </div>
+      </div>
+
+      <button class="btn" onclick="gradeQuiz()">채점하기</button>
+      <div id="quiz-result" style="margin-top: 1rem;"></div>
+    </div>
+
+    <p>LLM과 이미지 생성 AI는 서로 다른 강점을 가지고 있으며, 각각의 기반 기술도 다릅니다. 하지만 둘 다 생성형 AI의 핵심 분야로서 빠르게 발전하고 있습니다.</p>
+
+    <h3>🔄 LLM vs 이미지 생성 AI 심화 비교</h3>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>LLM (텍스트 생성)</th>
+          <th>이미지 생성 AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>주요 기반 기술</strong></td>
+          <td>Transformer, Attention</td>
+          <td>Diffusion, GAN, VAE</td>
+        </tr>
+        <tr>
+          <td><strong>학습 데이터</strong></td>
+          <td>텍스트 (책, 웹페이지, 대화)</td>
+          <td>이미지-텍스트 쌍</td>
+        </tr>
+        <tr>
+          <td><strong>출력 형태</strong></td>
+          <td>순차적 텍스트 생성</td>
+          <td>전체 이미지 동시 생성</td>
+        </tr>
+        <tr>
+          <td><strong>제어 방식</strong></td>
+          <td>프롬프트, 대화형</td>
+          <td>텍스트 프롬프트, 스타일 파라미터</td>
+        </tr>
+        <tr>
+          <td><strong>계산 요구사항</strong></td>
+          <td>높음 (대화 유지)</td>
+          <td>매우 높음 (이미지 생성)</td>
+        </tr>
+        <tr>
+          <td><strong>활용 분야</strong></td>
+          <td>글쓰기, 번역, 코딩, 분석</td>
+          <td>디자인, 아트, 마케팅, 게임</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>미래 전망:</strong> LLM과 이미지 생성 AI는 점점 더 통합되고 있습니다. GPT-4V처럼 텍스트와 이미지를 모두 이해하는 멀티모달 AI, 그리고 DALL-E 3처럼 더 정교한
+      텍스트 이해력을 가진 이미지 생성 AI가 등장하고 있습니다. 앞으로는 텍스트, 이미지, 음성, 비디오를 모두 처리할 수 있는 통합 AI 시대가 올 것으로 예상됩니다.
+    </div>
+    </div>
+
+    <div class="card">
+      <h2>🎯 1장 핵심 정리</h2>
+      <div class="row">
+        <div class="col">
+          <h3>핵심 개념</h3>
+          <ul>
+            <li><strong>AI ⊃ 머신러닝 ⊃ 딥러닝</strong>: 포함 관계 이해</li>
+            <li><strong>생성형 AI</strong>: 분석에서 창조로의 패러다임 전환</li>
+            <li><strong>Diffusion Model</strong>: 현재 이미지 생성의 주류 기술</li>
+            <li><strong>CLIP</strong>: 텍스트와 이미지를 연결하는 핵심 기술</li>
+            <li><strong>멀티모달 AI</strong>: 여러 형태의 데이터를 처리하는 미래</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>다음 장 예고</h3>
+          <p>2장에서는 LLM이 어떻게 작동하는지 그 비밀을 파헤쳐보겠습니다:</p>
+          <ul>
+            <li>세상에서 가장 정교한 '다음 단어 맞히기' 게임</li>
+            <li>효과적인 프롬프트 작성법</li>
+            <li>상업용 vs 오픈소스 LLM 비교</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+    <div class="muted">© 2024 AI 교육 자료 | 재배포 시 출처 표기 필요</div>
+  </main>
+
+  <script>
+    function gradeQuiz() {
+      const answers = {
+        q1: 'b', // AI ⊃ 머신러닝 ⊃ 딥러닝
+        q2: 'b', // 새로운 콘텐츠를 창조한다
+        q3: 'b', // 노이즈에서 시작해서 점진적으로 이미지를 복원한다
+        q4: 'b', // 텍스트와 이미지를 같은 공간에서 이해할 수 있게 한다
+        q5: 'c'  // Stable Diffusion
+      };
+
+      let score = 0;
+      let total = Object.keys(answers).length;
+      let results = [];
+
+      for (const [question, correctAnswer] of Object.entries(answers)) {
+        const selectedAnswer = document.querySelector(`input[name="${question}"]:checked`);
+        if (selectedAnswer) {
+          if (selectedAnswer.value === correctAnswer) {
+            score++;
+            results.push(`${question.toUpperCase()}: ✅ 정답`);
+          } else {
+            results.push(`${question.toUpperCase()}: ❌ 오답`);
+          }
+        } else {
+          results.push(`${question.toUpperCase()}: ⚪ 미응답`);
+        }
+      }
+
+      const percentage = Math.round((score / total) * 100);
+      let message = `<div class="note">`;
+      message += `<strong>점수: ${score}/${total} (${percentage}%)</strong><br><br>`;
+      message += results.join('<br>');
+
+      if (percentage >= 80) {
+        message += `<br><br><span class="correct">🎉 훌륭합니다! 1장 내용을 잘 이해하셨네요!</span>`;
+      } else if (percentage >= 60) {
+        message += `<br><br><span style="color: var(--warn)">👍 좋습니다! 조금 더 복습하면 완벽할 것 같아요.</span>`;
+      } else {
+        message += `<br><br><span class="wrong">💪 다시 한번 내용을 살펴보시고 도전해보세요!</span>`;
+      }
+      message += `</div>`;
+
+      document.getElementById('quiz-result').innerHTML = message;
+    }
+
+    // 생성형 AI 데모 기능
+    function showDemo(type) {
+      const resultDiv = document.getElementById('demo-result');
+      const demos = {
+        poem: {
+          title: '🎭 시 작성 예시',
+          content: '가을 하늘 높고 푸르러<br>구름 한 점 없이 맑은데<br>AI가 써준 이 시 한 편<br>마음에 드시나요?<br><br><em>- AI 시인 작품</em>'
+        },
+        code: {
+          title: '💻 코드 생성 예시',
+          content: '<code>def hello_world():<br>&nbsp;&nbsp;&nbsp;&nbsp;print("안녕하세요, AI가 만든 코드입니다!")<br>&nbsp;&nbsp;&nbsp;&nbsp;return "성공!"</code><br><br><em>- Python 함수 자동 생성</em>'
+        },
+        summary: {
+          title: '📝 요약 작성 예시',
+          content: '<strong>원문:</strong> 긴 뉴스 기사 (500단어)<br><br><strong>AI 요약:</strong><br>• 핵심 내용 1<br>• 핵심 내용 2<br>• 핵심 내용 3<br><br><em>- 3줄 요약 완료</em>'
+        },
+        translate: {
+          title: '🌍 번역 예시',
+          content: '<strong>한국어:</strong> "안녕하세요, 반갑습니다!"<br><br><strong>영어:</strong> "Hello, nice to meet you!"<br><strong>일본어:</strong> "こんにちは、はじめまして！"<br><strong>중국어:</strong> "你好，很高兴见到你！"<br><br><em>- 다국어 번역 완료</em>'
+        }
+      };
+
+      const demo = demos[type];
+      resultDiv.innerHTML = `<div><strong>${demo.title}</strong><br><br>${demo.content}</div>`;
+
+      // 애니메이션 효과
+      resultDiv.style.transform = 'scale(0.95)';
+      resultDiv.style.opacity = '0.7';
+      setTimeout(() => {
+        resultDiv.style.transform = 'scale(1)';
+        resultDiv.style.opacity = '1';
+        resultDiv.style.transition = 'all 0.3s ease';
+      }, 100);
+    }
+
+    // 이미지 생성 AI 데모 기능
+    function showImageDemo(type) {
+      const resultDiv = document.getElementById('image-demo-result');
+      const demos = {
+        quality: {
+          title: '🎨 이미지 품질 비교',
+          content: '<strong>Midjourney:</strong> ⭐⭐⭐⭐⭐ (예술적 완성도 최고)<br><strong>DALL-E 3:</strong> ⭐⭐⭐⭐⭐ (텍스트 이해력 뛰어남)<br><strong>Stable Diffusion:</strong> ⭐⭐⭐⭐ (커스터마이징으로 품질 향상 가능)<br><strong>Adobe Firefly:</strong> ⭐⭐⭐⭐ (상업적 사용에 최적화)'
+        },
+        speed: {
+          title: '⚡ 생성 속도 비교',
+          content: '<strong>Stable Diffusion:</strong> 5-15초 (로컬 실행 시)<br><strong>DALL-E 3:</strong> 10-30초 (서버 처리)<br><strong>Midjourney:</strong> 30-60초 (고품질 처리)<br><strong>Adobe Firefly:</strong> 15-45초 (클라우드 처리)'
+        },
+        control: {
+          title: '🎛️ 제어 가능성',
+          content: '<strong>Stable Diffusion:</strong> ⭐⭐⭐⭐⭐ (완전한 커스터마이징)<br><strong>Adobe Firefly:</strong> ⭐⭐⭐⭐ (다양한 편집 도구)<br><strong>DALL-E 3:</strong> ⭐⭐⭐ (프롬프트 중심)<br><strong>Midjourney:</strong> ⭐⭐⭐ (스타일 파라미터 제한적)'
+        },
+        cost: {
+          title: '💰 비용 효율성',
+          content: '<strong>Stable Diffusion:</strong> 무료 (오픈소스)<br><strong>Adobe Firefly:</strong> 구독형 (Creative Cloud)<br><strong>DALL-E 3:</strong> 크레딧 기반 ($0.04/이미지)<br><strong>Midjourney:</strong> 월 구독 ($10-60/월)'
+        }
+      };
+
+      const demo = demos[type];
+      resultDiv.innerHTML = `<div><strong>${demo.title}</strong><br><br>${demo.content}</div>`;
+
+      // 애니메이션 효과
+      resultDiv.style.transform = 'scale(0.95)';
+      resultDiv.style.opacity = '0.7';
+      setTimeout(() => {
+        resultDiv.style.transform = 'scale(1)';
+        resultDiv.style.opacity = '1';
+        resultDiv.style.transition = 'all 0.3s ease';
+      }, 100);
+    }
+
+    // 아키텍처 데모 기능
+    function showArchitectureDemo(type) {
+      const resultDiv = document.getElementById('architecture-demo-result');
+      const demos = {
+        text: {
+          title: '📝 텍스트 질문 처리 과정',
+          content: '<strong>사용자:</strong> "파이썬으로 계산기 만들어줘"<br><br><strong>처리 흐름:</strong><br>1️⃣ Intent Router가 "코드 생성" 요청으로 분류<br>2️⃣ GPT-4 모델로 라우팅<br>3️⃣ 코드 생성 모드로 실행<br>4️⃣ Python 코드 반환<br><br><strong>소요 시간:</strong> 2-5초'
+        },
+        image: {
+          title: '🎨 이미지 생성 처리 과정',
+          content: '<strong>사용자:</strong> "석양 배경의 고양이 그림"<br><br><strong>처리 흐름:</strong><br>1️⃣ Intent Router가 "이미지 생성" 요청으로 분류<br>2️⃣ DALL-E 3 모델로 라우팅<br>3️⃣ 텍스트 프롬프트를 이미지로 변환<br>4️⃣ 생성된 이미지 URL 반환<br><br><strong>소요 시간:</strong> 10-30초'
+        },
+        api: {
+          title: '🔌 API 직접 호출 과정',
+          content: '<strong>개발자:</strong> API 엔드포인트 직접 호출<br><br><strong>처리 흐름:</strong><br>1️⃣ API 키 인증<br>2️⃣ Rate Limiting 체크<br>3️⃣ 해당 모델로 직접 라우팅<br>4️⃣ JSON 형태로 응답 반환<br>5️⃣ 토큰 사용량 과금<br><br><strong>장점:</strong> 웹 인터페이스 없이 직접 통합'
+        },
+        multimodal: {
+          title: '🔄 멀티모달 처리 과정',
+          content: '<strong>사용자:</strong> "이 이미지를 보고 시를 써줘" + 이미지 첨부<br><br><strong>처리 흐름:</strong><br>1️⃣ Intent Router가 "이미지+텍스트" 요청으로 분류<br>2️⃣ GPT-4V (Vision) 모델로 라우팅<br>3️⃣ 이미지 분석 + 텍스트 생성<br>4️⃣ 이미지 내용 기반 시 작성<br><br><strong>특징:</strong> 여러 모달리티 동시 처리'
+        }
+      };
+
+      const demo = demos[type];
+      resultDiv.innerHTML = `<div><strong>${demo.title}</strong><br><br>${demo.content}</div>`;
+
+      // 애니메이션 효과
+      resultDiv.style.transform = 'scale(0.95)';
+      resultDiv.style.opacity = '0.7';
+      setTimeout(() => {
+        resultDiv.style.transform = 'scale(1)';
+        resultDiv.style.opacity = '1';
+        resultDiv.style.transition = 'all 0.3s ease';
+      }, 100);
+    }
+
+    // 페이지 로드 시 스크롤 애니메이션 효과
+    document.addEventListener('DOMContentLoaded', function () {
+      const cards = document.querySelectorAll('.card');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      });
+
+      cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+      });
+
+      // 통계 카드 애니메이션
+      const statCards = document.querySelectorAll('.stat-card');
+      const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0) scale(1)';
+            }, index * 200);
+          }
+        });
+      });
+
+      statCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px) scale(0.9)';
+        card.style.transition = 'all 0.6s ease';
+        statObserver.observe(card);
+      });
+    });
+  </script>
+</body>
+
+</html>

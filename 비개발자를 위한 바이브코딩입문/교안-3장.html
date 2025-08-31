@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3장. 바이브 코딩: 개념, 업무 활용, API 연계 (1시간)</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo', Arial, sans-serif; line-height: 1.7; color: #222; margin: 0; background: #fff; }
+    main { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1, h2, h3 { line-height: 1.3; }
+    h1 { font-size: 1.9rem; margin: 0 0 1rem; }
+    h2 { font-size: 1.25rem; margin: 1.6rem 0 0.6rem; }
+    ul { padding-left: 1.2rem; }
+    li { margin: 0.2rem 0; }
+    pre { background: #f6f8fa; padding: 0.8rem; overflow: auto; border-radius: 6px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size: 0.95rem; }
+    .muted { color: #666; font-size: 0.95rem; }
+    hr { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
+  </style>
+  </head>
+<body>
+  <main>
+    <div class="muted">비전공자를 위한 AI 기초와 바이브 코딩 (4시간 커리큘럼)</div>
+    <h1>3장. 바이브 코딩: 개념, 업무 활용, API 연계 (1시간)</h1>
+
+    <h2>바이브 코딩이란?</h2>
+    <ul>
+      <li>“대화로 문제 정의 → AI와 협업하여 솔루션을 점진적 설계·구현”하는 방식</li>
+      <li>전통 코딩과 차이: 정답 작성보다 문제 분해·지시·검증 루프가 핵심 역량</li>
+    </ul>
+
+    <h2>업무 활용 시나리오</h2>
+    <ul>
+      <li>문서 업무: 회의록 요약, 이메일/보고서 초안, 표준 운영절차 초안 생성</li>
+      <li>데이터 업무: CSV 탐색(요약/통계), 간단 시각화 코드 제안, SQL 질의 초안</li>
+      <li>개발 보조: 요구사항→스캐폴딩, 리팩터링, 테스트 코드 생성, 오류 원인 탐색</li>
+      <li>고객지원/세일즈: FAQ 초안, 응대 스크립트, 템플릿 자동화</li>
+    </ul>
+
+    <h2>바이브 코딩 체크리스트</h2>
+    <ul>
+      <li>목표·제약·출력형식을 선명하게 말했는가?</li>
+      <li>예시·맥락(도메인 용어/샘플 데이터)을 제공했는가?</li>
+      <li>결과를 검증·반복 개선하는 루프를 만들었는가?</li>
+    </ul>
+
+    <h2>API 활용(입문)</h2>
+    <ul>
+      <li>준비: 서비스 계정/개인 API 키 발급 → 환경변수에 저장(<code>GEMINI_API_KEY</code> 등)</li>
+      <li>호출 방식: REST(HTTPS) 또는 SDK. 요청 본문에 프롬프트/파라미터 전송</li>
+      <li>보안: 키 하드코딩 금지, 서버측 호출 권장, 로깅 시 민감정보 마스킹</li>
+      <li>요금/제한: 토큰 단가, 분당 호출 제한, 긴 컨텍스트 비용 주의</li>
+    </ul>
+
+    <h3>REST 호출 예시(개념)</h3>
+    <pre><code>POST https://api.example.ai/v1/chat
+Authorization: Bearer &lt;YOUR_API_KEY&gt;
+Content-Type: application/json
+
+{
+  "model": "gemini-1.5-pro",
+  "messages": [
+    {"role": "user", "content": "요약해줘: ..."}
+  ],
+  "max_tokens": 512,
+  "temperature": 0.7
+}
+</code></pre>
+
+    <h3>간단 워크플로우</h3>
+    <ul>
+      <li>사내 문서 업로드 → 임시 벡터검색(RAG) → 요약 API 호출 → 결과 저장</li>
+    </ul>
+
+    <h2>미니 실습(15분 제안)</h2>
+    <ul>
+      <li>프롬프트 템플릿 만들기 → 동일 입력에 대해 출력 형식/톤 바꿔보기 → 검증 질문 추가</li>
+    </ul>
+
+    <hr />
+    <div class="muted">© 교육용 자료 | 재배포 시 출처 표기</div>
+  </main>
+</body>
+</html>
+
+
