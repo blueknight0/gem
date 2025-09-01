@@ -12,7 +12,6 @@ logs/
 config/local.json
 
 config.yaml
-
 # Python 캐시/패키징
 __pycache__/
 *.py[cod]
