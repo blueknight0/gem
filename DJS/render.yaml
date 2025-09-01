@@ -9,8 +9,9 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        fromDatabase: djs-db
-        name: external
+        fromDatabase:
+          name: djs-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ALGORITHM
