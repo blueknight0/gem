@@ -332,6 +332,17 @@ docker compose logs -f backend
 docker compose down
 ```
 
+## Render 배포
+
+### 1) One‑click (render.yaml)
+- 레포에 포함된 `render.yaml`로 블루프린트 배포 가능: Render → Blueprints → `render.yaml` 선택
+- 자동으로 Web Service(docker)와 Postgres가 생성됩니다.
+
+### 2) 수동 생성
+- Web Service: repo=`blueknight0/worktools`, branch=`main`, Dockerfile=`Dockerfile.backend`
+- Health check: `/health`, Port: `$PORT` 자동 바인딩
+- Env: `DATABASE_URL`(Render Postgres 연결값), `JWT_SECRET`, `JWT_ALGORITHM=HS256`, `JWT_EXPIRE_MINUTES=1440`
+
 ## 데이터베이스(PostgreSQL) 전환
 
 ### 1) docker-compose로 Postgres 함께 실행

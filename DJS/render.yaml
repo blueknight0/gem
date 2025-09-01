@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: djs-api
+    env: docker
+    plan: starter
+    autoDeploy: true
+    repo: https://github.com/blueknight0/worktools
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: djs-db
+        name: external
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRE_MINUTES
+        value: 1440
+    dockerfilePath: Dockerfile.backend
+    buildFilter:
+      paths:
+        - backend/**
+        - Dockerfile.backend
+        - requirements.txt
+        - docker-compose.yml
+
+databases:
+  - name: djs-db
+    databaseName: djs
+    plan: free

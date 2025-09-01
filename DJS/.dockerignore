@@ -1,0 +1,14 @@
+venv/
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+*.log
+logs/
+data/embeddings/
+data/raw_news/
+data/processed_relations/
+node_modules/
+.dist/
+dist/
+build/
