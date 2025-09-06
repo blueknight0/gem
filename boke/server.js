@@ -97,6 +97,51 @@ function rollVisitorsDateIfNeeded() {
 	}
 }
 
+// --- Style diversification helpers
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickSome(arr, n) {
+	const copy = arr.slice();
+	for (let i = copy.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+	}
+	return copy.slice(0, Math.max(0, Math.min(n, copy.length)));
+}
+
+const STYLE_TIME = ["early morning", "noon", "golden hour", "blue hour", "overcast afternoon", "rainy evening", "late night indoors"];
+const STYLE_WEATHER = ["clear", "light rain", "misty", "snow flurries", "humid air", "after-rain puddles"];
+const STYLE_ANGLE = ["eye-level", "slightly low-angle", "slightly high-angle", "over-the-shoulder", "candid street-level", "three-quarter view"];
+const STYLE_LENS = ["24mm wide", "35mm", "50mm", "85mm", "105mm telephoto"];
+const STYLE_LIGHTING = [
+	"soft natural window light",
+	"diffused overcast light",
+	"fluorescent indoor lighting",
+	"subway station lighting",
+	"store aisle lighting",
+	"mixed temperature practical lights"
+];
+const STYLE_COLOR = ["neutral realistic colors", "muted pastel palette", "warm amber tint", "cool bluish tint", "film-like subdued colors"];
+const STYLE_COMPOSITION = ["rule-of-thirds composition", "centered symmetrical framing", "off-center candid framing", "slight dutch tilt"];
+
+function buildStyleHint() {
+	const t = pickRandom(STYLE_TIME);
+	const w = pickRandom(STYLE_WEATHER);
+	const a = pickRandom(STYLE_ANGLE);
+	const l = pickRandom(STYLE_LENS);
+	const li = pickRandom(STYLE_LIGHTING);
+	const c = pickRandom(STYLE_COLOR);
+	const comp = pickRandom(STYLE_COMPOSITION);
+	const extras = pickSome(["hand-held feel", "shallow depth of field", "subtle grain", "ambient reflections", "slight motion blur"], 2);
+	return [
+		`Style variation: ${a} angle, ${l} lens, ${comp}.`,
+		`Time/Weather: ${t}, ${w}.`,
+		`Lighting: ${li}.`,
+		`Color: ${c}.`,
+		extras.length ? `Extra: ${extras.join(", ")}.` : null,
+		"Keep it realistic and candid. Do not render any text in the image."
+	].filter(Boolean).join(" ");
+}
+
 async function callGeminiText(prompt) {
 	const apiKey = process.env.GEMINI_API_KEY;
 	if (!apiKey) throw new Error("Server missing GEMINI_API_KEY");
@@ -106,7 +151,12 @@ async function callGeminiText(prompt) {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
 			contents: [ { parts: [ { text: prompt } ] } ],
-			generationConfig: { responseMimeType: "application/json" }
+			generationConfig: {
+				responseMimeType: "application/json",
+				temperature: 1.3,
+				topP: 0.95,
+				topK: 64
+			}
 		}),
 	});
 	if (!resp.ok) {
@@ -138,13 +188,15 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 			"당신은 '보케 시나리오 아키텍트'입니다. 밈 스타일의 보케(일본식 유머) 시나리오를 1개 생성하세요.",
 			"목표: '장면 자체의 과한 황당함'이 아니라, 이미지와 한국어 한 줄 캡션(humor_ko) 사이의 아이러니에서 웃음을 만들어야 합니다.",
 			"톤: 짧고 공감되는 유머.",
-			"원칙: 약간 어긋났지만 가능한 행동. 풍부하고 다양한 상황과 장소",
-			"연출: 자연광/현실적 색감/일반 카메라/캔디드·다큐 분위기. ",
-			"캡션 톤(한국 인터넷 밈 2023~2025): 짧고 강하며 이미지와 반대로 읽히는 아이러니. 예시 톤(그대로 쓰지 말 것): '오히려 좋아', '현실부정', '현타 온다', '나만 없어', '이게 맞냐', '정신승리', '손절각'.",
+			"원칙: 약간 어긋났지만 가능한 행동. 풍부하고 다양한 상황과 장소.",
+			"연출 기본: 현실 사진 룩, 캔디드·다큐 분위기. 자연스러운 색감(필요 시 필름 톤 OK).",
+			"다양화 지침: 매 요청마다 배경/직업/역할/세대/시간대/날씨/마이크로-장소(편의점, 엘리베이터, 경로당, 공중화장실, 지하철 칸 등)를 바꾸고, 흔한 테마(사무실/컴퓨터/라면)는 남용하지 마세요.",
+			"유머 스타일 다양화: 자조/현타/현실부정/쿨하고 건조한 한마디/과몰입/무덤덤한 보고체 등 중 하나를 임의로 선택.",
+			"캡션 톤(한국 인터넷 밈 2023~2025): 짧고 강하며 이미지와 반대로 읽히는 아이러니. 예시는 참고만 하고 직접 문구는 새로 지을 것.",
 			"반환(JSON) 키: title, subject, action, background, expression, image_prompt, humor_ko, why_funny_ko",
 			"- title: 한국어 짧은 밈풍 제목(≤16자)",
 			"- subject/action/background/expression: 영어, 간결하게",
-			"- image_prompt: 영어로 자세히 작성(인물은 한국인, 현실 사진 룩, 자연광, meme-ready 프레이밍). 이미지에 텍스트를 넣지 말 것.",
+			"- image_prompt: 영어로 자세히 작성(인물은 한국인, 현실 사진 룩, candid framing). 이미지에 텍스트를 넣지 말 것.",
 			"- humor_ko: 한국어 한 줄 캡션(≤28자), 이미지와 의도적 아이러니",
 			"- why_funny_ko: 한국어 한 줄로 이미지와 캡션 사이의 아이러니가 왜 웃긴지 설명(≤40자)",
 		].join("\n");
@@ -154,6 +206,9 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 		if (!obj?.image_prompt) {
 			return res.status(502).json({ error: "invalid LLM response", raw: text });
 		}
+		// 스타일 힌트를 덧붙여 시각 결과의 다양성을 높임
+		const diversifiedPrompt = [obj.image_prompt, "\n\n", buildStyleHint()].join("");
+
 		rollUsageDateIfNeeded();
 		usage.today += 1;
 		usage.total += 1;
@@ -165,7 +220,7 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 				expression: obj.expression,
 				title: obj.title,
 			},
-			prompt: obj.image_prompt,
+			prompt: diversifiedPrompt,
 			humor: obj.humor_ko || null,
 			whyFunny: obj.why_funny_ko || null,
 		});
