@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: boke
+    env: node
+    rootDir: boke
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+
+
