@@ -144,7 +144,7 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 			"반환(JSON) 키: title, subject, action, background, expression, image_prompt, humor_ko, why_funny_ko",
 			"- title: 한국어 짧은 밈풍 제목(≤16자)",
 			"- subject/action/background/expression: 영어, 간결하게",
-			"- image_prompt: 영어로 자세히 작성(현실 사진 룩, 자연광, meme-ready 프레이밍). 이미지에 텍스트를 넣지 말 것.",
+			"- image_prompt: 영어로 자세히 작성(인물은 한국인, 현실 사진 룩, 자연광, meme-ready 프레이밍). 이미지에 텍스트를 넣지 말 것.",
 			"- humor_ko: 한국어 한 줄 캡션(≤28자), 이미지와 의도적 아이러니",
 			"- why_funny_ko: 한국어 한 줄로 이미지와 캡션 사이의 아이러니가 왜 웃긴지 설명(≤40자)",
 		].join("\n");
