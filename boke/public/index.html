@@ -28,6 +28,20 @@
 					<button id="btn-scenario">시나리오 생성</button>
 					<button id="btn-generate">이미지 생성</button>
 				</div>
+				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+					<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+						<span style="color:#aab4c1;font-size:12px;">Today</span>
+						<div id="stat-today" style="font-weight:700;">-</div>
+					</div>
+					<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+						<span style="color:#aab4c1;font-size:12px;">Total</span>
+						<div id="stat-total" style="font-weight:700;">-</div>
+					</div>
+				</div>
+				<div style="margin-top:6px;color:#aab4c1;font-size:12px;display:flex;gap:12px;align-items:center;">
+					<span>Limit: <span id="stat-limit-min">-</span>/min, <span id="stat-limit-day">-</span>/day</span>
+					<span id="stat-updated" style="opacity:.8;"></span>
+				</div>
 				<label for="humor">한 줄 유머</label>
 				<input id="humor" type="text" placeholder="예) '대체 왜 안 들어가지… 방향키가 부족했나'" />
 			</div>
@@ -69,6 +83,11 @@
 		const elCanvas = document.getElementById('canvas');
 		const elHumor = document.getElementById('humor');
 		const elWhy = document.getElementById('why');
+		const elToday = document.getElementById('stat-today');
+		const elTotal = document.getElementById('stat-total');
+		const elLimitMin = document.getElementById('stat-limit-min');
+		const elLimitDay = document.getElementById('stat-limit-day');
+		const elUpdated = document.getElementById('stat-updated');
 		const ctx = elCanvas.getContext('2d');
 
 		let currentPrompt = '';
@@ -103,7 +122,20 @@
 			ctx.fillText(text, elCanvas.width/2, elCanvas.height - padding);
 		}
 
+		async function refreshStats() {
+			try {
+				const s = await fetchJSON('/api/stats');
+				if (elToday) elToday.textContent = String(s.today ?? '-');
+				if (elTotal) elTotal.textContent = String(s.total ?? '-');
+				if (elLimitMin) elLimitMin.textContent = String(s.rate?.perMinute ?? '-');
+				if (elLimitDay) elLimitDay.textContent = String(s.rate?.perDay ?? '-');
+				if (elUpdated) elUpdated.textContent = new Date().toLocaleTimeString();
+			} catch {}
+		}
+
 		drawPlaceholder();
+		refreshStats();
+		setInterval(refreshStats, 15000);
 
 		const btnScenario = document.getElementById('btn-scenario');
 		const btnGenerate = document.getElementById('btn-generate');
@@ -134,7 +166,11 @@
 				btnScenario.textContent = prevTextS;
 				btnScenario.disabled = false;
 			} catch (e) {
-				elNotice.textContent = '서버에 연결되지 않았습니다. npm run dev로 서버를 실행한 뒤 http://localhost:5173 로 접속하세요.';
+				if ((e?.message||'').includes('429')) {
+					elNotice.textContent = '요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.';
+				} else {
+					elNotice.textContent = '서버에 연결되지 않았습니다. npm run dev로 서버를 실행한 뒤 http://localhost:5173 로 접속하세요.';
+				}
 				btnScenario.textContent = '시나리오 생성';
 				btnScenario.disabled = false;
 			}
@@ -163,7 +199,11 @@
 				btnGenerate.textContent = prevTextG;
 				btnGenerate.disabled = false;
 			} catch (e) {
-				elNotice.textContent = '이미지 생성 실패: 서버가 실행 중인지와 .env의 GEMINI_API_KEY를 확인하세요.';
+				if ((e?.message||'').includes('429')) {
+					elNotice.textContent = '요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.';
+				} else {
+					elNotice.textContent = '이미지 생성 실패: 서버가 실행 중인지와 .env의 GEMINI_API_KEY를 확인하세요.';
+				}
 				btnGenerate.textContent = '이미지 생성';
 				btnGenerate.disabled = false;
 			}

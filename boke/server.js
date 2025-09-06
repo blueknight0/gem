@@ -25,6 +25,60 @@ const GENAI_BASE = process.env.GENAI_BASE || "https://generativelanguage.googlea
 const GENAI_TEXT_MODEL = process.env.GENAI_TEXT_MODEL || "gemini-2.5-flash";
 const GENAI_IMAGE_MODEL = process.env.GENAI_IMAGE_MODEL || "gemini-2.5-flash-image-preview";
 
+// --- Usage counters (in-memory)
+let usage = {
+	total: 0,
+	today: 0,
+	date: new Date().toISOString().slice(0, 10),
+};
+
+function rollUsageDateIfNeeded() {
+	const d = new Date().toISOString().slice(0, 10);
+	if (usage.date !== d) {
+		usage.date = d;
+		usage.today = 0;
+	}
+}
+
+// --- Simple rate limit per IP (in-memory)
+const RATE_LIMIT_PER_MIN = Number(process.env.RATE_LIMIT_PER_MIN || 20);
+const RATE_LIMIT_PER_DAY = Number(process.env.RATE_LIMIT_PER_DAY || 200);
+
+const ipBuckets = new Map(); // ip -> { minuteStart: number, minuteCount: number, dayDate: string, dayCount: number }
+
+function rateLimitMiddleware(req, res, next) {
+	const ip = req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+	const now = Date.now();
+	let rec = ipBuckets.get(ip);
+	const currentMinuteStart = now - (now % 60000);
+	const currentDay = new Date().toISOString().slice(0, 10);
+	if (!rec) {
+		rec = { minuteStart: currentMinuteStart, minuteCount: 0, dayDate: currentDay, dayCount: 0 };
+		ipBuckets.set(ip, rec);
+	}
+	// rollover minute window
+	if (rec.minuteStart !== currentMinuteStart) {
+		rec.minuteStart = currentMinuteStart;
+		rec.minuteCount = 0;
+	}
+	// rollover day window
+	if (rec.dayDate !== currentDay) {
+		rec.dayDate = currentDay;
+		rec.dayCount = 0;
+	}
+	if (rec.minuteCount >= RATE_LIMIT_PER_MIN) {
+		const retryAfter = Math.ceil((rec.minuteStart + 60000 - now) / 1000);
+		return res.status(429).json({ error: "rate_limited_minute", retryAfterSeconds: retryAfter });
+	}
+	if (rec.dayCount >= RATE_LIMIT_PER_DAY) {
+		return res.status(429).json({ error: "rate_limited_day" });
+	}
+	// tentatively increment; on error paths we won't decrement (acceptable for simplicity)
+	rec.minuteCount += 1;
+	rec.dayCount += 1;
+	return next();
+}
+
 async function callGeminiText(prompt) {
 	const apiKey = process.env.GEMINI_API_KEY;
 	if (!apiKey) throw new Error("Server missing GEMINI_API_KEY");
@@ -60,7 +114,7 @@ function extractJsonObjectFromText(text) {
 }
 
 // API endpoints
-app.get("/api/boke", async (_req, res) => {
+app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 	try {
 		const instruction = [
 			"당신은 '보케 시나리오 아키텍트'입니다. 현실적이고 그라운디드한 밈 스타일의 보케 시나리오를 1개 생성하세요.",
@@ -82,6 +136,9 @@ app.get("/api/boke", async (_req, res) => {
 		if (!obj?.image_prompt) {
 			return res.status(502).json({ error: "invalid LLM response", raw: text });
 		}
+		rollUsageDateIfNeeded();
+		usage.today += 1;
+		usage.total += 1;
 		return res.json({
 			scenario: {
 				subject: obj.subject,
@@ -100,7 +157,7 @@ app.get("/api/boke", async (_req, res) => {
 	}
 });
 
-app.post("/api/generate", async (req, res) => {
+app.post("/api/generate", rateLimitMiddleware, async (req, res) => {
 	try {
 		const { prompt, humor } = req.body ?? {};
 		if (!prompt) return res.status(400).json({ error: "prompt is required" });
@@ -131,6 +188,9 @@ app.post("/api/generate", async (req, res) => {
 			|| data?.images?.[0]?.base64
 			|| null;
 		if (!b64) throw new Error("No image data in response");
+		rollUsageDateIfNeeded();
+		usage.today += 1;
+		usage.total += 1;
 		return res.json({ imageBase64: b64 });
 	} catch (e) {
 		console.error(e);
@@ -138,6 +198,11 @@ app.post("/api/generate", async (req, res) => {
 		const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
 		return res.status(200).json({ imageBase64: transparentPngBase64, warning: String(e?.message || e) });
 	}
+});
+
+app.get("/api/stats", (_req, res) => {
+	rollUsageDateIfNeeded();
+	res.json({ today: usage.today, total: usage.total, date: usage.date, rate: { perMinute: RATE_LIMIT_PER_MIN, perDay: RATE_LIMIT_PER_DAY } });
 });
 
 const PORT = process.env.PORT || 5173;
