@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Boke Generator</title>
+	<style>
+		body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji; margin: 0; padding: 24px; background: #0b0c10; color: #eaf0f1; }
+		.container { max-width: 1200px; margin: 0 auto; display: grid; gap: 16px; grid-template-columns: 1.2fr 1fr; align-items: start; }
+		.card { background: #15171c; border: 1px solid #2a2e37; border-radius: 12px; padding: 16px; }
+		.row { display: grid; gap: 12px; grid-template-columns: 1fr auto; align-items: center; }
+		button { background: #5b8cff; color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+		button:hover { background: #709dff; }
+		label { color: #aab4c1; font-size: 14px; }
+		input[type="text"] { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2e37; background: #0f1116; color: #eaf0f1; }
+		canvas { width: 100%; height: auto; background: #0f1116; border: 1px dashed #2a2e37; border-radius: 12px; }
+		pre { white-space: pre-wrap; word-break: break-word; background: #0f1116; border: 1px solid #2a2e37; padding: 12px; border-radius: 10px; }
+		@media (max-width: 980px) { .container { grid-template-columns: 1fr; } }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div>
+			<h1>ボケ Boke Image Tool</h1>
+			<div class="card">
+				<div class="row">
+					<button id="btn-scenario">시나리오 생성</button>
+					<button id="btn-generate">이미지 생성</button>
+				</div>
+				<label for="humor">한 줄 유머</label>
+				<input id="humor" type="text" placeholder="예) '대체 왜 안 들어가지… 방향키가 부족했나'" />
+			</div>
+			<div class="card">
+				<h3>프롬프트</h3>
+				<pre id="prompt"></pre>
+				<div id="notice" style="margin-top:8px;color:#ffb3b3;font-size:13px;"></div>
+				<div id="why" style="margin-top:6px;color:#aab4c1;font-size:13px;"></div>
+			</div>
+		</div>
+		<div>
+			<div class="card">
+				<h3>미리보기</h3>
+				<canvas id="canvas" width="1024" height="1024"></canvas>
+			</div>
+		</div>
+	</div>
+
+	<script type="module">
+		async function fetchJSON(url, options) {
+			try {
+				const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) } });
+				if (!res.ok) throw new Error('Request failed: ' + res.status);
+				return await res.json();
+			} catch (err) {
+				throw err;
+			}
+		}
+
+		const elPrompt = document.getElementById('prompt');
+		const elCanvas = document.getElementById('canvas');
+		const elHumor = document.getElementById('humor');
+		const elWhy = document.getElementById('why');
+		const ctx = elCanvas.getContext('2d');
+
+		let currentPrompt = '';
+		const elNotice = document.getElementById('notice');
+
+		function drawPlaceholder() {
+			ctx.fillStyle = '#0f1116';
+			ctx.fillRect(0,0,elCanvas.width, elCanvas.height);
+			ctx.strokeStyle = '#2a2e37';
+			ctx.setLineDash([8,8]);
+			ctx.strokeRect(8,8, elCanvas.width-16, elCanvas.height-16);
+			ctx.setLineDash([]);
+			ctx.fillStyle = '#aab4c1';
+			ctx.font = '28px system-ui';
+			ctx.textAlign = 'center';
+			ctx.fillText('이미지를 생성하면 여기 표시됩니다', elCanvas.width/2, elCanvas.height/2);
+		}
+
+		function overlayHumorText(text) {
+			if (!text) return;
+			const padding = 32;
+			const maxWidth = elCanvas.width - padding * 2;
+			ctx.font = 'bold 44px system-ui';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'bottom';
+			// shadow
+			ctx.fillStyle = 'rgba(0,0,0,0.6)';
+			for (let dx=-2; dx<=2; dx++) for (let dy=-2; dy<=2; dy++) {
+				ctx.fillText(text, elCanvas.width/2 + dx, elCanvas.height - padding + dy);
+			}
+			ctx.fillStyle = '#ffffff';
+			ctx.fillText(text, elCanvas.width/2, elCanvas.height - padding);
+		}
+
+		drawPlaceholder();
+
+		document.getElementById('btn-scenario').addEventListener('click', async () => {
+			elNotice.textContent = '';
+			try {
+				const data = await fetchJSON('/api/boke');
+				currentPrompt = data.prompt;
+				const s = data.scenario || {};
+				elPrompt.textContent = [
+					(s.title ? `- 제목: ${s.title}` : null),
+					(s.subject ? `- 주체: ${s.subject}` : null),
+					(s.action ? `- 행동: ${s.action}` : null),
+					(s.background ? `- 배경: ${s.background}` : null),
+					(s.expression ? `- 표정: ${s.expression}` : null),
+					(data.humor ? `- 유머: ${data.humor}` : null),
+					'',
+					currentPrompt ? `Prompt: ${currentPrompt}` : null
+				].filter(Boolean).join('\n');
+				if (data.humor) {
+					elHumor.value = data.humor;
+				}
+				elWhy.textContent = data.whyFunny ? `왜 웃긴가: ${data.whyFunny}` : '';
+			} catch (e) {
+				elNotice.textContent = '서버에 연결되지 않았습니다. npm run dev로 서버를 실행한 뒤 http://localhost:5173 로 접속하세요.';
+			}
+		});
+
+		document.getElementById('btn-generate').addEventListener('click', async () => {
+			if (!currentPrompt) {
+				alert('먼저 시나리오를 생성하세요');
+				return;
+			}
+			elNotice.textContent = '';
+			try {
+				const data = await fetchJSON('/api/generate', { method: 'POST', body: JSON.stringify({ prompt: currentPrompt, humor: elHumor.value.trim() }) });
+				const img = new Image();
+				img.onload = () => {
+					ctx.drawImage(img, 0, 0, elCanvas.width, elCanvas.height);
+					overlayHumorText(elHumor.value.trim());
+				};
+				if (data.warning) {
+					elNotice.textContent = '이미지 생성 경고: ' + data.warning;
+				}
+				img.src = 'data:image/png;base64,' + data.imageBase64;
+			} catch (e) {
+				elNotice.textContent = '이미지 생성 실패: 서버가 실행 중인지와 .env의 GEMINI_API_KEY를 확인하세요.';
+			}
+		});
+
+		// 파일로 직접 연 경우 안내
+		if (location.origin === 'null' || location.protocol === 'file:') {
+			const warn = document.createElement('div');
+			warn.style.color = '#ffb3b3';
+			warn.style.fontSize = '13px';
+			warn.style.marginTop = '8px';
+			warn.textContent = '이 페이지는 서버 없이 파일로 열렸습니다. API가 동작하지 않습니다. npm run dev 실행 후 http://localhost:5173 로 접속하세요.';
+			elNotice?.appendChild(warn);
+		}
+
+		// 다운로드 버튼 제거됨
+	</script>
+</body>
+</html>
+
+
