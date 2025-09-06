@@ -79,6 +79,24 @@ function rateLimitMiddleware(req, res, next) {
 	return next();
 }
 
+// --- Visitor counters (in-memory unique by client-provided vid)
+let visitors = {
+	date: new Date().toISOString().slice(0, 10),
+	today: 0, // unique visitors today
+	seenToday: new Set(),
+	total: 0, // lifetime unique visitors
+	seenEver: new Set(),
+};
+
+function rollVisitorsDateIfNeeded() {
+	const d = new Date().toISOString().slice(0, 10);
+	if (visitors.date !== d) {
+		visitors.date = d;
+		visitors.today = 0;
+		visitors.seenToday = new Set();
+	}
+}
+
 async function callGeminiText(prompt) {
 	const apiKey = process.env.GEMINI_API_KEY;
 	if (!apiKey) throw new Error("Server missing GEMINI_API_KEY");
@@ -202,7 +220,32 @@ app.post("/api/generate", rateLimitMiddleware, async (req, res) => {
 
 app.get("/api/stats", (_req, res) => {
 	rollUsageDateIfNeeded();
-	res.json({ today: usage.today, total: usage.total, date: usage.date, rate: { perMinute: RATE_LIMIT_PER_MIN, perDay: RATE_LIMIT_PER_DAY } });
+	rollVisitorsDateIfNeeded();
+	res.json({
+		usage: { today: usage.today, total: usage.total, date: usage.date },
+		rate: { perMinute: RATE_LIMIT_PER_MIN, perDay: RATE_LIMIT_PER_DAY },
+		visitors: { today: visitors.today, total: visitors.total, date: visitors.date }
+	});
+});
+
+// Track visitor unique id
+app.post("/api/visit", (req, res) => {
+	try {
+		rollVisitorsDateIfNeeded();
+		const vid = (req.body && typeof req.body.vid === 'string') ? req.body.vid : null;
+		if (!vid) return res.status(400).json({ error: 'vid_required' });
+		if (!visitors.seenEver.has(vid)) {
+			visitors.seenEver.add(vid);
+			visitors.total += 1;
+		}
+		if (!visitors.seenToday.has(vid)) {
+			visitors.seenToday.add(vid);
+			visitors.today += 1;
+		}
+		return res.json({ ok: true, visitors: { today: visitors.today, total: visitors.total } });
+	} catch (e) {
+		return res.status(500).json({ error: 'visit_failed' });
+	}
 });
 
 const PORT = process.env.PORT || 5173;
