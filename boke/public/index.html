@@ -28,20 +28,7 @@
 					<button id="btn-scenario">시나리오 생성</button>
 					<button id="btn-generate">이미지 생성</button>
 				</div>
-				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-					<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
-						<span style="color:#aab4c1;font-size:12px;">Today</span>
-						<div id="stat-today" style="font-weight:700;">-</div>
-					</div>
-					<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
-						<span style="color:#aab4c1;font-size:12px;">Total</span>
-						<div id="stat-total" style="font-weight:700;">-</div>
-					</div>
-				</div>
-				<div style="margin-top:6px;color:#aab4c1;font-size:12px;display:flex;gap:12px;align-items:center;">
-					<span>Limit: <span id="stat-limit-min">-</span>/min, <span id="stat-limit-day">-</span>/day</span>
-					<span id="stat-updated" style="opacity:.8;"></span>
-				</div>
+
 				<label for="humor">한 줄 유머</label>
 				<input id="humor" type="text" placeholder="예) '대체 왜 안 들어가지… 방향키가 부족했나'" />
 			</div>
@@ -65,6 +52,23 @@
 			<p style="margin:4px 0;">
 				<a href="https://www.youtube.com/watch?v=INyETUFXK6c" target="_blank" rel="noopener noreferrer">보케/츠코미 예시 영상(YouTube)</a>
 			</p>
+		</div>
+		<div class="card" style="grid-column: 1 / -1;">
+			<h3>방문자 카운터</h3>
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Visitors Today</span>
+					<div id="stat-today" style="font-weight:700;">-</div>
+				</div>
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Visitors Total</span>
+					<div id="stat-total" style="font-weight:700;">-</div>
+				</div>
+			</div>
+			<div style="margin-top:6px;color:#aab4c1;font-size:12px;display:flex;gap:12px;align-items:center;">
+				<span>Rate limit: <span id="stat-limit-min">-</span>/min, <span id="stat-limit-day">-</span>/day</span>
+				<span id="stat-updated" style="opacity:.8;"></span>
+			</div>
 		</div>
 	</div>
 
@@ -125,8 +129,8 @@
 		async function refreshStats() {
 			try {
 				const s = await fetchJSON('/api/stats');
-				if (elToday) elToday.textContent = String(s.today ?? '-');
-				if (elTotal) elTotal.textContent = String(s.total ?? '-');
+				if (elToday) elToday.textContent = String(s.visitors?.today ?? '-');
+				if (elTotal) elTotal.textContent = String(s.visitors?.total ?? '-');
 				if (elLimitMin) elLimitMin.textContent = String(s.rate?.perMinute ?? '-');
 				if (elLimitDay) elLimitDay.textContent = String(s.rate?.perDay ?? '-');
 				if (elUpdated) elUpdated.textContent = new Date().toLocaleTimeString();
@@ -134,8 +138,20 @@
 		}
 
 		drawPlaceholder();
-		refreshStats();
-		setInterval(refreshStats, 15000);
+		// 방문자 vid 생성 및 전송
+		const VID_KEY = 'boke_vid';
+		function getVid() {
+			let v = localStorage.getItem(VID_KEY);
+			if (!v) { v = (self.crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2)); localStorage.setItem(VID_KEY, v); }
+			return v;
+		}
+		(async () => {
+			try {
+				await fetch('/api/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid: getVid() }) });
+			} catch {}
+			refreshStats();
+			setInterval(refreshStats, 15000);
+		})();
 
 		const btnScenario = document.getElementById('btn-scenario');
 		const btnGenerate = document.getElementById('btn-generate');
