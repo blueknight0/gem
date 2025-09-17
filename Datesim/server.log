@@ -1,0 +1,7 @@
+
+> datesim@1.0.0 start
+> node server.js
+
+[dotenv@17.2.2] injecting env (5) from .env -- tip: ðŸ“¡ version env with Radar: https://dotenvx.com/radar
+server on http://localhost:5174 
+ÀÏ°ý ÀÛ¾÷À» ³¡³»½Ã°Ú½À´Ï±î (Y/N)? 

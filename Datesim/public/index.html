@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="ko">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>DateSim</title>
+	<style>
+		body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji; margin: 0; padding: 24px; background: #0b0c10; color: #eaf0f1; }
+		*, *::before, *::after { box-sizing: border-box; }
+		.container { max-width: 1200px; margin: 0 auto; display: grid; gap: 16px; grid-template-columns: 1.2fr 1fr; align-items: start; }
+		.card { background: #15171c; border: 1px solid #2a2e37; border-radius: 12px; padding: 16px; }
+		.card--story { display: flex; flex-direction: column; height: 78vh; }
+		.row { display: grid; gap: 12px; grid-template-columns: 140px 1fr; align-items: center; }
+		.row--compact { grid-template-columns: auto auto; }
+		button { background: #5b8cff; color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: background .15s ease; white-space: nowrap; }
+		button:hover { background: #709dff; }
+		label { color: #aab4c1; font-size: 14px; }
+		input[type="text"] { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2e37; background: #0f1116; color: #eaf0f1; box-sizing: border-box; display: block; }
+		select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2e37; background: #0f1116; color: #eaf0f1; }
+		canvas { width: 100%; height: auto; background: #0f1116; border: 1px dashed #2a2e37; border-radius: 12px; }
+		pre { white-space: pre-wrap; word-break: break-word; background: #0f1116; border: 1px solid #2a2e37; padding: 12px; border-radius: 10px; }
+		button:disabled { background: #3a3f4a; cursor: not-allowed; opacity: 0.8; }
+		#choices button { width: 100%; text-align: left; }
+		@media (max-width: 980px) { .container { grid-template-columns: 1fr; } }
+		@media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+		/* modal */
+		.modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: flex-start; padding-left: 24px; z-index: 1000; }
+		.modal--open { display: flex; }
+		.modal__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
+		.modal__content { position: relative; width: min(560px, 92vw); max-height: 92vh; overflow: auto; background: #15171c; border: 1px solid #2a2e37; border-radius: 14px; padding: 16px; }
+		@media (max-width: 640px) { .modal { justify-content: center; padding-left: 0; } }
+		/* hide inline setup card in main layout; we use modal instead */
+		#setup-card { display: none; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div>
+			<h1>DateSim</h1>
+			<div class="card" id="setup-card">
+				<h3>이상형 설정</h3>
+				<div class="row">
+					<label>내 이름</label>
+					<input id="player" type="text" placeholder="예) 민준" />
+				</div>
+				<div class="row">
+					<label>스타일(2D/3D)</label>
+					<select id="dim">
+						<option value="3D">3D</option>
+						<option value="2D">2D</option>
+					</select>
+				</div>
+				<div class="row"><label>이름</label><input id="name" type="text" placeholder="예) 아린" /></div>
+				<div class="row"><label>종족</label><input id="species" type="text" placeholder="예) 인간, 엘프, 뱀파이어" /></div>
+				<div class="row"><label>인종</label><input id="race" type="text" placeholder="예) 한국인, 백인, 흑인, 라틴계" /></div>
+				<div class="row"><label>성별</label><input id="gender" type="text" placeholder="예) 여성, 남성, 논바이너리" /></div>
+				<div class="row"><label>기타 요청</label><input id="extra" type="text" placeholder="예) 단발, 온화한 미소, 캐주얼 의상" /></div>
+				<div class="row row--compact">
+					<button id="btn-preview">미리보기</button>
+					<button id="btn-reroll">리롤(남은 2)</button>
+				</div>
+				<div class="row">
+					<button id="btn-confirm">확정하고 시작</button>
+					<span id="notice-setup" style="color:#ffb3b3;font-size:13px;"></span>
+				</div>
+			</div>
+			<div class="card card--story">
+				<h3>데이트 진행</h3>
+				<div id="progress" style="color:#aab4c1;font-size:13px;margin-bottom:8px;">Day - / 30 · Turn - / 10</div>
+				<div id="history" style="min-height:120px;color:#eaf0f1;white-space:pre-wrap; overflow:auto; flex:1; min-height:0;"></div>
+				<div id="choices" style="display:grid;gap:8px;margin-top:8px;"></div>
+				<div id="notice-game" style="margin-top:8px;color:#ffb3b3;font-size:13px;"></div>
+			</div>
+		</div>
+		<div>
+			<div class="card">
+				<h3>캐릭터</h3>
+				<canvas id="canvas" width="1024" height="1024"></canvas>
+			</div>
+		</div>
+		<div class="card" style="grid-column: 1 / -1;">
+			<h3>게임 안내</h3>
+			<p style="margin:8px 0 10px; color:#aab4c1;">이상형을 설정하고 미리보기 이미지를 확인한 뒤 확정하면, 3가지 선택지가 제시됩니다. 선택을 3번 할 때마다 장면이 갱신되어 이미지가 다시 생성됩니다. 이미지 정책으로 실패 시 설정을 조정해 주세요.</p>
+		</div>
+		<div class="card" style="grid-column: 1 / -1;">
+			<h3>방문자 카운터</h3>
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Visitors Today</span>
+					<div id="stat-today" style="font-weight:700;">-</div>
+				</div>
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Visitors Total</span>
+					<div id="stat-total" style="font-weight:700;">-</div>
+				</div>
+			</div>
+			<div style="margin-top:6px;color:#aab4c1;font-size:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+				<span>Rate limit: <span id="stat-limit-min">-</span>/min, <span id="stat-limit-day">-</span>/day</span>
+				<span id="stat-updated" style="opacity:.8;"></span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Setup Modal -->
+	<div class="modal" id="setup-modal">
+		<div class="modal__backdrop"></div>
+		<div class="modal__content">
+			<h3 style="margin:0 0 12px;">이상형 설정</h3>
+			<div class="row">
+				<label>내 이름</label>
+				<input id="m_player" type="text" placeholder="예) 민준" />
+			</div>
+			<div class="row">
+				<label>스타일(2D/3D)</label>
+				<select id="m_dim">
+					<option value="3D">3D</option>
+					<option value="2D">2D</option>
+				</select>
+			</div>
+			<div class="row"><label>이름</label><input id="m_name" type="text" placeholder="예) 아린" /></div>
+			<div class="row"><label>종족</label><input id="m_species" type="text" placeholder="예) 인간, 엘프, 뱀파이어" /></div>
+			<div class="row"><label>인종</label><input id="m_race" type="text" placeholder="예) 한국인, 백인, 흑인, 라틴계" /></div>
+			<div class="row"><label>성별</label><input id="m_gender" type="text" placeholder="예) 여성, 남성, 논바이너리" /></div>
+			<div class="row"><label>기타 요청</label><input id="m_extra" type="text" placeholder="예) 단발, 온화한 미소, 캐주얼 의상" /></div>
+			<div class="row row--compact">
+				<button id="m_btn_preview">미리보기</button>
+				<button id="m_btn_reroll">리롤(남은 2)</button>
+			</div>
+			<div class="row">
+				<button id="m_btn_confirm">확정하고 시작</button>
+				<span id="m_notice_setup" style="color:#ffb3b3;font-size:13px;"></span>
+			</div>
+		</div>
+	</div>
+
+	<script type="module">
+		async function fetchJSON(url, options) {
+			try {
+				const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) } });
+				if (!res.ok) throw new Error('Request failed: ' + res.status);
+				return await res.json();
+			} catch (err) {
+				throw err;
+			}
+		}
+
+		const elCanvas = document.getElementById('canvas');
+		const elDim = document.getElementById('dim');
+		const elPlayer = document.getElementById('player');
+		const elName = document.getElementById('name');
+		const elSpecies = document.getElementById('species');
+		const elRace = document.getElementById('race');
+		const elGender = document.getElementById('gender');
+		const elExtra = document.getElementById('extra');
+		const elPreview = document.getElementById('btn-preview');
+		const elReroll = document.getElementById('btn-reroll');
+		const elConfirm = document.getElementById('btn-confirm');
+		const elHistory = document.getElementById('history');
+		const elChoices = document.getElementById('choices');
+		const elNoticeSetup = document.getElementById('notice-setup');
+		const elNoticeGame = document.getElementById('notice-game');
+		const elToday = document.getElementById('stat-today');
+		const elTotal = document.getElementById('stat-total');
+		const elLimitMin = document.getElementById('stat-limit-min');
+		const elLimitDay = document.getElementById('stat-limit-day');
+		const elUpdated = document.getElementById('stat-updated');
+		const elProgress = document.getElementById('progress');
+		const ctx = elCanvas.getContext('2d');
+
+		// modal refs
+		const mModal = document.getElementById('setup-modal');
+		const mDim = document.getElementById('m_dim');
+		const mPlayer = document.getElementById('m_player');
+		const mName = document.getElementById('m_name');
+		const mSpecies = document.getElementById('m_species');
+		const mRace = document.getElementById('m_race');
+		const mGender = document.getElementById('m_gender');
+		const mExtra = document.getElementById('m_extra');
+		const mPreview = document.getElementById('m_btn_preview');
+		const mReroll = document.getElementById('m_btn_reroll');
+		const mConfirm = document.getElementById('m_btn_confirm');
+		const mNoticeSetup = document.getElementById('m_notice_setup');
+
+		let history = [];
+		let lastSceneHint = '';
+		let selectionsMade = 0;
+		let locked = false;
+		let ended = false;
+
+		function openSetupModal() { mModal.classList.add('modal--open'); }
+		function closeSetupModal() { mModal.classList.remove('modal--open'); }
+
+		function drawPlaceholder() {
+			ctx.fillStyle = '#0f1116';
+			ctx.fillRect(0,0,elCanvas.width, elCanvas.height);
+			ctx.strokeStyle = '#2a2e37';
+			ctx.setLineDash([8,8]);
+			ctx.strokeRect(8,8, elCanvas.width-16, elCanvas.height-16);
+			ctx.setLineDash([]);
+			ctx.fillStyle = '#aab4c1';
+			ctx.font = '28px system-ui';
+			ctx.textAlign = 'center';
+			ctx.fillText('이미지를 생성하면 여기 표시됩니다', elCanvas.width/2, elCanvas.height/2);
+		}
+
+		function overlayHumorText(text) {
+			if (!text) return;
+			const padding = 32;
+			const maxWidth = elCanvas.width - padding * 2;
+			ctx.font = 'bold 44px system-ui';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'bottom';
+			// shadow
+			ctx.fillStyle = 'rgba(0,0,0,0.6)';
+			for (let dx=-2; dx<=2; dx++) for (let dy=-2; dy<=2; dy++) {
+				ctx.fillText(text, elCanvas.width/2 + dx, elCanvas.height - padding + dy);
+			}
+			ctx.fillStyle = '#ffffff';
+			ctx.fillText(text, elCanvas.width/2, elCanvas.height - padding);
+		}
+
+		async function refreshStats() {
+			try {
+				const s = await fetchJSON('/api/stats');
+				if (elToday) elToday.textContent = String(s.visitors?.today ?? '-');
+				if (elTotal) elTotal.textContent = String(s.visitors?.total ?? '-');
+				if (elLimitMin) elLimitMin.textContent = String(s.rate?.perMinute ?? '-');
+				if (elLimitDay) elLimitDay.textContent = String(s.rate?.perDay ?? '-');
+				if (elUpdated) elUpdated.textContent = new Date().toLocaleTimeString();
+			} catch {}
+		}
+
+		drawPlaceholder();
+		// 방문자 vid 생성 및 전송
+		const VID_KEY = 'datesim_vid';
+		function getVid() {
+			let v = localStorage.getItem(VID_KEY);
+			if (!v) { v = (self.crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2)); localStorage.setItem(VID_KEY, v); }
+			return v;
+		}
+		(async () => {
+			try {
+				await fetch('/api/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid: getVid() }) });
+			} catch {}
+			refreshStats();
+			setInterval(refreshStats, 15000);
+			openSetupModal();
+		})();
+
+		function getProfile() {
+			const useModal = !!mDim; // modal present
+			return {
+				dimension: (useModal ? mDim.value : (elDim?.value || '3D')) || '3D',
+				playerName: (useModal ? mPlayer?.value : (elPlayer?.value || ''))?.trim(),
+				name: (useModal ? mName.value : (elName?.value || '')).trim(),
+				species: (useModal ? mSpecies.value : (elSpecies?.value || '')).trim(),
+				race: (useModal ? mRace.value : (elRace?.value || '')).trim(),
+				gender: (useModal ? mGender.value : (elGender?.value || '')).trim(),
+				extra: (useModal ? mExtra.value : (elExtra?.value || '')).trim(),
+			};
+		}
+
+		async function setupRequest(reroll) {
+			try {
+				const payload = { vid: getVid(), profile: getProfile(), reroll: !!reroll };
+				const data = await fetchJSON('/api/datesim/setup', { method: 'POST', body: JSON.stringify(payload) });
+				if (data.warning || !data.imageBase64) {
+					(mNoticeSetup || elNoticeSetup).textContent = '이미지 생성이 제한되었을 수 있습니다. 설정을 조정해 보세요.';
+				} else {
+					(mNoticeSetup || elNoticeSetup).textContent = '';
+				}
+				if (typeof data.rerollsLeft === 'number') {
+					(mReroll || elReroll).textContent = `리롤(남은 ${data.rerollsLeft})`;
+					(mReroll || elReroll).disabled = data.rerollsLeft <= 0;
+				}
+				if (data.imageBase64) {
+					const img = new Image();
+					img.onload = () => { ctx.drawImage(img, 0, 0, elCanvas.width, elCanvas.height); };
+					img.src = 'data:image/png;base64,' + data.imageBase64;
+				}
+			} catch (e) {
+				(mNoticeSetup || elNoticeSetup).textContent = '설정 요청 실패: 서버 상태와 API 키를 확인하세요.';
+			}
+		}
+
+		async function fetchChoices() {
+			try {
+				if (ended) return;
+				elNoticeGame.textContent = '';
+				const data = await fetchJSON('/api/datesim/choices', { method: 'POST', body: JSON.stringify({ vid: getVid(), history }) });
+				if (data.ended || data.ending) {
+					ended = true;
+					elNoticeGame.textContent = '엔딩에 도달했습니다.';
+					elChoices.innerHTML = '';
+					return;
+				}
+				if (typeof data.day === 'number' && typeof data.turnInDay === 'number') {
+					if (elProgress) elProgress.textContent = `Day ${data.day} / 30 · Turn ${data.turnInDay+1} / 10`;
+				}
+				lastSceneHint = data.sceneHint || '';
+				const partner = data.partnerReply || '';
+				const narrative = data.narrative || '';
+				const emotion = data.emotionDelta || '';
+				appendHistory(`상대: ${partner}\n상황: ${narrative}${emotion ? `\n감정 변화: ${emotion}` : ''}`);
+				renderChoices(data.choices || []);
+			} catch (e) {
+				elNoticeGame.textContent = '선택지 생성 실패: 네트워크 또는 레이트 리밋을 확인하세요.';
+			}
+		}
+
+		function appendHistory(text) {
+			const prev = elHistory.textContent || '';
+			elHistory.textContent = prev ? prev + '\n\n' + text : text;
+			elHistory.scrollTop = elHistory.scrollHeight;
+		}
+
+		function renderChoices(choices) {
+			elChoices.innerHTML = '';
+			(choices || []).slice(0,3).forEach((c, idx) => {
+				const btn = document.createElement('button');
+				btn.textContent = `${idx+1}. ${c}`;
+				btn.addEventListener('click', () => choose(c));
+				elChoices.appendChild(btn);
+			});
+		}
+
+		let pendingImageRetry = false;
+		async function maybeUpdateImage() {
+			if (selectionsMade > 0 && selectionsMade % 3 === 0) {
+				try {
+					const data = await fetchJSON('/api/datesim/image', { method: 'POST', body: JSON.stringify({ vid: getVid(), sceneHint: lastSceneHint }) });
+					if (data.warning) {
+						elNoticeGame.textContent = '이미지 생성 경고: ' + data.warning;
+					}
+					if (data.imageBase64) {
+						const img = new Image();
+						img.onload = () => { ctx.drawImage(img, 0, 0, elCanvas.width, elCanvas.height); };
+						img.src = 'data:image/png;base64,' + data.imageBase64;
+						pendingImageRetry = false;
+					} else if (data.retryNext) {
+						pendingImageRetry = true;
+					}
+				} catch (e) {
+					elNoticeGame.textContent = '이미지 갱신 실패: 잠시 후 다시 시도하세요.';
+				}
+			}
+		}
+
+		async function choose(choiceText) {
+			if (locked || ended) return;
+			locked = true;
+			try {
+				appendHistory(`내 선택: ${choiceText}`);
+				history.push({ choice: choiceText });
+				selectionsMade += 1;
+				if (pendingImageRetry) {
+					pendingImageRetry = false;
+					await maybeUpdateImage();
+				} else {
+					await maybeUpdateImage();
+				}
+				await fetchChoices();
+			} finally {
+				locked = false;
+			}
+		}
+
+		// inline (hidden) buttons still wired in case modal is disabled
+		if (elPreview) elPreview.addEventListener('click', async () => { await setupRequest(false); });
+		if (elReroll) elReroll.addEventListener('click', async () => { await setupRequest(true); });
+		if (elConfirm) elConfirm.addEventListener('click', async () => {
+			try {
+				await fetchJSON('/api/datesim/confirm', { method: 'POST', body: JSON.stringify({ vid: getVid() }) });
+				history = [];
+				selectionsMade = 0;
+				ended = false;
+				elHistory.textContent = '';
+				await fetchChoices();
+			} catch (e) {
+				(elNoticeSetup || mNoticeSetup).textContent = '확정 실패: 잠시 후 다시 시도하세요.';
+			}
+		});
+
+		// modal buttons
+		if (mPreview) mPreview.addEventListener('click', async () => { await setupRequest(false); });
+		if (mReroll) mReroll.addEventListener('click', async () => { await setupRequest(true); });
+		if (mConfirm) mConfirm.addEventListener('click', async () => {
+			try {
+				await fetchJSON('/api/datesim/confirm', { method: 'POST', body: JSON.stringify({ vid: getVid() }) });
+				history = [];
+				selectionsMade = 0;
+				ended = false;
+				elHistory.textContent = '';
+				closeSetupModal();
+				await fetchChoices();
+			} catch (e) {
+				(mNoticeSetup || elNoticeSetup).textContent = '확정 실패: 잠시 후 다시 시도하세요.';
+			}
+		});
+
+		// 파일로 직접 연 경우 안내
+		if (location.origin === 'null' || location.protocol === 'file:') {
+			const warn = document.createElement('div');
+			warn.style.color = '#ffb3b3';
+			warn.style.fontSize = '13px';
+			warn.style.marginTop = '8px';
+			warn.textContent = '이 페이지는 서버 없이 파일로 열렸습니다. API가 동작하지 않습니다. npm run dev 실행 후 http://localhost:5174 로 접속하세요.';
+			const mount = document.getElementById('notice-setup') || document.body;
+			mount.appendChild(warn);
+		}
+
+		// 다운로드 버튼 제거됨
+	</script>
+</body>
+</html>
+
+

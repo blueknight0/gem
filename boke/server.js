@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -22,7 +23,7 @@ app.get("/api/health", (_req, res) => {
 
 // --- Gemini config
 const GENAI_BASE = process.env.GENAI_BASE || "https://generativelanguage.googleapis.com";
-const GENAI_TEXT_MODEL = process.env.GENAI_TEXT_MODEL || "gemini-2.5-flash";
+const GENAI_TEXT_MODEL = process.env.GENAI_TEXT_MODEL || "gemini-2.5-flash-lite";
 const GENAI_IMAGE_MODEL = process.env.GENAI_IMAGE_MODEL || "gemini-2.5-flash-image-preview";
 
 // --- Usage counters (in-memory)
@@ -142,6 +143,34 @@ function buildStyleHint() {
 	].filter(Boolean).join(" ");
 }
 
+// --- Famous figures loader
+let FAMOUS_FIGURES = [];
+function loadFamousFigures() {
+	try {
+		const mdPath = path.join(__dirname, "famous_historical_figures.md");
+		if (!fs.existsSync(mdPath)) return;
+		const text = fs.readFileSync(mdPath, "utf-8");
+		const lines = text.split(/\r?\n/);
+		const re = /^\s*(\d+)\.\s+(.+?)\s+\((.+?)\)\s*$/;
+		const arr = [];
+		for (const line of lines) {
+			const m = line.match(re);
+			if (m) {
+				const idx = Number(m[1]);
+				const name = m[2].trim();
+				const era = m[3].trim();
+				arr.push({ index: idx, name, era });
+			}
+		}
+		if (arr.length) FAMOUS_FIGURES = arr;
+	} catch {}
+}
+loadFamousFigures();
+function pickRandomFigure() {
+	if (!FAMOUS_FIGURES.length) return null;
+	return FAMOUS_FIGURES[Math.floor(Math.random() * FAMOUS_FIGURES.length)];
+}
+
 async function callGeminiText(prompt) {
 	const apiKey = process.env.GEMINI_API_KEY;
 	if (!apiKey) throw new Error("Server missing GEMINI_API_KEY");
@@ -184,21 +213,23 @@ function extractJsonObjectFromText(text) {
 // API endpoints
 app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 	try {
+		const figure = pickRandomFigure();
+		const figureName = figure?.name || null;
+		const figureEra = figure?.era || null;
 		const instruction = [
-			"당신은 '보케 시나리오 아키텍트'입니다. 밈 스타일의 보케(일본식 유머) 시나리오를 1개 생성하세요.",
-			"목표: '장면 자체의 과한 황당함'이 아니라, 이미지와 한국어 한 줄 캡션(humor_ko) 사이의 아이러니에서 웃음을 만들어야 합니다.",
-			"톤: 짧고 공감되는 유머.",
-			"원칙: 약간 어긋났지만 가능한 행동. 풍부하고 다양한 상황과 장소.",
-			"연출 기본: 현실 사진 룩, 캔디드·다큐 분위기. 자연스러운 색감(필요 시 필름 톤 OK).",
-			"다양화 지침: 매 요청마다 배경/직업/역할/세대/시간대/날씨/마이크로-장소(편의점, 엘리베이터, 경로당, 공중화장실, 지하철 칸 등)를 바꾸고, 흔한 테마(사무실/컴퓨터/라면)는 남용하지 마세요.",
-			"유머 스타일 다양화: 자조/현타/현실부정/쿨하고 건조한 한마디/과몰입/무덤덤한 보고체 등 중 하나를 임의로 선택.",
-			"캡션 톤(한국 인터넷 밈 2023~2025): 짧고 강하며 이미지와 반대로 읽히는 아이러니. 예시는 참고만 하고 직접 문구는 새로 지을 것.",
-			"반환(JSON) 키: title, subject, action, background, expression, image_prompt, humor_ko, why_funny_ko",
-			"- title: 한국어 짧은 밈풍 제목(≤16자)",
-			"- subject/action/background/expression: 영어, 간결하게",
-			"- image_prompt: 영어로 자세히 작성(인물은 한국인, 현실 사진 룩, candid framing). 이미지에 텍스트를 넣지 말 것.",
-			"- humor_ko: 한국어 한 줄 캡션(≤28자), 이미지와 의도적 아이러니",
-			"- why_funny_ko: 한국어 한 줄로 이미지와 캡션 사이의 아이러니가 왜 웃긴지 설명(≤40자)",
+			"당신은 '쓸데없는 명언 짤' 생성기 기획자입니다. 아래 조건을 만족하는 한 개의 결과를 JSON으로 만드세요.",
+			figureName ? `지정 인물: ${figureName} (${figureEra || '시대/연도 미상'})` : "지정 인물: (무작위)",
+			"목표: 위 인물의 '그 사람이 하지 않을 법한' 내용을, 명언처럼 보이지만 역설적인 한국어 1~2문장으로 만듭니다.",
+			"캡션 형식: 인물명 (생년~사망년|현재)\\n명언문",
+			"이미지 연출: 해당 인물을 대표할 법한 배경에서, 반신이 보이는 half-length portrait. 현실감 있는 사진/그림 룩 중 하나. 텍스트는 이미지에 렌더링하지 않습니다(캡션은 별도 오버레이).",
+			"품질: 너무 장황하지 말고 간결하게.",
+			"반환(JSON) 키: person_ko, birth_year, death_year_or_present, quote_ko, image_prompt, why_ironic_ko",
+			"- person_ko: 인물 한국어 이름 (반드시 지정 인물과 동일하게)",
+			"- birth_year: 4자리 연도(모르면 대략 추정치도 허용)",
+			"- death_year_or_present: 사망년 4자리 또는 '현재'",
+			"- quote_ko: 그 인물이 하지 않을 법한, 그러나 명언처럼 보이는 1~2문장. 너무 길지 않게",
+			"- image_prompt: 영어로 작성. representative background, half-length portrait, realistic photo or painterly look, candid/portrait framing, no text, no watermark",
+			"- why_ironic_ko: 왜 그 인물과 어울리지 않아 웃긴지 1문장 설명",
 		].join("\n");
 
 		const text = await callGeminiText(instruction);
@@ -212,17 +243,24 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 		rollUsageDateIfNeeded();
 		usage.today += 1;
 		usage.total += 1;
+		const person = figureName || obj.person_ko || null;
+		const years = (obj.birth_year ? String(obj.birth_year) : "") + "~" + (obj.death_year_or_present ? String(obj.death_year_or_present) : "");
+		const paren = years.trim() !== "~" ? `(${years})` : (figureEra ? `(${figureEra})` : null);
+		const caption = [
+			person ? String(person) : null,
+			paren,
+		].filter(Boolean).join(" ") + (obj.quote_ko ? "\n" + String(obj.quote_ko) : "");
 		return res.json({
 			scenario: {
-				subject: obj.subject,
-				action: obj.action,
-				background: obj.background,
-				expression: obj.expression,
-				title: obj.title,
+				person: person,
+				birthYear: obj.birth_year || null,
+				deathYear: obj.death_year_or_present || null,
+				quote: obj.quote_ko || null,
 			},
 			prompt: diversifiedPrompt,
-			humor: obj.humor_ko || null,
-			whyFunny: obj.why_funny_ko || null,
+			humor: caption || null,
+			caption: caption || null,
+			whyFunny: obj.why_ironic_ko || null,
 		});
 	} catch (e) {
 		console.error(e);
