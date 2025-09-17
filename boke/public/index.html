@@ -24,17 +24,29 @@
 		<div>
 			<h1>쓸데없는 명언 짤 생성기</h1>
 			<div class="card">
-				<div class="row">
-					<button id="btn-scenario">시나리오 생성</button>
-					<button id="btn-generate">이미지 생성</button>
+				<h3>시나리오</h3>
+				<div style="display:grid;gap:14px;">
+					<div style="display:grid;gap:10px;grid-template-columns:1fr auto;align-items:center;">
+						<input id="person-input" type="text" placeholder="인물명 직접 입력 (예: 세종대왕)" />
+						<button id="btn-scenario-custom">직접 입력으로 시나리오</button>
+					</div>
+					<div style="display:flex;gap:12px;flex-wrap:wrap;">
+						<button id="btn-scenario">랜덤인물 시나리오</button>
+						<button id="btn-generate">이미지 생성</button>
+					</div>
 				</div>
 
-				<label for="humor">캡션 미리보기(수정 가능)</label>
-				<textarea id="humor" rows="3" placeholder="인물명 (생년~사망년|현재)&#10;명언문 (1~2문장)"></textarea>
+				<div style="margin-top:14px;">
+					<label for="humor">캡션(수정 가능)</label>
+					<textarea id="humor" rows="3" placeholder="인물명 (생년~사망년|현재)&#10;명언문 (1~2문장)"></textarea>
+				</div>
 			</div>
 			<div class="card">
-				<h3>이미지 프롬프트</h3>
-				<pre id="prompt"></pre>
+				<h3 style="display:flex;justify-content:space-between;align-items:center;">
+					<span>이미지 프롬프트</span>
+					<button id="btn-toggle-prompt" style="background:#2a2e37;">펼치기</button>
+				</h3>
+				<pre id="prompt" style="display:none;"></pre>
 				<div id="notice" style="margin-top:8px;color:#ffb3b3;font-size:13px;"></div>
 				<div id="why" style="margin-top:6px;color:#aab4c1;font-size:13px;"></div>
 			</div>
@@ -44,8 +56,8 @@
 				<h3>미리보기</h3>
 				<canvas id="canvas" width="1024" height="1024"></canvas>
 				<div style="margin-top:8px">
-					<img id="downloadable" alt="생성 이미지(길게 눌러 저장)" style="max-width:100%;height:auto;display:none;border:1px solid #2a2e37;border-radius:10px;" />
-					<div style="color:#aab4c1;font-size:12px;margin-top:6px;">모바일: 이미지 위에 길게 눌러 저장하세요</div>
+					<button id="btn-download" style="display:inline-block">캔버스 저장(PNG)</button>
+					<span style="color:#aab4c1;font-size:12px;margin-left:8px;">모바일: 버튼을 길게 누르지 말고 탭하세요</span>
 				</div>
 			</div>
 		</div>
@@ -56,8 +68,8 @@
 			</p>
 		</div>
 		<div class="card" style="grid-column: 1 / -1;">
-			<h3>방문자 카운터</h3>
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+			<h3>카운터</h3>
+			<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px;">
 				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
 					<span style="color:#aab4c1;font-size:12px;">Visitors Today</span>
 					<div id="stat-today" style="font-weight:700;">-</div>
@@ -65,6 +77,14 @@
 				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
 					<span style="color:#aab4c1;font-size:12px;">Visitors Total</span>
 					<div id="stat-total" style="font-weight:700;">-</div>
+				</div>
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Generations Today</span>
+					<div id="gen-today" style="font-weight:700;">-</div>
+				</div>
+				<div style="background:#0f1116;border:1px solid #2a2e37;border-radius:10px;padding:10px 12px;">
+					<span style="color:#aab4c1;font-size:12px;">Generations Total</span>
+					<div id="gen-total" style="font-weight:700;">-</div>
 				</div>
 			</div>
 			<div style="margin-top:6px;color:#aab4c1;font-size:12px;display:flex;gap:12px;align-items:center;">
@@ -86,16 +106,21 @@
 		}
 
 		const elPrompt = document.getElementById('prompt');
+		const btnTogglePrompt = document.getElementById('btn-toggle-prompt');
 		const elCanvas = document.getElementById('canvas');
-		const elImg = document.getElementById('downloadable');
+		const elBtnDownload = document.getElementById('btn-download');
 		const elHumor = document.getElementById('humor');
 		const elWhy = document.getElementById('why');
 		const elToday = document.getElementById('stat-today');
 		const elTotal = document.getElementById('stat-total');
 		const elLimitMin = document.getElementById('stat-limit-min');
 		const elLimitDay = document.getElementById('stat-limit-day');
+		const elGenToday = document.getElementById('gen-today');
+		const elGenTotal = document.getElementById('gen-total');
 		const elUpdated = document.getElementById('stat-updated');
 		const ctx = elCanvas.getContext('2d');
+		const elPerson = document.getElementById('person-input');
+		const btnScenarioCustom = document.getElementById('btn-scenario-custom');
 
 		let currentPrompt = '';
 		const elNotice = document.getElementById('notice');
@@ -159,6 +184,8 @@
 				const s = await fetchJSON('/api/stats');
 				if (elToday) elToday.textContent = String(s.visitors?.today ?? '-');
 				if (elTotal) elTotal.textContent = String(s.visitors?.total ?? '-');
+				if (elGenToday) elGenToday.textContent = String(s.imageGen?.today ?? '-');
+				if (elGenTotal) elGenTotal.textContent = String(s.imageGen?.total ?? '-');
 				if (elLimitMin) elLimitMin.textContent = String(s.rate?.perMinute ?? '-');
 				if (elLimitDay) elLimitDay.textContent = String(s.rate?.perDay ?? '-');
 				if (elUpdated) elUpdated.textContent = new Date().toLocaleTimeString();
@@ -217,6 +244,47 @@
 			}
 		});
 
+		btnTogglePrompt?.addEventListener('click', () => {
+			const shown = elPrompt.style.display !== 'none';
+			elPrompt.style.display = shown ? 'none' : 'block';
+			btnTogglePrompt.textContent = shown ? '펼치기' : '접기';
+		});
+
+		btnScenarioCustom.addEventListener('click', async () => {
+			const name = String(elPerson?.value || '').trim();
+			if (!name) { alert('인물명을 입력하세요'); return; }
+			elNotice.textContent = '';
+			try {
+				btnScenarioCustom.disabled = true;
+				const prevTextC = btnScenarioCustom.textContent;
+				btnScenarioCustom.textContent = '시나리오 생성중…';
+				const data = await fetchJSON('/api/boke?person=' + encodeURIComponent(name));
+				currentPrompt = data.prompt;
+				const s = data.scenario || {};
+				elPrompt.textContent = [
+					(s.person ? `- 인물: ${s.person}` : null),
+					(s.birthYear || s.deathYear ? `- 연도: ${s.birthYear ?? ''}~${s.deathYear ?? ''}` : null),
+					(s.quote ? `- 명언(예정): ${s.quote}` : null),
+					'',
+					currentPrompt ? `Prompt: ${currentPrompt}` : null
+				].filter(Boolean).join('\n');
+				if (data.caption || data.humor) {
+					elHumor.value = (data.caption || data.humor);
+				}
+				elWhy.textContent = data.whyFunny ? `왜 웃긴가: ${data.whyFunny}` : '';
+				btnScenarioCustom.textContent = prevTextC;
+				btnScenarioCustom.disabled = false;
+			} catch (e) {
+				if ((e?.message||'').includes('429')) {
+					elNotice.textContent = '요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.';
+				} else {
+					elNotice.textContent = '시나리오 생성 실패';
+				}
+				btnScenarioCustom.textContent = '직접 입력';
+				btnScenarioCustom.disabled = false;
+			}
+		});
+
 		btnGenerate.addEventListener('click', async () => {
 			if (!currentPrompt) {
 				alert('먼저 시나리오를 생성하세요');
@@ -233,12 +301,7 @@
 					ctx.drawImage(img, 0, 0, elCanvas.width, elCanvas.height);
 					overlayHumorText(elHumor.value.trim());
 					// set downloadable img for mobile long-press
-					try {
-						if (elImg) {
-							elImg.src = img.src;
-							elImg.style.display = 'block';
-						}
-					} catch {}
+					// downloadable is canvas via button
 				};
 				if (data.warning) {
 					elNotice.textContent = '이미지 생성 경고: ' + data.warning;
@@ -254,6 +317,18 @@
 				}
 				btnGenerate.textContent = '이미지 생성';
 				btnGenerate.disabled = false;
+			}
+		});
+
+		// 캔버스 저장 버튼
+		elBtnDownload?.addEventListener('click', () => {
+			try {
+				const a = document.createElement('a');
+				a.href = elCanvas.toDataURL('image/png');
+				a.download = 'boke.png';
+				a.click();
+			} catch (e) {
+				alert('저장 실패: ' + (e?.message || e));
 			}
 		});
 

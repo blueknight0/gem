@@ -305,11 +305,12 @@ function extractJsonObjectFromText(text) {
 }
 
 // API endpoints
-app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
+app.get("/api/boke", rateLimitMiddleware, async (req, res) => {
 	try {
-		const figure = pickRandomFigure();
-		const figureName = figure?.name || null;
-		const figureEra = figure?.era || null;
+		const personParam = (req?.query && typeof req.query.person === 'string') ? req.query.person.trim() : '';
+		const figure = personParam ? null : pickRandomFigure();
+		const figureName = personParam || figure?.name || null;
+		const figureEra = personParam ? null : (figure?.era || null);
 		const instruction = [
 			"당신은 '쓸데없는 명언 짤' 생성기 기획자입니다. 아래 조건을 만족하는 한 개의 결과를 JSON으로 만드세요.",
 			figureName ? `지정 인물: ${figureName} (${figureEra || '시대/연도 미상'})` : "지정 인물: (무작위)",

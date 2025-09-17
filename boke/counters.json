@@ -1,0 +1,23 @@
+{
+  "usage": {
+    "total": 8,
+    "today": 8,
+    "date": "2025-09-17"
+  },
+  "imageGen": {
+    "total": 5,
+    "today": 5,
+    "date": "2025-09-17"
+  },
+  "visitors": {
+    "total": 1,
+    "today": 1,
+    "date": "2025-09-17",
+    "seenToday": [
+      "f18fa5bc-16d8-4788-84a9-7131e1794199"
+    ],
+    "seenEver": [
+      "f18fa5bc-16d8-4788-84a9-7131e1794199"
+    ]
+  }
+}
