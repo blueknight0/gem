@@ -43,6 +43,10 @@
 			<div class="card">
 				<h3>미리보기</h3>
 				<canvas id="canvas" width="1024" height="1024"></canvas>
+				<div style="margin-top:8px">
+					<img id="downloadable" alt="생성 이미지(길게 눌러 저장)" style="max-width:100%;height:auto;display:none;border:1px solid #2a2e37;border-radius:10px;" />
+					<div style="color:#aab4c1;font-size:12px;margin-top:6px;">모바일: 이미지 위에 길게 눌러 저장하세요</div>
+				</div>
 			</div>
 		</div>
 		<div class="card" style="grid-column: 1 / -1;">
@@ -83,6 +87,7 @@
 
 		const elPrompt = document.getElementById('prompt');
 		const elCanvas = document.getElementById('canvas');
+		const elImg = document.getElementById('downloadable');
 		const elHumor = document.getElementById('humor');
 		const elWhy = document.getElementById('why');
 		const elToday = document.getElementById('stat-today');
@@ -227,6 +232,13 @@
 				img.onload = () => {
 					ctx.drawImage(img, 0, 0, elCanvas.width, elCanvas.height);
 					overlayHumorText(elHumor.value.trim());
+					// set downloadable img for mobile long-press
+					try {
+						if (elImg) {
+							elImg.src = img.src;
+							elImg.style.display = 'block';
+						}
+					} catch {}
 				};
 				if (data.warning) {
 					elNotice.textContent = '이미지 생성 경고: ' + data.warning;

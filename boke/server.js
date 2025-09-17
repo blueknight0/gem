@@ -38,6 +38,8 @@ function rollUsageDateIfNeeded() {
 	if (usage.date !== d) {
 		usage.date = d;
 		usage.today = 0;
+		// persist rollover
+		scheduleSaveCounters();
 	}
 }
 
@@ -95,8 +97,100 @@ function rollVisitorsDateIfNeeded() {
 		visitors.date = d;
 		visitors.today = 0;
 		visitors.seenToday = new Set();
+		// persist rollover
+		scheduleSaveCounters();
 	}
 }
+
+// --- Image generation counters (in-memory)
+let imageGen = {
+	total: 0,
+	today: 0,
+	date: new Date().toISOString().slice(0, 10),
+};
+
+function rollImageGenDateIfNeeded() {
+	const d = new Date().toISOString().slice(0, 10);
+	if (imageGen.date !== d) {
+		imageGen.date = d;
+		imageGen.today = 0;
+		// persist rollover
+		scheduleSaveCounters();
+	}
+}
+
+// --- Persistence for counters (usage, visitors, imageGen)
+const COUNTERS_FILE = path.join(__dirname, "counters.json");
+
+function serializeCounters() {
+	return {
+		usage: { total: usage.total, today: usage.today, date: usage.date },
+		imageGen: { total: imageGen.total, today: imageGen.today, date: imageGen.date },
+		visitors: {
+			total: visitors.total,
+			today: visitors.today,
+			date: visitors.date,
+			seenToday: Array.from(visitors.seenToday || []),
+			seenEver: Array.from(visitors.seenEver || []),
+		},
+	};
+}
+
+let saveCountersTimer = null;
+function scheduleSaveCounters() {
+	try {
+		if (saveCountersTimer) clearTimeout(saveCountersTimer);
+		saveCountersTimer = setTimeout(() => {
+			try {
+				fs.writeFileSync(COUNTERS_FILE, JSON.stringify(serializeCounters(), null, 2));
+			} catch {}
+		}, 200);
+	} catch {}
+}
+
+function loadPersistentCounters() {
+	try {
+		if (!fs.existsSync(COUNTERS_FILE)) return;
+		const raw = fs.readFileSync(COUNTERS_FILE, "utf-8");
+		const data = JSON.parse(raw);
+		if (data && typeof data === 'object') {
+			if (data.usage) {
+				usage.total = Number(data.usage.total || 0);
+				usage.today = Number(data.usage.today || 0);
+				usage.date = data.usage.date || usage.date;
+			}
+			if (data.imageGen) {
+				imageGen.total = Number(data.imageGen.total || 0);
+				imageGen.today = Number(data.imageGen.today || 0);
+				imageGen.date = data.imageGen.date || imageGen.date;
+			}
+			if (data.visitors) {
+				visitors.total = Number(data.visitors.total || 0);
+				visitors.today = Number(data.visitors.today || 0);
+				visitors.date = data.visitors.date || visitors.date;
+				visitors.seenToday = new Set(Array.isArray(data.visitors.seenToday) ? data.visitors.seenToday : []);
+				visitors.seenEver = new Set(Array.isArray(data.visitors.seenEver) ? data.visitors.seenEver : []);
+			}
+		}
+		// Adjust day rollovers on load
+		rollUsageDateIfNeeded();
+		rollVisitorsDateIfNeeded();
+		rollImageGenDateIfNeeded();
+	} catch {}
+}
+
+// Load at startup
+loadPersistentCounters();
+
+// Best-effort save on shutdown
+try {
+	["SIGINT", "SIGTERM"].forEach(sig => {
+		process.on(sig, () => {
+			try { fs.writeFileSync(COUNTERS_FILE, JSON.stringify(serializeCounters(), null, 2)); } catch {}
+			process.exit(0);
+		});
+	});
+} catch {}
 
 // --- Style diversification helpers
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -243,6 +337,7 @@ app.get("/api/boke", rateLimitMiddleware, async (_req, res) => {
 		rollUsageDateIfNeeded();
 		usage.today += 1;
 		usage.total += 1;
+		scheduleSaveCounters();
 		const person = figureName || obj.person_ko || null;
 		const years = (obj.birth_year ? String(obj.birth_year) : "") + "~" + (obj.death_year_or_present ? String(obj.death_year_or_present) : "");
 		const paren = years.trim() !== "~" ? `(${years})` : (figureEra ? `(${figureEra})` : null);
@@ -302,11 +397,23 @@ app.post("/api/generate", rateLimitMiddleware, async (req, res) => {
 		rollUsageDateIfNeeded();
 		usage.today += 1;
 		usage.total += 1;
+		rollImageGenDateIfNeeded();
+		imageGen.today += 1;
+		imageGen.total += 1;
+		scheduleSaveCounters();
 		return res.json({ imageBase64: b64 });
 	} catch (e) {
 		console.error(e);
 		// Non-fatal fallback to 1x1 png so UI continues to work
 		const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
+		// count attempt as generation as UI receives an image
+		rollUsageDateIfNeeded();
+		usage.today += 1;
+		usage.total += 1;
+		rollImageGenDateIfNeeded();
+		imageGen.today += 1;
+		imageGen.total += 1;
+		scheduleSaveCounters();
 		return res.status(200).json({ imageBase64: transparentPngBase64, warning: String(e?.message || e) });
 	}
 });
@@ -314,8 +421,10 @@ app.post("/api/generate", rateLimitMiddleware, async (req, res) => {
 app.get("/api/stats", (_req, res) => {
 	rollUsageDateIfNeeded();
 	rollVisitorsDateIfNeeded();
+	rollImageGenDateIfNeeded();
 	res.json({
 		usage: { today: usage.today, total: usage.total, date: usage.date },
+		imageGen: { today: imageGen.today, total: imageGen.total, date: imageGen.date },
 		rate: { perMinute: RATE_LIMIT_PER_MIN, perDay: RATE_LIMIT_PER_DAY },
 		visitors: { today: visitors.today, total: visitors.total, date: visitors.date }
 	});
@@ -335,6 +444,7 @@ app.post("/api/visit", (req, res) => {
 			visitors.seenToday.add(vid);
 			visitors.today += 1;
 		}
+		scheduleSaveCounters();
 		return res.json({ ok: true, visitors: { today: visitors.today, total: visitors.total } });
 	} catch (e) {
 		return res.status(500).json({ error: 'visit_failed' });
